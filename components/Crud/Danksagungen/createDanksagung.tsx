@@ -4,15 +4,31 @@ import { supabase } from '../../config/supabase';
 import { useAuthStore } from '../../stores/AuthStore';
 import { CreateDanksagungProps } from '../../types/Danksagungen';
 import { useDanksagungStore } from '../../stores/danksagungStores';
+import { v4 as uuidv4 } from 'uuid';
+import 'react-native-get-random-values';
+import { FontSizeContext } from '@/components/provider/FontSizeContext'; 
+import { useContext } from 'react';
 
 const CreateDanksagung: React.FC<CreateDanksagungProps> = ({ userId:recipientUserId }) => {
   const [writtenText, setWrittenText] = useState('');
   const incrementDanksagungCount = useDanksagungStore(state => state.incrementDanksagungCount);
+  const { fontSize } = useContext(FontSizeContext);
+  const maxFontSize = 38; // Passen Sie diesen Wert nach Bedarf an
+  const defaultFontSize = 22; // Standard-Schriftgröße im Kontext
+  const componentBaseFontSize = 20; // Ausgangsschriftgröße für das Label
+  const minIconSize = 35;
+  const maxIconSize = 60;
+  const iconSize = Math.min(Math.max(fontSize * 1.5, minIconSize), maxIconSize);
 
-  const generateCustomId = useCallback((userId: string): string => {
-    const timestamp = new Date().getTime();
-    return `${userId}_${timestamp}`;
-  }, []);
+  // Berechnung der angepassten Schriftgröße
+  const adjustedFontSize = (fontSize / defaultFontSize) * componentBaseFontSize;
+  const finalFontSize = Math.min(adjustedFontSize, maxFontSize);
+
+  const generateCustomId = (): string => {
+    const id = uuidv4();
+    console.log("Generated UUID: ", id);
+    return id;
+  };
 
   const onSubmit = useCallback(async () => {
     if (writtenText.length <= 5) {
@@ -26,9 +42,11 @@ const CreateDanksagung: React.FC<CreateDanksagungProps> = ({ userId:recipientUse
         console.error('Benutzer nicht angemeldet');
         return;
       }
+      console.log("Recipient User ID (userId):", recipientUserId);
+      console.log("Author User ID (authorId):", userData.id);
 
       const { error } = await supabase.from('Danksagungen').insert({
-        id: generateCustomId(recipientUserId),
+        id: generateCustomId(),
         writtenText, 
         userId: recipientUserId, // Empfänger der Danksagung
         authorId: userData.id, // Autor der Danksagung
@@ -53,14 +71,14 @@ const CreateDanksagung: React.FC<CreateDanksagungProps> = ({ userId:recipientUse
   return (
     <View style={styles.container}>
       <TextInput
-        style={styles.input}
+        style={[styles.input, { fontSize: finalFontSize }]}
         placeholder="Schreibe eine Danksagung..."
         value={writtenText}
         onChangeText={setWrittenText}
         multiline
       />
       <TouchableOpacity style={styles.button} onPress={onSubmit}>
-        <Text style={styles.buttonText}>Abschicken</Text>
+        <Text style={[styles.buttonText, { fontSize: finalFontSize }]}>Abschicken</Text>
       </TouchableOpacity>
     </View>
   );
@@ -71,14 +89,14 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   input: {
-    padding: 8,
+    padding: 18,
     borderWidth: 1,
     borderColor: 'gray',
     borderRadius: 55,
     marginBottom: 8,
   },
   button: {
-    backgroundColor: 'green',
+    backgroundColor: 'orange',
     borderRadius: 5,
     padding: 12,
     alignItems: 'center',

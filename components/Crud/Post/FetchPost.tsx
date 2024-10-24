@@ -1,8 +1,9 @@
 import { supabase } from '../../config/supabase';
 import { Post } from '../../../components/types/post';
-
+import { useLocationStore } from '../../stores/locationStore';  
 // Definiere den Typ Post
 
+const location = useLocationStore.getState().location;
 
 // Funktion zum Abrufen der Beiträge
 export const fetchPosts = async (): Promise<Post[]> => {

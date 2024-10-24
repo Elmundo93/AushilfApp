@@ -1,158 +1,180 @@
-import React, { useState } from 'react';
-import { TouchableOpacity, StyleSheet, Text, TextInput, View, Alert } from 'react-native';
-import { ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { KeyboardAvoidingView, Platform } from 'react-native';
+import React from 'react';
+import { TouchableOpacity, Text, View, StyleSheet, SafeAreaView } from 'react-native';
+import { FontAwesome, AntDesign } from '@expo/vector-icons';
+import { Image } from 'react-native';
+import { createRStyle } from 'react-native-full-responsive';
+import { Link } from 'expo-router';
+import GoogleLogin from '@/components/Auth/GoogleAuth';
+import { handleAppleSignIn } from '@/components/Auth/AppleAuth'; // Importiere die Apple Login Funktion
 import { router } from 'expo-router';
-import { signUp } from '@/components/services/AuthService';
-import { User } from '@/components/types/auth';
 
-const Page = () => {
-  const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    confirmPassword: '',
-    vorname: '',
-    nachname: '',
-    location: ''
-  });
 
-  const handleInputChange = (name: string, value: string) => {
-    setFormData(prevData => ({ ...prevData, [name]: value }));
-  };
 
-  const validateForm = () => {
-    if (!formData.email || !formData.password || !formData.confirmPassword || 
-        !formData.vorname || !formData.nachname || !formData.location) {
-      Alert.alert('Fehler', 'Bitte füllen Sie alle Felder aus.');
-      return false;
-    }
-    if (formData.password !== formData.confirmPassword) {
-      Alert.alert('Fehler', 'Die Passwörter stimmen nicht überein.');
-      return false;
-    }
-    return true;
-  };
+const Registration = () => {
 
-  const handleRegister = async () => {
-    if (!validateForm()) return;
-  
-    setLoading(true);
-  
-    try {
-      const userData: User = {
-        email: formData.email,
-        vorname: formData.vorname,
-        nachname: formData.nachname,
-        location: formData.location,
-        id: '',
-        created_at: ''  
-      };
-  
-      const result = await signUp(formData.email, formData.password, userData);
-  
-      if (result.error) {
-        throw new Error(result.error);
-      }
-  
-      // Erfolgreiche Registrierung
-      router.replace('/(authenticated)/pinnwand');
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Ein unerwarteter Fehler ist aufgetreten';
-      Alert.alert('Fehler bei der Registrierung', errorMessage);
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const renderInput = (label: string, name: keyof typeof formData, placeholder: string, secureTextEntry = false) => (
-    <View style={styles.inputContainer}>
-      <Text style={styles.label}>{label}</Text>
-      <TextInput
-        value={formData[name]}
-        style={styles.input}
-        placeholderTextColor={'rgba(255, 255, 255, 0.7)'}
-        placeholder={placeholder}
-        autoCapitalize="none"
-        onChangeText={(text) => handleInputChange(name, text)}
-        secureTextEntry={secureTextEntry}
-      />
-    </View>
-  );
-
+    const { promptAsync } = GoogleLogin();
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.keyboardAvoidingView}>
-        <View style={styles.formContainer}>
-          {renderInput("Vorname:", "vorname", "Vorname")}
-          {renderInput("Nachname:", "nachname", "Nachname")}
-          {renderInput("Wohnort:", "location", "Wohnort")}
-          {renderInput("E-Mail Adresse:", "email", "Email")}
-          {renderInput("Passwort:", "password", "Passwort", true)}
-          {renderInput("Passwort wiederholen:", "confirmPassword", "Passwort wiederholen", true)}
+         <Image source={require('@/assets/images/people.jpg')} resizeMode="center" style={styles.imageBackground}/>
+         
+            
+            <View style={styles.welcomeView}>
+            <Link href=".." asChild  style={styles.backButton}>
+            <TouchableOpacity  >
+            <AntDesign name="left" size={24} color="black" />
+            </TouchableOpacity>
+            </Link>
+                      <Text style={styles.welcomeText}>Registrieren</Text>
+                    </View>
+      <View style={styles.content}>
+        <View style={styles.greenView}>
+
+        <Text style={styles.greenText}>
+          Registriere dich schnell und einfach mit Google oder Apple oder stelle dich manuell vor!
+        </Text>
         </View>
         <View style={styles.buttonContainer}>
-          {loading ? (
-            <ActivityIndicator size="large" color="#ffffff" />
-          ) : (
-            <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
-              <Text style={styles.buttonText}>Registrieren!</Text>
-            </TouchableOpacity>
-          )}
+          <TouchableOpacity
+            style={[styles.button, styles.googleButton]}
+            onPress={() => promptAsync()}
+          >
+            <AntDesign name="google" size={24} color="#4285F4" style={styles.buttonIcon} />
+            <Text style={styles.buttonText}>Anmeldung mit Google</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.button, styles.appleButton]}
+            onPress={handleAppleSignIn} // Die importierte Funktion hier verwenden
+          >
+            <AntDesign name="apple1" size={24} color="#FFFFFF" style={styles.buttonIcon} />
+            <Text style={[styles.buttonText, styles.appleButtonText]}>Anmeldung mit Apple</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.button, styles.manualButton]}
+            onPress={() => router.push('/manuellRegistration')}
+          >
+            <FontAwesome name="user" size={24} color="#FFFFFF" style={styles.buttonIcon} />
+            <Text style={[styles.buttonText, styles.manualButtonText]}>Manuell Anmelden</Text>
+          </TouchableOpacity>
+
         </View>
-      </KeyboardAvoidingView>
+      </View>
     </SafeAreaView>
   );
 };
 
-
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#4a90e2',
-  },
-  keyboardAvoidingView: {
-    flex: 1,
-  },
-  formContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 20,
-    padding: 20,
-    
-
-  },
-  inputContainer: {
-    marginBottom: 15,
-  },
-  label: {
-    fontSize: 16,
-    color: 'white',
-    marginBottom: 5,
-  },
-  input: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 10,
+    container: {
+        flex: 1,
+        backgroundColor: '#4a90e2',
+        alignItems: 'center',
+        height:'100%'
+    },
+  imageBackground: {
+    width: '100%',
+    height: '100%',
+    position: 'absolute',
+    top: 150,
+    opacity: 0.8
+  
+},
+welcomeView: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
     padding: 10,
-    color: 'white',
-    fontSize: 16,
+    justifyContent: 'center', // Zentriert den Inhalt horizontal
+    position: 'relative', // Ermöglicht absolute Positionierung des backButton
+    marginTop: 18,
+},
+  backButton: {
+    position: 'absolute',
+    top: 10, // Angepasst, um mit dem Padding des welcomeView übereinzustimmen
+    left: 10,
+    zIndex: 1, // Stellt sicher, dass der Button über dem Text liegt
+  },
+  welcomeText: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: 'white',  
+    letterSpacing: 0.5,
+    // Entfernen Sie jegliche Positionierungseigenschaften, falls vorhanden
+  },
+  
+greenView: {
+
+    padding: 15,
+    borderRadius: 30,
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    marginBottom: 80,
+
+},
+greenText: {
+    fontSize: 24,
+    color: 'black',
+    padding: 5,
+    fontWeight: 'bold'
+},
+  content: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  logo: {
+    marginBottom: 30,
+  },
+  headerText: {
+    fontSize: 18,
+    textAlign: 'center',
+    marginBottom: 30,
+    color: '#333',
+    lineHeight: 24,
   },
   buttonContainer: {
-    alignItems: 'center',
-    marginTop: 20,
+    width: '100%',
   },
-  registerButton: {
-    backgroundColor: '#ff9800',
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    borderRadius: 25,
+  button: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-evenly',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  buttonIcon: {
+
   },
   buttonText: {
-    color: 'white',
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '600',
+    marginLeft: 10,
+  },
+  googleButton: {
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  appleButton: {
+    backgroundColor: '#000000',
+  },
+  appleButtonText: {
+    color: '#ffffff',
+  },
+  manualButton: {
+    backgroundColor: '#007AFF',
+  },
+  manualButtonText: {
+    color: '#ffffff',
   },
 });
 
-export default Page;
+export default Registration;

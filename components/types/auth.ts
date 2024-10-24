@@ -15,8 +15,17 @@ export interface User {
 
   // Weitere Benutzerfelder hier
 }
+// types/userProfile.ts
+export type UserProfile = {
+  
+  userId: string;
+  vorname: string;
+  nachname: string;
+  profileImage: string;
+  userBio: string;
+};
 
-export type SignupData = Pick<User, 'email' | 'vorname' | 'nachname' | 'location' >;
+export type SignupData = Pick<User, 'email' | 'vorname' | 'nachname'  >;
 
 // Verwenden Sie den Session-Typ direkt von Supabase
 export { Session };

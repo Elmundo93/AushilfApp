@@ -1,75 +1,71 @@
 import React, { useEffect, useState } from 'react';
 import { SafeAreaView, View, StyleSheet, Text, KeyboardAvoidingView, Platform, TouchableOpacity } from 'react-native';
 import { Channel, MessageInput, MessageList } from 'stream-chat-expo';
-import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
-import { AuthProgressLoader } from '../../../../components/Auth/AuthProgressLoader/AuthProgressLoader';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import { AuthProgressLoader } from '@/components/Auth/AuthProgressLoader/AuthProgressLoader';
 import {Ionicons} from '@expo/vector-icons';
 import { useChatContext } from 'stream-chat-expo'; 
+import { useAuthStore } from '@/components/stores/AuthStore';
+import { ActivityIndicator } from 'react-native';
+
+import { FontSizeContext } from '@/components/provider/FontSizeContext';
+import { useContext } from 'react';
 
 import type { Channel as ChannelType } from 'stream-chat';
 
 
+
 export default function ChannelScreen() {
-    const [channel, setChannel] = useState<ChannelType | null>(null);
     const { cid } = useLocalSearchParams<{ cid: string }>();
-    const router = useRouter();
+    const [channel, setChannel] = useState<ChannelType | null>(null);
+    const [loading, setLoading] = useState(true);
+    const client = useAuthStore.getState().streamChatClient;
+    const { fontSize } = useContext(FontSizeContext);
+
   
-    
-
-    const { client } = useChatContext();
-
     useEffect(() => {
         const fetchChannel = async () => {
-            if (!cid) {
-                console.error('CID ist nicht definiert.');
-                return;
-            }
-
-            try {
-                console.log('Querying channels with cid:', cid);
-                const channels = await client.queryChannels({ cid: { $eq: cid } });
-                console.log('Fetched channels:', channels);
-                setChannel(channels[0]);
-            } catch (error) {
-                console.error('Fehler beim Abrufen des Kanals:', error);
-                setChannel(null);
-            }
+          if (!client || !cid) return;
+    
+          try {
+            // cid aufteilen, um channelType und channelId zu erhalten
+            const [channelType, channelId] = cid.split(':');
+            const channel = client.channel(channelType, channelId);
+            await channel.watch();
+            setChannel(channel);
+          } catch (error) {
+            console.error('Fehler beim Abrufen des Kanals:', error);
+          } finally {
+            setLoading(false);
+          }
         };
-
+    
         fetchChannel();
-    }, [cid]);
-
-    if (channel === null) {
-        return (
-            <View style={styles.centered}>
-                <Text>Fehler beim Laden des Kanals. Bitte versuchen Sie es später erneut.</Text>
-            </View>
-        );
-    }
-
-    if (!channel) {
-        return <AuthProgressLoader />;
-    }
-
-    return (
+      }, [client, cid]);
+    
+      if (loading) {
+        return <ActivityIndicator size="large" color="#0000ff" />;
+      }
+    
+      if (!channel) {
+        return <Text style={[ { fontSize }]}>Kanal nicht gefunden</Text>;
+      }
+    
+      return (
         <SafeAreaView style={styles.container}>
-             <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.push('/(authenticated)/nachrichten')}>
-                    <Ionicons name="arrow-back" size={24} color="black" />
-                    <Text style={styles.backButton}>Zurück</Text>
-                </TouchableOpacity>
-            </View>
+             
             <KeyboardAvoidingView
                 style={styles.flex}
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 keyboardVerticalOffset={Platform.select({ ios: 135, android: 500 })}
             >
                 <Channel
-                    audioRecordingEnabled={true}
                     channel={channel}
+                    
+                    
                 >
                     <View style={styles.flex}>
-                        <MessageList />
+                        <MessageList  />
                         <MessageInput />
                     </View>
                 </Channel>
@@ -101,7 +97,7 @@ export default function ChannelScreen() {
             alignSelf: 'flex-start',
         },
         headerText: {
-            fontSize: 18,
+
             fontWeight: 'bold',
         },
     });

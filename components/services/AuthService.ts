@@ -51,10 +51,13 @@ const authenticateUser = async (userData: User, session: Session) => {
     {
       id: userData.id,
       name: `${userData.vorname} ${userData.nachname}`,
+      vorname: userData.vorname,
+      nachname: userData.nachname,
+      image: userData.profileImageUrl,
     },
     streamToken
   );
-
+console.log('getStreamUser:', client.user);
   console.log('User connected to StreamChat');
 
   // Calculate expiry date (6 days from now)
@@ -74,6 +77,7 @@ const authenticateUser = async (userData: User, session: Session) => {
   authStore.setStreamChatClient(client);
   authStore.setAuthenticated(true);
 
+  console.log('AuthState:', useAuthStore.getState());
   console.log('Authentication process completed');
 
   return { userData, streamClient: client };

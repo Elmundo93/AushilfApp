@@ -3,6 +3,8 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { createRStyle } from 'react-native-full-responsive';
 import { FilterAccordionProps } from '../types/components';
+import { useContext } from 'react';
+import { FontSizeContext } from '@/components/provider/FontSizeContext';
 
 
 
@@ -19,13 +21,25 @@ const FilterAccordion: React.FC<FilterAccordionProps> = React.memo(({
   handleSuchenBietenChange,
   handleCategoryChange
 }) => {
+  const { fontSize } = useContext(FontSizeContext);
+  const maxFontSize = 45; // Passen Sie diesen Wert nach Bedarf an
+
+  const defaultFontSize = 24; // Standard-Schriftgröße im Kontext
+  const componentBaseFontSize = 24; // Ausgangsschriftgröße für das Label
+  const minIconSize = 40;
+  const maxIconSize = 120;
+
+  // Begrenzen Sie die Schriftgröße auf den maximalen Wert
+  const adjustedFontSize = (fontSize / defaultFontSize) * componentBaseFontSize;
+  const finalFontSize = Math.min(adjustedFontSize, maxFontSize);
+  const iconSize = Math.min(Math.max(fontSize * 1.5, minIconSize), maxIconSize);
   return (
     <View style={styles.accordContainer}>
       <TouchableOpacity style={styles.accordHeader} onPress={onToggle}>
-        <Text style={styles.accordTitle}>Filter deine Suche:</Text>
+        <Text style={[styles.accordTitle, { fontSize: finalFontSize }]}>Filter deine Suche:</Text>
         <MaterialCommunityIcons 
           name={isExpanded ? 'chevron-up' : 'chevron-down'}
-          size={20} 
+          size={iconSize} 
           color="#bbb" 
         />
       </TouchableOpacity>
@@ -69,7 +83,7 @@ const styles = createRStyle({
     flexDirection: 'row',
     justifyContent: 'space-evenly',
     flexWrap: 'wrap',
-    paddingHorizontal: '10rs',
+
   },
   trenner: {
     width: '100%',

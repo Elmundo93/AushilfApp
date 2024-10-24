@@ -7,6 +7,7 @@ import {  router } from 'expo-router';
 import { createRStyle} from 'react-native-full-responsive';
 
 import { TouchableOpacity } from 'react-native-gesture-handler';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const Page = () => {
 
@@ -24,7 +25,18 @@ const Page = () => {
                        <SafeAreaView style={styles.container}>
                
                  
-                  <Image source={require('@/assets/images/people.jpg')} resizeMode="center" style={styles.imageBackground}/>
+<LinearGradient
+       colors={['orange', 'white']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.gradient}
+    />
+    <Image 
+      source={require('@/assets/images/peopleWhiteBackground.png')} 
+      resizeMode="center" 
+      style={styles.imageBackground}
+    />
+    <View style={styles.contentContainer} >
                     <View style={styles.welcomeView}>
                       <Text style={styles.welcomeText}>Herzlich Willkommen!</Text>
                     </View>
@@ -54,6 +66,7 @@ const Page = () => {
                     </TouchableOpacity>
                   </View>
                 </View>
+                </View>
                 </SafeAreaView>
              
                 
@@ -68,18 +81,30 @@ const Page = () => {
         const styles = createRStyle({
             container: {
                 flex: 1,
-                backgroundColor: '#4a90e2',
+                backgroundColor: 'white',
                 alignItems: 'center',
                 height:'100%'
+            },
+            gradient: {
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
             },
             imageBackground: {
               width: '100%',
               height: '100%',
               position: 'absolute',
-              top:'150rs',
-              opacity: 0.8
-            
-          },
+              top: '150rs',
+              opacity: 0.8,
+              zIndex: 1, // Fügen Sie diese Zeile hinzu
+            },
+            contentContainer: {
+              flex: 1,
+              width: '100%',
+              zIndex: 3,
+            },
             
             welcomeView: {
                 marginTop: '25rs'
@@ -87,19 +112,15 @@ const Page = () => {
             welcomeText: {
               fontSize: '32rs',
               fontWeight: 'bold',
-              color: 'white',  // Dunkelgrüne Farbe
-
-              letterSpacing: '0.5rs'
+            color: 'white',  
+              letterSpacing: '0.5rs',
+              alignSelf: 'center'
           },
           greenView: {
             marginTop: '30rs',
             padding: '15rs',
             borderRadius: '30rs',
             backgroundColor: 'rgba(255, 255, 255, 0.7)',
-
-
-
-
             elevation: 3,
             borderWidth: 1,
             borderColor: '#e0e0e0',
@@ -156,7 +177,7 @@ const Page = () => {
      
     
    },       
-            input: {
+    input: {
               height: 40,
               margin: 12,
               borderWidth: 1,

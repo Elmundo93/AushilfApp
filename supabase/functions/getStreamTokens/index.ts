@@ -2,7 +2,6 @@ import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { create,  Header } from "https://deno.land/x/djwt@v2.8/mod.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 
-// Load environment variables
 
 
 serve(async (req: Request) => {
@@ -14,6 +13,21 @@ serve(async (req: Request) => {
   corsHeaders.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   corsHeaders.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
   corsHeaders.set("Content-Type", "application/json");
+
+  // Load environment variables
+const supabaseUrl = Deno.env.get('SUPABASE_URL');
+const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_KEY');
+const apiKey = Deno.env.get('GETSTREAM_API_KEY');
+const apiSecret = Deno.env.get('GETSTREAM_API_SECRET');
+
+// Check if environment variables are loaded
+if (!supabaseUrl || !supabaseServiceKey || !apiKey || !apiSecret) {
+  console.error("Environment variables are missing");
+  return new Response(
+    JSON.stringify({ error: "Environment variables are missing" }),
+    { status: 500, headers: corsHeaders }
+  );
+}
 
   if (req.method === "OPTIONS") {
     // Handle preflight requests
@@ -35,9 +49,9 @@ serve(async (req: Request) => {
   }
   const jwt = authHeader.split(" ")[1];
 
-  // Initialize Supabase client
-  const supabaseUrl = 'http://host.docker.internal:54321';
-  const supabaseServiceKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU';
+
+
+
 
   if (!supabaseUrl || !supabaseServiceKey) {
     console.error("Supabase configuration missing");
@@ -59,8 +73,6 @@ serve(async (req: Request) => {
     console.log("User ID:", userId);
 
     // GetStream configuration
-    const apiKey = 'p8vdfnctx7qc'; // Your GetStream API key
-    const apiSecret = 'rkprffbdnxyppg8akd28d233vrhtwjr7we3j7rj8k62vmu3jfgvdqgjn2eghju8f'; // Your GetStream API secret
 
     if (!apiKey || !apiSecret) {
       console.error("GetStream configuration missing");

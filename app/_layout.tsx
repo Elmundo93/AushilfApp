@@ -7,7 +7,8 @@ import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AuthProvider } from '@/components/provider/AuthProvider';
 import 'react-native-reanimated';
-
+import { MenuProvider } from 'react-native-popup-menu';
+import { FontSizeProvider } from '@/components/provider/FontSizeContext';
 import { useColorScheme } from '@/components/useColorScheme';
 
 export {
@@ -50,11 +51,13 @@ export default function RootLayout() {
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
 
-  return (
+  return (<FontSizeProvider>
     <GestureHandlerRootView>
+      
+      <MenuProvider>
       <AuthProvider>
      <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="(public)"/>
+      <Stack.Screen name="(public)" />
       <Stack.Screen name="(authenticated)" />
       
 
@@ -63,7 +66,10 @@ function RootLayoutNav() {
 
  </Stack>
      </AuthProvider>
+     </MenuProvider>
+     
     </GestureHandlerRootView>
-
+    </FontSizeProvider>
+    
   );
 }

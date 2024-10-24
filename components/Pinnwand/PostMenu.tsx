@@ -4,29 +4,42 @@ import { createRStyle } from 'react-native-full-responsive';
 import { Menu, MenuOption, MenuOptions, MenuTrigger } from 'react-native-popup-menu';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useRouter } from 'expo-router';
+import { useSelectedUserStore } from '@/components/stores/selectedUserStore';
 import { Post } from '../types/post';
-
+import { useContext } from 'react';
+import { FontSizeContext } from '@/components/provider/FontSizeContext';
+import { StyleSheet } from 'react-native';
 interface PostMenuProps {
   item: Post;
 }
 
 const PostMenu: React.FC<PostMenuProps> = ({ item }) => {
   const router = useRouter();
+  const { setSelectedUser } = useSelectedUserStore();
+  const { fontSize } = useContext(FontSizeContext);
+  const maxFontSize = 28; // Passen Sie diesen Wert nach Bedarf an
+  const defaultFontSize = 24; // Standard-Schriftgröße im Kontext
+  const componentBaseFontSize = 22; // Ausgangsschriftgröße für das Label
 
+  // Begrenzen Sie die Schriftgröße auf den maximalen Wert
+  const adjustedFontSize = (fontSize / defaultFontSize) * componentBaseFontSize;
+  const finalFontSize = Math.min(adjustedFontSize, maxFontSize);
   const handleWriteMessage = () => {
     alert('Nachricht schreiben');
   };
 
   const handleViewProfile = () => {
+    setSelectedUser(item);
     router.push({
-      pathname: '/',
-      params: { userID: item.userId, post: JSON.stringify(item) },
+      pathname: '/(modal)/forreignProfile',
+
     });
   };
 
   const handleReportPost = () => {
-    const name = item?.vorname || 'Benutzer';
-    alert(`${name}s Post melden`);
+    router.push({
+      pathname: '/(modal)/postMelden',
+    });
   };
 
   return (
@@ -36,7 +49,7 @@ const PostMenu: React.FC<PostMenuProps> = ({ item }) => {
       </MenuTrigger>
       <MenuOptions customStyles={{
         optionsWrapper: {
-          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+
           borderRadius: 15,
          
           elevation: 5,
@@ -50,52 +63,35 @@ const PostMenu: React.FC<PostMenuProps> = ({ item }) => {
           borderBottomColor: '#f0f0f0',
         },
         optionText: {
-          fontSize: 16,
-          color: '#333',
+          fontSize: finalFontSize,
           fontWeight: '500',
         },
       }}>
         <MenuOption onSelect={handleWriteMessage} text="Nachricht schreiben" />
         <MenuOption onSelect={handleViewProfile} text="Profil anzeigen" />
-        <MenuOption onSelect={handleReportPost} text="Post melden" />
+        <MenuOption customStyles={{
+          optionText: {
+            color: 'white',
+            fontSize: finalFontSize,
+            backgroundColor: 'red',
+            padding: 10,
+            fontWeight: '600',
+
+          },
+        }}
+        onSelect={handleReportPost} text="Post melden" />
       </MenuOptions>
     </Menu>
   );
 };
 
-const styles = createRStyle({
+const styles = StyleSheet.create({
   stringsButton: {
     position: 'absolute',
     bottom: 18,
   },
 });
 
-const menuOptionsStyles = {
-  optionsWrapper: {
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderRadius: '15rs',
-    padding: '10rs',
-   
-    elevation: 5,
-  },
-  optionsContainer: {
-    width: '200rs',
-  },
-  optionWrapper: {
-    padding: '12rs',
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  optionText: {
-    fontSize: '16rs',
-    color: '#333',
-    fontWeight: '500',
-  },
-  OptionTouchableComponent: TouchableHighlight,
-  optionTouchable: {
-    activeOpacity: 0.5,
-    underlayColor: 'rgba(0,0,0,0.1)'
-  }
-};
+
 
 export default React.memo(PostMenu);
