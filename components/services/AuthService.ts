@@ -18,7 +18,7 @@ const authenticateUser = async (userData: User, session: Session) => {
 
   // Generate GetStream token
   console.log('Requesting GetStream token...');
-  const response = await fetch('http://127.0.0.1:54321/functions/v1/getStreamTokens', {
+  const response = await fetch('https://rorjehxddmuelbakcyqo.supabase.co/functions/v1/getStreamTokens', {
     method: 'POST',
     headers: { 
       'Content-Type': 'application/json',

@@ -4,11 +4,11 @@
     "slug": "aushilfapp",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/bienenlogo.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "splash": {
-      "image": "./assets/images/splash.png",
+      "image": "./assets/images/bienenlogo.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -17,14 +17,14 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "./assets/images/bienenlogo.png",
         "backgroundColor": "#ffffff"
       }
     },
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/bienenlogo.png"
     },
     "plugins": [
       "expo-router",
@@ -33,6 +33,14 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "4c23d573-79b8-43e8-9992-d4c304f8638d"
+      }
     }
   }
 }

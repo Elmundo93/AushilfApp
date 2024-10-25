@@ -2,9 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { SafeAreaView, View, StyleSheet, Text, KeyboardAvoidingView, Platform, TouchableOpacity } from 'react-native';
 import { Channel, MessageInput, MessageList } from 'stream-chat-expo';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { AuthProgressLoader } from '@/components/Auth/AuthProgressLoader/AuthProgressLoader';
-import {Ionicons} from '@expo/vector-icons';
-import { useChatContext } from 'stream-chat-expo'; 
+
+ 
 import { useAuthStore } from '@/components/stores/AuthStore';
 import { ActivityIndicator } from 'react-native';
 

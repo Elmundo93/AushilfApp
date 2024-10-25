@@ -16,12 +16,12 @@ serve(async (req: Request) => {
 
   // Load environment variables
 const supabaseUrl = Deno.env.get('SUPABASE_URL');
-const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_KEY');
+const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
 const apiKey = Deno.env.get('GETSTREAM_API_KEY');
 const apiSecret = Deno.env.get('GETSTREAM_API_SECRET');
 
 // Check if environment variables are loaded
-if (!supabaseUrl || !supabaseServiceKey || !apiKey || !apiSecret) {
+if (!supabaseUrl || !supabaseAnonKey || !apiKey || !apiSecret) {
   console.error("Environment variables are missing");
   return new Response(
     JSON.stringify({ error: "Environment variables are missing" }),
@@ -53,14 +53,14 @@ if (!supabaseUrl || !supabaseServiceKey || !apiKey || !apiSecret) {
 
 
 
-  if (!supabaseUrl || !supabaseServiceKey) {
+  if (!supabaseUrl || !supabaseAnonKey) {
     console.error("Supabase configuration missing");
     return new Response(
       JSON.stringify({ error: "Supabase configuration missing" }),
       { status: 500, headers: corsHeaders }
     );
   }
-  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+  const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
   try {
     console.log("Verifying JWT and extracting user ID");
