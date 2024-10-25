@@ -6,6 +6,9 @@ import { Image } from 'react-native';
 import { SafeAreaView } from 'react-native';
 import { createRStyle } from 'react-native-full-responsive';
 import { signInWithPassword } from '@/components/services/AuthService';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Link } from 'expo-router';
+import { AntDesign } from '@expo/vector-icons';
 
 const Page = () => {
   const [email, setEmail] = useState('');
@@ -25,7 +28,7 @@ const Page = () => {
         Alert.alert('Anmeldefehler', 'Ungültige Anmeldeinformationen');
       } else {
         // Erfolgreiche Anmeldung
-        router.replace('/pinnwand');
+        router.replace('/(authenticated)/(aushilfapp)/pinnwand');
       }
     } catch (error) {
       Alert.alert('Fehler', 'Ein unerwarteter Fehler ist aufgetreten.');
@@ -36,7 +39,22 @@ const Page = () => {
   };
   return (
     <SafeAreaView style={styles.container}>
-      <Image source={require('@/assets/images/people.jpg')} resizeMode="cover" style={styles.imageBackground} />
+      <Image source={require('@/assets/images/peopleWhiteBackground.png')} resizeMode="cover" style={styles.imageBackground} />
+      <LinearGradient
+        colors={['orange', 'white']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.gradient}
+      />
+      <View style={styles.contentContainer} >
+      <View style={styles.welcomeView}>
+            <Link href=".." asChild  style={styles.backButton}>
+            <TouchableOpacity  >
+            <AntDesign name="left" size={24} color="black" />
+            </TouchableOpacity>
+            </Link>
+                      <Text style={styles.welcomeText}>Anmelden</Text>
+                    </View>
       <KeyboardAvoidingView behavior="padding" style={styles.content}>
         <View style={styles.headerContainer}>
           <Text style={styles.headerText}>
@@ -73,7 +91,9 @@ const Page = () => {
             )}
           </TouchableOpacity>
         </View>
+
       </KeyboardAvoidingView>
+      </View>
     </SafeAreaView>
   );
 };
@@ -85,11 +105,49 @@ const styles = createRStyle({
     flex: 1,
     backgroundColor: '#f5f5f5',
   },
+  gradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
   imageBackground: {
     width: '100%',
     height: '100%',
     position: 'absolute',
-    opacity: 0.2
+    top: '150rs',
+    opacity: 0.8,
+    zIndex: 1, // Fügen Sie diese Zeile hinzu
+  },
+  contentContainer: {
+    flex: 1,
+    width: '100%',
+    zIndex: 3,
+  },
+ 
+  welcomeView: {
+    flexDirection: 'row',
+
+    width: '100%',
+    padding: 10,
+    justifyContent: 'center', // Zentriert den Inhalt horizontal
+    position: 'relative', // Ermöglicht absolute Positionierung des backButton
+    marginTop: 18,
+},
+  backButton: {
+    position: 'absolute',
+    top: 10, // Angepasst, um mit dem Padding des welcomeView übereinzustimmen
+    left: 10,
+    zIndex: 1, // Stellt sicher, dass der Button über dem Text liegt
+  },
+  welcomeText: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: 'white',  
+    letterSpacing: 0.5,
+    alignSelf: 'center',
+    // Entfernen Sie jegliche Positionierungseigenschaften, falls vorhanden
   },
   content: {
     flex: 1,
@@ -126,7 +184,7 @@ const styles = createRStyle({
     backgroundColor: '#fff',
   },
   loginButton: {
-    backgroundColor: '#4a90e2',
+    backgroundColor: 'orange',
     height: '50rs',
     borderRadius: '25rs',
     justifyContent: 'center',

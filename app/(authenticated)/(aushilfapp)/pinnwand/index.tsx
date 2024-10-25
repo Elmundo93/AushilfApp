@@ -23,7 +23,8 @@ import { handleSuchenBietenChange, handleCategoryChange } from '@/components/uti
 import CustomCheckbox from '@/components/Checkboxes/CustomCheckbox';
 import PostItem from '@/components/Pinnwand/PostItem';
 import RefreshHandler from '@/components/Pinnwand/RefreshHandler';
-
+import { useLocationRequest } from '@/components/Location/locationRequest';
+import { StyleSheet } from 'react-native';
 
 const PinnwandFilters: React.FC = () => {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -44,61 +45,8 @@ const PinnwandFilters: React.FC = () => {
     setIsAccordionExpanded(!isAccordionExpanded);
   }, [isAccordionExpanded]);
 
+useLocationRequest();
 
-
-  useEffect(() => {
-    const getLocationPermission = async () => {
-      const { status } = await Location.getForegroundPermissionsAsync();
-      
-      if (status === 'undetermined') {
-        return new Promise((resolve) => {
-          Alert.alert(
-            "Standortberechtigung",
-            "Diese App benötigt Zugriff auf Ihren Standort, um Ihnen relevante Inhalte anzuzeigen. Möchten Sie den Zugriff erlauben?",
-            [
-              {
-                text: "Nein",
-                onPress: () => resolve(false),
-                style: "cancel"
-              },
-              {
-                text: "Ja",
-                onPress: () => resolve(true)
-              }
-            ]
-          );
-        });
-      }
-      
-      return status === 'granted';
-    };
-
-    const requestAndSetLocation = async () => {
-      const hasPermission = await getLocationPermission();
-      
-      if (hasPermission) {
-        try {
-          let { status } = await Location.requestForegroundPermissionsAsync();
-          if (status !== 'granted') {
-            console.error('Standortberechtigung wurde verweigert');
-            return;
-          }
-
-          let location = await Location.getCurrentPositionAsync({});
-          setLocation({
-            latitude: location.coords.latitude,
-            longitude: location.coords.longitude,
-          });
-        } catch (error) {
-          console.error('Fehler beim Abrufen des Standorts:', error);
-        }
-      } else {
-        console.log('Standortberechtigung wurde nicht erteilt');
-      }
-    };
-
-    requestAndSetLocation();
-  }, [setLocation]);
 
   useEffect(() => {
     const loadPosts = async () => {
@@ -214,12 +162,12 @@ const PinnwandFilters: React.FC = () => {
   );
 };
 
-const styles = createRStyle({
+const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    marginTop: '-25rs',
-  },
+  marginTop:-50}
+  ,
   loaderContainer: {
     justifyContent: 'space-between'
   },
@@ -235,7 +183,7 @@ const styles = createRStyle({
   emptyListText: {
     color: 'white',
     alignSelf: 'center',
-    fontSize: 30,
+
   },
 });
 

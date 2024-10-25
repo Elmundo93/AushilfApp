@@ -6,44 +6,70 @@ import { Post } from '../types/post';
 import PostHeader from './PostHeader';
 import PostIcons from './PostIcons';
 import PostMenu from './PostMenu';
+import { useSelectedPostStore } from '../stores/selectedPostStore'; 
+import { useContext } from 'react';
+import { FontSizeContext } from '@/components/provider/FontSizeContext';
+import { LinearGradient } from 'expo-linear-gradient';
 
 interface PostItemProps {
   item: Post;
 }
 
 const PostItem: React.FC<PostItemProps> = ({ item }) => {
+  const { fontSize } = useContext(FontSizeContext);
+  const maxFontSize = 24; // Passen Sie diesen Wert nach Bedarf an
+  const defaultFontSize = 28; // Standard-Schriftgröße im Kontext
+  const componentBaseFontSize = 22; // Ausgangsschriftgröße für das Label
+  const minIconSize = 45;
+  const maxIconSize = 60;
+  const iconSize = Math.min(Math.max(fontSize * 1.5, minIconSize), maxIconSize);
+
+  // Begrenzen Sie die Schriftgröße auf den maximalen Wert
+  const adjustedFontSize = (fontSize / defaultFontSize) * componentBaseFontSize;
+  const finalFontSize = Math.min(adjustedFontSize, maxFontSize);
   const router = useRouter();
+  const { setSelectedPost } = useSelectedPostStore();
 
   return (
-    <View>
+    <View >
       <View style={styles.stringscontainer}>
         <Image source={require('@/assets/images/PinnwandHeader.png')} style={styles.strings} />
         <PostMenu item={item} />
       </View>
       <View style={styles.post}>
-        <PostIcons item={item} />
+        <View style={styles.postInside}>
+        <PostHeader item={item} />
+        
         <View style={styles.headerContainerPost}>
-          <PostHeader item={item} />
-          <View style={styles.postContainer}>
-            <Text style={styles.postText} numberOfLines={3}>
+          <PostIcons item={item} />
+          <View style={[styles.postContainer, { height: iconSize *2 }]}>
+            <Text style={[styles.postText, { fontSize: finalFontSize }]} numberOfLines={4}>
               {item.postText}
             </Text>
           </View>
+          </View>
           <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={styles.button}
-              onPress={() =>
-                router.push({
-                  pathname: '/(modal)/einstellungen',
-                  params: { postID: item.id, post: JSON.stringify(item) },
-                })
-              }
-            >
-              <Text style={styles.buttonText}>Beitrag ansehen!</Text>
+          <TouchableOpacity
+  style={styles.button}
+  onPress={() => {
+    setSelectedPost(item); // Set the selected post in the store
+    router.push('/(modal)/postDetail'); // Navigate without params
+  }}
+>
+ <LinearGradient
+            colors={['#FFA500', '#FF8C00', '#fcb63d']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.modalButton}
+          >
+              <Text style={[styles.buttonText, { fontSize: finalFontSize +3 }]}>Beitrag ansehen!</Text>
+              </LinearGradient>
             </TouchableOpacity>
           </View>
+
         </View>
       </View>
+      
     </View>
   );
 };
@@ -55,6 +81,7 @@ const styles = createRStyle({
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 50,
+
   },
   strings: {
     width: 100,
@@ -63,19 +90,31 @@ const styles = createRStyle({
     bottom: 0,
   },
   post: {
-    flexDirection: 'row',
+    
+    width: '95%',
+    alignSelf: 'center',
+    borderWidth: 1,
+    borderColor: 'lightgray',
+    overflow: 'hidden',
+    borderRadius: 50,
+  },
+  postInside: {
+    flexDirection: 'column',
     alignItems: 'flex-start',
     marginBottom: 20,
     padding: 15,
-    borderRadius: 5,
-    backgroundColor: '#f9f9f9',
+    borderRadius: 50,
+    marginVertical: 10,
+
+
+
     
     elevation: 3,
   },
   headerContainerPost: {
     flex: 1,
-    flexDirection: 'column',
-    alignItems: 'flex-end',
+    flexDirection: 'row',
+
   },
   postContainer: {
     flex: 1,
@@ -86,28 +125,42 @@ const styles = createRStyle({
     marginBottom: 20,
     padding: 10,
     backgroundColor: '#ffffff',
+
  
     elevation: 3,
     width: '100%',
   },
   postText: {
     fontSize: 14,
-    lineHeight: 20,
+    lineHeight: 25,
     color: '#333',
     textAlign: 'left',
+
   },
   buttonContainer: {
     alignItems: 'center',
-    marginTop: 10
+    marginTop: 10,
+    alignSelf: 'flex-end',
   },
   button: {
-    backgroundColor: '#007BFF',
+
     padding: 10,
-    borderRadius: 5
+    borderRadius: 5,
+    shadowColor: 'orange',
+
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
   },
   buttonText: {
     color: '#fff',
     fontWeight: 'bold'
+  },
+  modalButton: {
+
+    minHeight: 50,
+    maxHeight: 150,
+    borderRadius: 5,
+    padding: 10,
   },
 });
 

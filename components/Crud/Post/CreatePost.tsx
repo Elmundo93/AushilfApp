@@ -7,16 +7,30 @@ import { ScrollView, TouchableOpacity } from 'react-native-gesture-handler';
 import { supabase } from '../../config/supabase';
 import { usePostStore } from '../../stores/postStores';
 import { useAuthStore } from '../../stores/AuthStore';
-
-
+import { useLocationStore } from '../../stores/locationStore';
+import { FontSizeContext } from '@/components/provider/FontSizeContext';
+import { useContext } from 'react';
+import { StyleSheet } from 'react-native';
 
 const CreatePost: React.FC = () => {
+  const { fontSize } = useContext(FontSizeContext);
+  const defaultFontSize = 22; // Standard-Schriftgröße im Kontext
+  const componentBaseFontSize = 18; // Ausgangsschriftgröße für das Label
+  const maxFontSize = 45; // Passen Sie diesen Wert nach Bedarf an
+  const minIconSize = 60;
+  const maxIconSize = 180;
+  // Begrenzen Sie die Schriftgröße auf den maximalen Wert
+  const adjustedFontSize = (fontSize / defaultFontSize) * componentBaseFontSize;
+  const finalFontSize = Math.min(adjustedFontSize, maxFontSize);
+  const iconSize = Math.min(Math.max(fontSize * 1.5, minIconSize), maxIconSize);
   const [postText, setPostText] = useState('');
   const [selectedOption, setSelectedOption] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
 
   const incrementPostCount = usePostStore((state) => state.incrementPostCount);
+  const location = useLocationStore((state) => state.location); 
 
+  
   const onSubmit = async () => {
     if (!postText || !selectedCategory || !selectedOption) {
       console.error('Bitte wähle eine Kategorie & schreibe eine Nachricht.');
@@ -25,6 +39,7 @@ const CreatePost: React.FC = () => {
 
     try {
       const userData = useAuthStore.getState().user;
+      
       if (!userData) {
         console.error('Benutzer nicht angemeldet');
         return;
@@ -39,7 +54,8 @@ const CreatePost: React.FC = () => {
         location: userData.location,
         option: selectedOption,
         userId: userData.id,
-        profileImage: userData.profileImageUrl || ''
+        profileImage: userData.profileImageUrl || '',
+     
       });
 
       if (error) {
@@ -55,10 +71,11 @@ const CreatePost: React.FC = () => {
   };
 
   
+  
 
   return (
-    <ScrollView
-    contentContainerStyle={styles.container}
+    <View
+    style={styles.container}
 
 
   >
@@ -83,58 +100,57 @@ const CreatePost: React.FC = () => {
           onPress={onSubmit}
           disabled={!postText || !selectedCategory || !selectedOption}
         >
-          <Text style={styles.postButtonText}>Posten</Text>
+          <Text style={[styles.postButtonText, { fontSize: finalFontSize }]}>Posten</Text>
         </TouchableOpacity>
       </View>
-    </ScrollView>
+    </View>
   );
 };
 
 
-const styles = createRStyle({
+const styles = StyleSheet.create({
 container: {
-  flexGrow: 1,
-  backgroundColor: 'white',
-  paddingTop: '16rs',
+  
+  backgroundColor: 'transparent',
+  paddingTop: 16,
 },
 flex: {
   flex: 1,
   backgroundColor: 'white',
 },
 input: {
-  height: '100rs',
-  borderWidth: '2rs',
+  height: 100,
+  borderWidth: 2,
   borderColor: '#FFB74D',
-  borderRadius: '15rs',
-  marginTop: '16rs',
-  paddingHorizontal: '15rs',
-  paddingVertical: '10rs',
-  fontSize: '16rs',
+  borderRadius: 15,
+  marginTop: 16,
+  paddingHorizontal: 15,
+  paddingVertical: 10,
+  fontSize: 16,
   backgroundColor: 'white',
   color: '#333',
 
   elevation: 3,
 },
 inputContainer: {
-  marginTop: '-25rs',
-  marginHorizontal: '10rs',
+ 
 },
 postButtonContainer: {
   flexDirection: 'row-reverse', 
   alignItems: 'center',
-  padding: '20rs',
+  padding: 20,
 },
 postButton: {
   backgroundColor: 'orange',
   borderStyle: 'solid',
-  borderWidth: '1rs',
+  borderWidth: 1,
   borderColor: 'gray',
-  borderRadius: '25rs',
-  padding: '20rs',
+  borderRadius: 25,
+  padding: 20,
 },
 postButtonText: {
   color: 'white',
-  fontSize: '16rs',
+  fontSize: 16,
   fontWeight: 'bold',
 },
 disabledButton: {

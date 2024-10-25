@@ -6,12 +6,28 @@ import { createRStyle } from 'react-native-full-responsive';
 import { Text } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { PostFiltersProps } from '../../types/checkbox';
-
+import { useContext } from 'react';
+import { FontSizeContext } from '@/components/provider/FontSizeContext';
+import { StyleSheet } from 'react-native';
 
 
   
 
 const PostFilters: React.FC<PostFiltersProps>  = ({ onOptionChange, onCategoryChange }) => {
+  const { fontSize } = useContext(FontSizeContext);
+  const defaultFontSize = 22; // Standard-Schriftgröße im Kontext
+  const componentBaseFontSize = 18; // Ausgangsschriftgröße für das Label
+  const maxFontSize = 28; // Passen Sie diesen Wert nach Bedarf an
+  const minWidth = 100; // Minimale Breite
+  const maxWidth = 150; // Maximale Breite
+  const minHeight = 40; // Minimale Höhe
+  const maxHeight = 60; // Maximale Höhe
+  const adjustedFontSize = (fontSize / defaultFontSize) * componentBaseFontSize;
+  const finalFontSize = Math.min(adjustedFontSize, maxFontSize);  
+  const adjustedWidth = Math.min(Math.max(fontSize * 4, minWidth), maxWidth);
+  const adjustedHeight = Math.min(Math.max(fontSize * 2, minHeight), maxHeight);
+  // Begrenzen Sie die Schriftgröße auf den maximalen Wert
+  
 
 
     const [suchenChecked, setSuchenChecked] = useState(false);
@@ -44,149 +60,150 @@ const PostFilters: React.FC<PostFiltersProps>  = ({ onOptionChange, onCategoryCh
       
      
 
-      return (
-
-        
-<KeyboardAvoidingView style={styles.container}>
-           <View style={styles.ichContainer}>
-          <Text style={styles.ichHeader}>Ich</Text>
-           <View style={styles.ichButtonContainer}>
-            
-            
-            <TouchableOpacity 
-             
-              style={[styles.sucheButton, {
-                backgroundColor: suchenChecked ? 'orange' : 'white'
-              }]} 
-              onPress={() => {
-               handleSuchenBietenChange('suchen');
-              }}
-            >
-              <Text>Suchen</Text>
+    return (
+      <KeyboardAvoidingView style={styles.container}>
+        <Text style={[{ fontSize: finalFontSize +12 }, {marginBottom:50, alignSelf: 'center'}]}>Verfasse deinen Beitrag!
+        </Text>
+        <View style={styles.contentWrapper}>
+          
+          <View style={styles.ichContainer}>
+          
+            <Text style={[styles.ichHeader, { fontSize: finalFontSize +12 }]}>Ich</Text>
+            <View style={styles.ichButtonContainer}>
+              <TouchableOpacity 
+                style={[styles.sucheButton, {
+                  backgroundColor: suchenChecked ? 'green' : 'white',
+                  width: adjustedWidth,
+                  height: adjustedHeight
+                }]} 
+                onPress={() => {
+                  handleSuchenBietenChange('suchen');
+                }}
+              >
+                <Text style={[{ fontSize: finalFontSize, color: suchenChecked ? 'white' : 'black', fontWeight: '600' }]}>Suche</Text>
               </TouchableOpacity>
-            
-<TouchableOpacity
- 
-  style={[styles.bieteAnButton, { backgroundColor: bietenChecked ? 'green' : 'white'}]}
-  onPress={() => {
-    handleSuchenBietenChange('bieten');
-  }}
->
-  <Text style={{color: bietenChecked ? 'white' : 'black'}}>Biete an</Text>
-</TouchableOpacity>
-
-
-
-
-
-</View>
-</View>
-            
-            
-            
-              <View style={styles.imBereichHeaderContainer}>
-            <Text style={styles.imBereichHeader}>Im Bereich</Text>
-</View >
-<View style={styles.imBereichContainer}>
-<CustomCheckbox
-  label="Garten"
-  isChecked={gartenChecked}
-  onCheck={() => handleCategoryChange('garten')}
-/>
-<CustomCheckbox
-  label="Haushalt"
-  isChecked={haushaltChecked}
-  onCheck={() => handleCategoryChange('haushalt')}
-/>
-<CustomCheckbox
-  label="Soziales"
-  isChecked={sozialesChecked}
-  onCheck={() => handleCategoryChange('soziales')}
-/>
-<CustomCheckbox
-  label="Gastro"
-  isChecked={gastroChecked}
-  onCheck={() => handleCategoryChange('gastro')}
-/>
+              
+              <TouchableOpacity
+                style={[styles.bieteAnButton, {
+                  backgroundColor: bietenChecked ? 'rgb(184,0,211)' : 'white',
+                  width: adjustedWidth,
+                  height: adjustedHeight
+                }]}
+                onPress={() => {
+                  handleSuchenBietenChange('bieten');
+                }}
+              >
+                <Text style={[{ fontSize: finalFontSize }, {color: bietenChecked ? 'white' : 'black', fontWeight: '600'}]}>Biete an</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+          
+          <View style={styles.imBereichContainer}>
+            <View style={styles.imBereichHeaderContainer}>
+              <Text style={[styles.imBereichHeader, { fontSize: finalFontSize +12 }]}>Im Bereich</Text>
+            </View>
+            <View style={styles.checkboxContainer}>
+              <CustomCheckbox
+                label="Garten"
+                isChecked={gartenChecked}
+                onCheck={() => handleCategoryChange('garten')}
+              />
+              <CustomCheckbox
+                label="Haushalt"
+                isChecked={haushaltChecked}
+                onCheck={() => handleCategoryChange('haushalt')}
+              />
+              <CustomCheckbox
+                label="Soziales"
+                isChecked={sozialesChecked}
+                onCheck={() => handleCategoryChange('soziales')}
+              />
+              <CustomCheckbox
+                label="Gastro"
+                isChecked={gastroChecked}
+                onCheck={() => handleCategoryChange('gastro')}
+              />
+            </View>
+          </View>
         </View>
-        </KeyboardAvoidingView>
-);
+      </KeyboardAvoidingView>
+    );
 };
 
-const styles = createRStyle({
-    container: {
-        
-        flexWrap: 'wrap',
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 10,
+    borderRadius: 10,
+    margin: 10,
+  },
+  contentWrapper: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'lightgray',
+    paddingVertical: 20,
+    marginTop: -25,
+    borderRadius: 25,
+  },
+  ichContainer: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    backgroundColor: 'transparent',
 
-        flexDirection: 'row',
-       
-       
-        padding: 10,
-        borderRadius: 10,
-        justifyContent: 'center',
-        alignItems: 'center',
-        margin: 10    },
+    width: '100%',
+  },
+  ichButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    backgroundColor: 'transparent',
+    width: '100%',
+  },
+  ichHeader: {
+    fontWeight: 'bold',
+    textAlign: 'center',
 
-        ichContainer: {
-            flexDirection: 'column', 
-            position: 'relative',
-            backgroundColor: 'white',
-            marginTop: '-25rs'
-          },
-          ichButtonContainer: {
-            flexDirection: 'row', 
-            justifyContent: 'space-between',
-            position: 'relative',
-            backgroundColor: 'white'
-          },
-        
-          ichHeader: {
-            fontSize: '20rs', fontWeight: 'bold', 
-            textAlign: 'center',
-            zIndex: 1000
-          },
-            
-          sucheButton: {
-              
-              borderStyle:'solid', 
-              borderWidth: '1rs', 
-              borderColor: 'gray', 
-              borderRadius:25,
-              paddingVertical:'10rs', 
-              paddingHorizontal:'35rs',
-              marginRight: '10rs',
-            },
-        
-            bieteAnButton: {
-              borderStyle:'solid', 
-              borderWidth: '1rs', 
-              borderColor: 'gray', 
-              borderRadius:'25rs', 
-              paddingVertical:'10rs', 
-              paddingHorizontal:'35rs',
-              marginLeft: '10rs',
-            },
-        
-        imBereichContainer: {
-              justifyContent: 'center',
-              flexWrap: 'wrap',
-              flexDirection: 'row', 
-              position: 'relative',
-              backgroundColor: 'white',
-              
-            },
-            
-            imBereichHeaderContainer: {
-              marginTop: '28rs',
-              backgroundColor: 'white'
-            },
-          
-        imBereichHeader: {
-              fontSize: '20rs',
-               fontWeight: 'bold',
-                marginBottom: '10rs',
-                textAlign:'center',
-                zIndex: 1000},
+  },
+  sucheButton: {
+    borderStyle: 'solid',
+    borderWidth: 1,
+    borderColor: 'gray',
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  bieteAnButton: {
+    borderStyle: 'solid',
+    borderWidth: 1,
+    borderColor: 'gray',
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 10,
+  },
+  imBereichContainer: {
+    width: '100%',
+    alignItems: 'center',
+    marginTop: 30,
+    backgroundColor: 'white',
+  },
+  imBereichHeaderContainer: {
+    width: '100%',
+    alignItems: 'center',
+    backgroundColor: 'white',
+  },
+  imBereichHeader: {
+    fontWeight: 'bold',
+    marginBottom: 10,
+    textAlign: 'center',
+    zIndex: 1000,
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+  },
 });
 
 export default PostFilters;

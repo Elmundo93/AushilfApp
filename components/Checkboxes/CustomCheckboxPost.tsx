@@ -4,6 +4,8 @@ import {Image} from 'react-native';
 import { createRStyle } from 'react-native-full-responsive';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { CustomCheckboxProps } from '../types/checkbox';
+import { useContext } from 'react';
+import { FontSizeContext } from '@/components/provider/FontSizeContext';
 
 
 
@@ -12,7 +14,11 @@ import { CustomCheckboxProps } from '../types/checkbox';
 
 
 const CustomCheckbox: React.FC<CustomCheckboxProps> = ({ label, isChecked, onCheck }) => {
+  const { fontSize } = useContext(FontSizeContext);
+    const maxFontSize = 18; // Passen Sie diesen Wert nach Bedarf an
 
+  // Begrenzen Sie die Schriftgröße auf den maximalen Wert
+  const adjustedFontSize = Math.min(fontSize, maxFontSize);
   const getUnderlayColor = () => {
     switch (label) {
       case 'Garten':
@@ -74,8 +80,7 @@ const styles = createRStyle({
   checkbox: {
   
   borderRadius: '10rs',
-  width: '90rs',
-  height: '90rs',
+ 
     marginHorizontal: '15rs',
     marginVertical: '10rs',
     justifyContent: 'center',
