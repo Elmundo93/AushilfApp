@@ -1,13 +1,13 @@
 import { FontSizeContext } from '@/components/provider/FontSizeContext';
 import { useContext } from 'react';
 import { View, Text } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
 import React from 'react'
 import { TextInput } from 'react-native';
 import { useState } from 'react';
 import  CheckBox  from 'expo-checkbox';
 import { StyleSheet } from 'react-native';
 import { TouchableOpacity } from 'react-native';
+
 const PostMeldenPage: React.FC = () => { 
 
     const { fontSize, setFontSize } = useContext(FontSizeContext);

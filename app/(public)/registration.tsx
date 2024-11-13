@@ -2,7 +2,7 @@ import React from 'react';
 import { TouchableOpacity, Text, View, StyleSheet, SafeAreaView } from 'react-native';
 import { FontAwesome, AntDesign } from '@expo/vector-icons';
 import { Image } from 'react-native';
-import { createRStyle } from 'react-native-full-responsive';
+
 import { Link } from 'expo-router';
 import GoogleLogin from '@/components/Auth/GoogleAuth';
 import { handleAppleSignIn } from '@/components/Auth/AppleAuth'; // Importiere die Apple Login Funktion
@@ -144,11 +144,7 @@ greenText: {
     padding: 12,
     borderRadius: 8,
     marginBottom: 16,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    elevation: 2
   },
   buttonIcon: {
 

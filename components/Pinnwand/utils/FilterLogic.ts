@@ -7,7 +7,9 @@ export const applyFilters = (
   gartenChecked: boolean,
   haushaltChecked: boolean,
   sozialesChecked: boolean,
-  gastroChecked: boolean
+  gastroChecked: boolean,
+  handwerkChecked: boolean,
+  bildungChecked: boolean
 ): Post[] => {
   let filtered = posts;
 
@@ -22,6 +24,8 @@ export const applyFilters = (
     haushaltChecked ? 'haushalt' : '',
     sozialesChecked ? 'soziales' : '',
     gastroChecked ? 'gastro' : '',
+    handwerkChecked ? 'handwerk' : '',
+    bildungChecked ? 'bildung' : '',
   ].filter(Boolean);
 
   if (categories.length > 0) {

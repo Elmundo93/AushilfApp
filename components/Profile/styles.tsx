@@ -54,7 +54,7 @@ export const styles = createRStyle({
     position: 'absolute',
     top: -18,
     left: 15,
-    backgroundColor: 'transparent',
+    backgroundColor: 'white',
   },
   userBio: {
     fontSize: 16,
@@ -123,7 +123,7 @@ export const styles = createRStyle({
     top: 0,
     left: 0,
     right: 0,
-    height: 200, // Anpassen Sie diese Höhe nach Bedarf
+    height: 170, // Anpassen Sie diese Höhe nach Bedarf
 
   },
   
@@ -140,9 +140,9 @@ export const styles = createRStyle({
     letterSpacing: 2,
   },
   emptyListContainer: {
-    borderWidth: 1,
+   
     borderRadius: 25,
-    backgroundColor: 'green',
+    backgroundColor: 'orange',
     justifyContent: 'center',
     alignContent: 'center',
     margin: 25,

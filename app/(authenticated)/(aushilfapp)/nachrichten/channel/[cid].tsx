@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { SafeAreaView, View, StyleSheet, Text, KeyboardAvoidingView, Platform, TouchableOpacity } from 'react-native';
 import { Channel, MessageInput, MessageList } from 'stream-chat-expo';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import {  useLocalSearchParams } from 'expo-router';
 
  
 import { useAuthStore } from '@/components/stores/AuthStore';
@@ -56,17 +56,17 @@ export default function ChannelScreen() {
             <KeyboardAvoidingView
                 style={styles.flex}
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                keyboardVerticalOffset={Platform.select({ ios: 135, android: 500 })}
+                keyboardVerticalOffset={Platform.select({ ios: 220, android: 500 })}
             >
                 <Channel
                     channel={channel}
                     
                     
                 >
-                    <View style={styles.flex}>
+
                         <MessageList  />
                         <MessageInput />
-                    </View>
+
                 </Channel>
             </KeyboardAvoidingView>
         </SafeAreaView>

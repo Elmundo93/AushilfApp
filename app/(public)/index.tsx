@@ -48,7 +48,7 @@ const Page = () => {
                   - oder eine zu werden!
                 </Text>
                 <Text style={styles.greenText} >
-                  Der erste Monat ist kostenlos, danach entscheide selbst wieviel du beitragen möchtest!
+                
                   </Text>
             
             </View>

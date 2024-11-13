@@ -1,10 +1,11 @@
 import React from 'react';
 import { Image, StyleSheet, ImageStyle } from 'react-native';
-import { useSelectedUserStore } from '../stores/selectedUserStore';
+import { useSelectedUserStore } from '@/components/stores/selectedUserStore';
 import { TouchableOpacity } from 'react-native-gesture-handler';
-import { Link } from 'expo-router';
 import { FontSizeContext } from '@/components/provider/FontSizeContext';
 import { useContext } from 'react';
+
+
 interface ProfileAvatarProps {
   style?: ImageStyle;
 }
@@ -23,8 +24,8 @@ const ForeignProfileAvatar: React.FC<ProfileAvatarProps> = ({ style }) => {
   const finalFontSize = Math.min(adjustedFontSize, maxFontSize);
 
 
-  const imageSource = selectedUser?.profileImage
-        ? { uri: selectedUser.profileImage }
+  const imageSource = selectedUser?.profileImageUrl
+        ? { uri: selectedUser.profileImageUrl }
     : require('@/assets/images/bienenlogo.png');
 
   return (

@@ -1,7 +1,7 @@
 import React, { useCallback, useState, forwardRef } from 'react';
-import { RefreshControl, RefreshControlProps } from 'react-native';
-import { Post } from '../types/post';
-import { refreshPosts } from '../Crud/Post/FetchPost';
+import { RefreshControl } from 'react-native';
+import { Post } from '@/components/types/post';
+import { refreshPosts } from '@/components/Crud/Post/FetchPost';
 
 interface RefreshHandlerProps {
   onRefreshComplete: (refreshedPosts: Post[]) => void;

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Image, StyleSheet, ImageStyle } from 'react-native';
-import { useAuthStore } from '../stores/AuthStore';
+import { useAuthStore } from '@/components/stores/AuthStore';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { Link } from 'expo-router';
 

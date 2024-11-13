@@ -1,5 +1,5 @@
-import { supabase } from '../config/supabase';
-import { useAuthStore } from '../stores/AuthStore';
+import { supabase } from '@/components/config/supabase';
+import { useAuthStore } from '@/components/stores/AuthStore';
 
 export class ImageUploadService {
   private supabase;

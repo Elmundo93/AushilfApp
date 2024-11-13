@@ -21,7 +21,7 @@ export type UserProfile = {
   userId: string;
   vorname: string;
   nachname: string;
-  profileImage: string;
+  profileImageUrl: string;
   userBio: string;
 };
 

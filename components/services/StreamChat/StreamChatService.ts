@@ -1,6 +1,6 @@
-import { User } from '../types/auth';
-import { Post } from '../types/post';
-import { useAuthStore } from '../stores/AuthStore';
+import { User } from '@/components/types/auth';
+import { Post } from '@/components/types/post';
+import { useAuthStore } from '@/components/stores/AuthStore';
 
 export const handleChatPress = async (
   currentUser: User,
@@ -57,7 +57,7 @@ export const handleChatPress = async (
       custom_post_user_id: postDetails.userId,
       custom_post_vorname: postDetails.vorname,
       custom_post_nachname: postDetails.nachname,
-      custom_post_profileImage: postDetails.profileImage,
+      custom_post_profileImage: postDetails.profileImageUrl,
       custom_post_userBio: postDetails.userBio,
       custom_user_vorname: currentUser.vorname,
       custom_user_nachname: currentUser.nachname,

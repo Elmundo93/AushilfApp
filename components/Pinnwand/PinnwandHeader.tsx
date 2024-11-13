@@ -1,43 +1,51 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, Image } from 'react-native';
-import { createRStyle } from 'react-native-full-responsive';
+import React, { useContext } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import LottieView from 'lottie-react-native';
 import Entypo from '@expo/vector-icons/Entypo';
 import { useRouter } from 'expo-router';
-import { useContext } from 'react';
 import { FontSizeContext } from '@/components/provider/FontSizeContext';
-import {LinearGradient} from 'expo-linear-gradient';
+import { LinearGradient } from 'expo-linear-gradient';
+
+
 const PinnwandHeader: React.FC = () => {
   const router = useRouter();
   const { fontSize } = useContext(FontSizeContext);
-  const maxFontSize = 42; // Passen Sie diesen Wert nach Bedarf an
-  const defaultFontSize = 24; // Standard-Schriftgröße im Kontext
-  const componentBaseFontSize = 34; // Ausgangsschriftgröße für das Label
+  const maxFontSize = 42;
+  const defaultFontSize = 24;
+  const componentBaseFontSize = 34;
 
-  // Berechnung der angepassten Schriftgröße
   const adjustedFontSize = (fontSize / defaultFontSize) * componentBaseFontSize;
-
-
   const finalFontSize = Math.min(adjustedFontSize, maxFontSize);
 
   return (
     <View>
       <View style={styles.headerContainer}>
-        <Text style={[styles.welcomeText, { fontSize: finalFontSize }]}>Wilkommen auf der Pinnwand!</Text>
-        <Text style={[styles.welcomeText2, { fontSize: finalFontSize }]}>Starte deine Suche und </Text>
+        <Text numberOfLines={1} adjustsFontSizeToFit style={[styles.welcomeText1, { fontSize: finalFontSize }]}>
+          Willkommen auf der
+        </Text>
+        <Text numberOfLines={1} adjustsFontSizeToFit style={[styles.welcomeText, { fontSize: finalFontSize }]}>
+          Pinnwand!
+        </Text>
+        <Text numberOfLines={1} adjustsFontSizeToFit style={[styles.welcomeText, { fontSize: finalFontSize }]}>
+          Starte deine Suche
+        </Text>
+        <Text numberOfLines={1} adjustsFontSizeToFit style={[styles.welcomeText, { fontSize: finalFontSize }]}>
+          und
+        </Text>
         <View style={styles.modalButtonContainer}>
-        <TouchableOpacity onPress={() => router.push('/(modal)/createPost')}>
-          <LinearGradient
-            colors={['#FFA500', '#FF8C00', '#fcb63d']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.modalButton}
-          >
-            <Text style={[styles.modalButtonText, { fontSize: finalFontSize }]}>Verfasse einen Pinnwandbeitrag!</Text>
+          <TouchableOpacity style={styles.modalButton} onPress={() => router.push('/(modal)/createPost')}>
+            <LinearGradient
+              colors={['orange', 'rgb(255, 128, 0)']} 
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={StyleSheet.absoluteFillObject}
+/>
+            <Text numberOfLines={2} adjustsFontSizeToFit style={[styles.modalButtonText, { fontSize: finalFontSize }]}>
+              Verfasse einen Pinnwandbeitrag!
+            </Text>
             <Entypo name="new-message" size={30} color="white" style={styles.modalButtonIcon} />
-          </LinearGradient>
-        </TouchableOpacity>
-      </View>
+          </TouchableOpacity>
+        </View>
       </View>
       <View style={styles.lottieContainer}>
         {[1, 2, 3].map((_, index) => (
@@ -54,60 +62,77 @@ const PinnwandHeader: React.FC = () => {
   );
 };
 
-const styles = createRStyle({
+const styles = StyleSheet.create({
   headerContainer: {
-    marginBottom: 20,
+    marginVertical: 20,
+    marginHorizontal: 10,
+    paddingTop: 10,
+    padding: 10,
+    borderWidth: 1,
+    borderBottomLeftRadius: 50,
+    borderBottomRightRadius: 50,
+    borderTopWidth: 0,
+    position: 'relative',
+    top: -15,
+    borderColor: 'lightgray',
+  },
+  welcomeText1: {
+    fontSize: 24,
+    alignSelf: 'center',
+    fontWeight: 'bold',
+    marginTop: 10,
   },
   welcomeText: {
-    fontSize: '24rs',
-    fontWeight: 'bold',
-    marginBottom: '10rs',
-    alignSelf: 'center',
-  },
-  welcomeText2: {
-    fontSize: '24rs',
+    fontSize: 24,
     alignSelf: 'center',
     fontWeight: 'bold',
   },
   modalButtonContainer: {
-    flex:1,
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: 'orange',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.5,
-    shadowRadius: 2,
   },
   modalButton: {
     borderRadius: 25,
-    paddingVertical: '10rs',
-    marginTop: '10rs',
-    width: '330rs',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    marginTop: 10,
+    width: 330,
     justifyContent: 'center',
     alignItems: 'center',
     alignSelf: 'center',
     flexDirection: 'row',
-    shadowColor: 'green',
-    elevation: 2,
-  },
-  modalButtonIcon: {
-    paddingLeft: '15rs',
+    overflow: 'hidden',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 140, 0, 0.5)',
+    marginBottom: 10,
   },
   modalButtonText: {
     color: 'white',
-    fontSize: '24rs',
     fontWeight: 'bold',
-    flexShrink: 1,
+    paddingLeft: 15,
+    paddingRight: 15,
+    paddingVertical: 5,
+    fontSize: 18,
+  },
+  modalButtonIcon: {
+    paddingHorizontal: 15,
   },
   lottieContainer: {
     flexDirection: 'row',
     justifyContent: 'space-evenly',
     alignItems: 'center',
+    marginTop: 10,
   },
   lottie: {
     alignSelf: 'center',
-    width: '100rs',
-    height: '40rs',
+    width: 100,
+    height: 40,
     zIndex: 1000,
     transform: [{ rotate: '180deg' }],
   },

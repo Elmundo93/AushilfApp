@@ -7,11 +7,12 @@ export type Post = {
     option: string;
     postText: string;
     vorname: string;
-    profileImage: string;
+    profileImageUrl: string;
     userId: string;
-  postId: string;
-  userBio: string;
-  email: string;
+    long: number;
+    lat: number;
+    userBio: string;
+    email: string;
 
   };
 

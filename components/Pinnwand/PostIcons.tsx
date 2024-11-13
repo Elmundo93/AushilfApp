@@ -1,15 +1,12 @@
 import React from 'react';
 import { View, Image } from 'react-native';
-import { createRStyle } from 'react-native-full-responsive';
-import { Post } from '../types/post';
+import { Post } from '@/components/types/post';
 import { useAuthStore } from '@/components/stores/AuthStore';
-import { ImageSourcePropType } from 'react-native';
 import { useContext } from 'react';
 import { FontSizeContext } from '@/components/provider/FontSizeContext';
 import { StyleSheet } from 'react-native';
-import { TouchableOpacity } from 'react-native';
 
-import { useRouter } from 'expo-router';
+
 interface PostIconsProps {
   item: Post;
 }
@@ -52,6 +49,10 @@ const PostIcons: React.FC<PostIconsProps> = ({ item }) => {
         return require('@/assets/images/HaushaltIconBackgroundColor.png');
       case 'soziales':
         return require('@/assets/images/SozialesIconBackgroundColor.png');
+      case 'handwerk':
+        return require('@/assets/images/HandwerkIconWithBackground.png');
+      case 'bildung':
+        return require('@/assets/images/BildungsIconWithBackground.png');
       default:
         return require('@/assets/images/bienenlogo.png');
     }

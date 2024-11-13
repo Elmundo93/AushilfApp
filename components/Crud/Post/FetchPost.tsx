@@ -1,18 +1,32 @@
-import { supabase } from '../../config/supabase';
-import { Post } from '../../../components/types/post';
-import { useLocationStore } from '../../stores/locationStore';  
+import { supabase } from '@/components/config/supabase';
+import { Post } from '@/components/types/post';
+import { useLocationStore } from '@/components/stores/locationStore';  
+import { getBoundingBox } from '@/components/Location/boundingBox';
 // Definiere den Typ Post
-
 const location = useLocationStore.getState().location;
+const radiusInKm = 10; // Dieser Wert kann angepasst werden
+
+
 
 // Funktion zum Abrufen der Beiträge
 export const fetchPosts = async (): Promise<Post[]> => {
   try {
+    if (!location) {
+      throw new Error('Benutzerstandort ist nicht verfügbar');
+    }
+
+    const { latitude, longitude } = location;
+    const { minLat, maxLat, minLon, maxLon } = getBoundingBox(latitude, longitude, radiusInKm);
+
     const { data, error } = await supabase
       .from('Posts')
       .select('*')
+      .gte('lat', minLat)
+      .lte('lat', maxLat)
+      .gte('long', minLon)
+      .lte('long', maxLon)
       .order('created_at', { ascending: false })
-      .limit(50);
+      .limit(100);
 
     if (error) {
       throw error;

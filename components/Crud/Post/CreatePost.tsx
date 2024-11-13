@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
 import { View, TextInput, Text, Platform, KeyboardAvoidingView } from 'react-native';
-import PostFilters from '../../Checkboxes/CheckboxGroups/PostFilters';
-import { createRStyle } from 'react-native-full-responsive';
+import PostFilters from '@/components/Pinnwand/Checkboxes/CheckboxGroups/PostFilters';
 import { router } from 'expo-router';
-import { ScrollView, TouchableOpacity } from 'react-native-gesture-handler';
-import { supabase } from '../../config/supabase';
-import { usePostStore } from '../../stores/postStores';
-import { useAuthStore } from '../../stores/AuthStore';
-import { useLocationStore } from '../../stores/locationStore';
+import { TouchableOpacity } from 'react-native-gesture-handler';
+import { supabase } from '@/components/config/supabase';
+import { usePostStore } from '@/components/stores/postStores';
+import { useAuthStore } from '@/components/stores/AuthStore';
+import { useLocationStore } from '@/components/stores/locationStore';
 import { FontSizeContext } from '@/components/provider/FontSizeContext';
 import { useContext } from 'react';
 import { StyleSheet } from 'react-native';
 
 const CreatePost: React.FC = () => {
+
   const { fontSize } = useContext(FontSizeContext);
   const defaultFontSize = 22; // Standard-Schriftgröße im Kontext
   const componentBaseFontSize = 18; // Ausgangsschriftgröße für das Label
@@ -54,7 +54,9 @@ const CreatePost: React.FC = () => {
         location: userData.location,
         option: selectedOption,
         userId: userData.id,
-        profileImage: userData.profileImageUrl || '',
+        profileImageUrl: userData.profileImageUrl || '',
+        lat: location?.latitude,
+        long: location?.longitude,
      
       });
 
@@ -74,34 +76,31 @@ const CreatePost: React.FC = () => {
   
 
   return (
-    <View
-    style={styles.container}
-
-
-  >
+    <View style={styles.container}>
       <PostFilters 
         onOptionChange={setSelectedOption} 
         onCategoryChange={setSelectedCategory}
       />
-
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Verfasse deinen Pinnwand Beitrag!"
-          multiline
-          value={postText}
-          onChangeText={setPostText}
-        />
-      </View>
-
-      <View style={styles.postButtonContainer}>
-        <TouchableOpacity 
-          style={[styles.postButton, (!postText || !selectedCategory || !selectedOption) && styles.disabledButton]} 
-          onPress={onSubmit}
-          disabled={!postText || !selectedCategory || !selectedOption}
-        >
-          <Text style={[styles.postButtonText, { fontSize: finalFontSize }]}>Posten</Text>
-        </TouchableOpacity>
+      <View style={styles.contentContainer}>
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            placeholder="Verfasse deinen Pinnwand Beitrag!"
+            multiline
+            value={postText}
+            onChangeText={setPostText}
+          />
+        </View>
+  
+        <View style={styles.postButtonContainer}>
+          <TouchableOpacity 
+            style={[styles.postButton, (!postText || !selectedCategory || !selectedOption) && styles.disabledButton]} 
+            onPress={onSubmit}
+            disabled={!postText || !selectedCategory || !selectedOption}
+          >
+            <Text style={[styles.postButtonText, { fontSize: finalFontSize }]}>Posten</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
@@ -109,54 +108,62 @@ const CreatePost: React.FC = () => {
 
 
 const styles = StyleSheet.create({
-container: {
-  
-  backgroundColor: 'transparent',
-  paddingTop: 16,
-},
-flex: {
-  flex: 1,
-  backgroundColor: 'white',
-},
-input: {
-  height: 100,
-  borderWidth: 2,
-  borderColor: '#FFB74D',
-  borderRadius: 15,
-  marginTop: 16,
-  paddingHorizontal: 15,
-  paddingVertical: 10,
-  fontSize: 16,
-  backgroundColor: 'white',
-  color: '#333',
-
-  elevation: 3,
-},
-inputContainer: {
- 
-},
-postButtonContainer: {
-  flexDirection: 'row-reverse', 
-  alignItems: 'center',
-  padding: 20,
-},
-postButton: {
-  backgroundColor: 'orange',
-  borderStyle: 'solid',
-  borderWidth: 1,
-  borderColor: 'gray',
-  borderRadius: 25,
-  padding: 20,
-},
-postButtonText: {
-  color: 'white',
-  fontSize: 16,
-  fontWeight: 'bold',
-},
-disabledButton: {
-  backgroundColor: 'gray',
-  opacity: 0.5,
-}
+  container: {
+    flex: 1,
+    backgroundColor: 'transparent',
+    justifyContent: 'space-between', // This ensures proper spacing
+  },
+  filtersContainer: {
+    paddingBottom: 10,
+  },
+  contentContainer: {
+    flex: 1,
+    paddingHorizontal: 15,
+    justifyContent: 'space-between',
+    minHeight: 200, // Ensure minimum height for content
+  },
+  inputContainer: {
+    flex: 1,
+    marginVertical: 15,
+  },
+  input: {
+    flex: 1,
+    minHeight: 100,
+    maxHeight: 150, // Reduced max height
+    borderWidth: 2,
+    borderColor: '#FFB74D',
+    borderRadius: 15,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    fontSize: 16,
+    backgroundColor: 'white',
+    color: '#333',
+    elevation: 3,
+  },
+  postButtonContainer: {
+    paddingVertical: 15, // Reduced padding
+    alignItems: 'flex-end',
+    marginBottom: Platform.OS === 'ios' ? 10 : 0, // Add margin bottom for iOS
+  },
+  postButton: {
+    backgroundColor: 'orange',
+    borderStyle: 'solid',
+    borderWidth: 1,
+    borderColor: 'gray',
+    borderRadius: 25,
+    padding: 20,
+    minWidth: 120,
+    alignItems: 'center',
+  },
+  postButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  disabledButton: {
+    backgroundColor: 'gray',
+    opacity: 0.5,
+  }
 });
 
 export default CreatePost;

@@ -2,6 +2,16 @@ import { Channel as ChannelType } from "stream-chat";
 
 
 
+export interface CategoryStyles {
+  backgroundColor: string;
+}
+
+export interface CategoryIcons {
+  [key: string]: any;
+}
+
+export type CategoryType = 'garten' | 'haushalt' | 'gastro' | 'soziales' | 'handwerk' | 'bildung';
+
 
 export type ChannelMetadata = {
     postVorname?: string;

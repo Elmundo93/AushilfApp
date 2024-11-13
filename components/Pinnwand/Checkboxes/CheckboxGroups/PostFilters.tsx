@@ -1,11 +1,11 @@
 import React from 'react';
-import { KeyboardAvoidingView, View } from 'react-native';
+import {  View } from 'react-native';
 import CustomCheckbox from '../CustomCheckboxPost';
 import { useState } from 'react';
-import { createRStyle } from 'react-native-full-responsive';
+
 import { Text } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
-import { PostFiltersProps } from '../../types/checkbox';
+import { PostFiltersProps } from '@/components/types/checkbox';
 import { useContext } from 'react';
 import { FontSizeContext } from '@/components/provider/FontSizeContext';
 import { StyleSheet } from 'react-native';
@@ -36,6 +36,8 @@ const PostFilters: React.FC<PostFiltersProps>  = ({ onOptionChange, onCategoryCh
     const [haushaltChecked, setHaushaltChecked] = useState(false);
     const [sozialesChecked, setSozialesChecked] = useState(false);
     const [gastroChecked, setGastroChecked] = useState(false);
+    const [bildungChecked, setBildungChecked] = useState(false);
+    const [handwerkChecked, setHandwerkChecked] = useState(false);
   
     const handleSuchenBietenChange = (option: string) => {
       if (option === 'suchen') {
@@ -50,18 +52,20 @@ const PostFilters: React.FC<PostFiltersProps>  = ({ onOptionChange, onCategoryCh
     };
   
     const handleCategoryChange = (category: string) => {
-      const isAlreadyChecked = { garten: gartenChecked, haushalt: haushaltChecked, soziales: sozialesChecked, gastro: gastroChecked }[category];
+      const isAlreadyChecked = { garten: gartenChecked, haushalt: haushaltChecked, soziales: sozialesChecked, gastro: gastroChecked, handwerk: handwerkChecked, bildung: bildungChecked }[category];
       setGartenChecked(category === 'garten' ? !isAlreadyChecked : false);
       setHaushaltChecked(category === 'haushalt' ? !isAlreadyChecked : false);
       setSozialesChecked(category === 'soziales' ? !isAlreadyChecked : false);
       setGastroChecked(category === 'gastro' ? !isAlreadyChecked : false);
+      setBildungChecked(category === 'bildung' ? !isAlreadyChecked : false);
+      setHandwerkChecked(category === 'handwerk' ? !isAlreadyChecked : false);
       onCategoryChange(category);
     };
       
      
 
     return (
-      <KeyboardAvoidingView style={styles.container}>
+      <View style={styles.container}>
         <Text style={[{ fontSize: finalFontSize +12 }, {marginBottom:50, alignSelf: 'center'}]}>Verfasse deinen Beitrag!
         </Text>
         <View style={styles.contentWrapper}>
@@ -123,28 +127,39 @@ const PostFilters: React.FC<PostFiltersProps>  = ({ onOptionChange, onCategoryCh
                 isChecked={gastroChecked}
                 onCheck={() => handleCategoryChange('gastro')}
               />
+              <CustomCheckbox
+                label="Bildung"
+                isChecked={bildungChecked}
+                onCheck={() => handleCategoryChange('bildung')}
+              />
+              <CustomCheckbox
+                label="Handwerk"
+                isChecked={handwerkChecked}
+                onCheck={() => handleCategoryChange('handwerk')}
+              />  
             </View>
           </View>
         </View>
-      </KeyboardAvoidingView>
+      </View>
     );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     padding: 10,
     borderRadius: 10,
-    margin: 10,
+    backgroundColor: 'transparent',
   },
   contentWrapper: {
     flexDirection: 'column',
     alignItems: 'center',
     borderWidth: 1,
     borderColor: 'lightgray',
-    paddingVertical: 20,
+    paddingVertical: 15, // Reduced padding
     marginTop: -25,
-    borderRadius: 25,
+    borderBottomLeftRadius: 50,
+    borderBottomRightRadius: 50,
+    borderTopWidth: 0,
   },
   ichContainer: {
     flexDirection: 'column',
@@ -185,13 +200,13 @@ const styles = StyleSheet.create({
   imBereichContainer: {
     width: '100%',
     alignItems: 'center',
-    marginTop: 30,
-    backgroundColor: 'white',
+    marginTop: 15,
+    backgroundColor: 'transparent',
   },
   imBereichHeaderContainer: {
     width: '100%',
     alignItems: 'center',
-    backgroundColor: 'white',
+    backgroundColor: 'transparent',
   },
   imBereichHeader: {
     fontWeight: 'bold',

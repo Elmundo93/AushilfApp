@@ -1,8 +1,8 @@
 import React from 'react';
 import { View } from 'react-native';
-import FilterAccordion from '../Accordion/FilterAccordion';
+import FilterAccordion from '@/components/Pinnwand/Accordion/FilterAccordion';
 import { createRStyle } from 'react-native-full-responsive';
-import { FilterSectionProps } from '../types/components';
+import { FilterSectionProps } from '@/components/types/components';
 
 const FilterSection: React.FC<FilterSectionProps> = ({
   option,
@@ -31,6 +31,8 @@ const FilterSection: React.FC<FilterSectionProps> = ({
         haushaltChecked={false} 
         sozialesChecked={false} 
         gastroChecked={false} 
+        handwerkChecked={false} 
+        bildungChecked={false} 
         handleSuchenBietenChange={() => {}} 
         handleCategoryChange={() => {}} 
       />

@@ -1,4 +1,4 @@
-import { supabase } from '../../config/supabase';
+import { supabase } from '@/components/config/supabase';
 import { SupabaseClient } from '@supabase/supabase-js';
 import * as SecureStore from 'expo-secure-store';
 

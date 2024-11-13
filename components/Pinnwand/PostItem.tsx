@@ -2,11 +2,11 @@ import React from 'react';
 import { View, Image, Text, TouchableOpacity } from 'react-native';
 import { createRStyle } from 'react-native-full-responsive';
 import { useRouter } from 'expo-router';
-import { Post } from '../types/post';
-import PostHeader from './PostHeader';
-import PostIcons from './PostIcons';
-import PostMenu from './PostMenu';
-import { useSelectedPostStore } from '../stores/selectedPostStore'; 
+import { Post } from '@/components/types/post';
+import PostHeader from '@/components/Pinnwand/PostHeader';
+import PostIcons from '@/components/Pinnwand/PostIcons';
+import PostMenu from '@/components/Pinnwand/PostMenu';
+import { useSelectedPostStore } from '@/components/stores/selectedPostStore'; 
 import { useContext } from 'react';
 import { FontSizeContext } from '@/components/provider/FontSizeContext';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -81,6 +81,7 @@ const styles = createRStyle({
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 50,
+    
 
   },
   strings: {
@@ -97,6 +98,7 @@ const styles = createRStyle({
     borderColor: 'lightgray',
     overflow: 'hidden',
     borderRadius: 50,
+
   },
   postInside: {
     flexDirection: 'column',
@@ -139,27 +141,25 @@ const styles = createRStyle({
   },
   buttonContainer: {
     alignItems: 'center',
-    marginTop: 10,
+
     alignSelf: 'flex-end',
   },
   button: {
 
     padding: 10,
     borderRadius: 5,
-    shadowColor: 'orange',
-
-    shadowOpacity: 0.3,
-    shadowRadius: 2,
+   
   },
   buttonText: {
     color: '#fff',
-    fontWeight: 'bold'
+    fontWeight: 'bold',
+
   },
   modalButton: {
 
     minHeight: 50,
     maxHeight: 150,
-    borderRadius: 5,
+    borderRadius: 25,
     padding: 10,
   },
 });

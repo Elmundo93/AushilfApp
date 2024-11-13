@@ -1,24 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { View, TouchableOpacity, Image, Alert, ActivityIndicator, StyleSheet, Linking } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system';
 import { supabase } from '@/components/config/supabase';
 import { useAuthStore } from '@/components/stores/AuthStore';
 import { FontSizeContext } from '@/components/provider/FontSizeContext';
-import { useContext } from 'react';
-
+import { decode } from 'base64-arraybuffer';
 
 const ProfileImagePicker: React.FC = () => {
   const { user, setUser } = useAuthStore();
   const { fontSize } = useContext(FontSizeContext);
-  const maxFontSize = 38; // Passen Sie diesen Wert nach Bedarf an
-  const defaultFontSize = 22; // Standard-Schriftgröße im Kontext
-  const componentBaseFontSize = 18; // Ausgangsschriftgröße für das Label
+  const maxFontSize = 38; // Adjust as needed
+  const defaultFontSize = 22; // Default font size in context
+  const componentBaseFontSize = 18; // Base font size for the label
   const minIconSize = 80;
   const maxIconSize = 300;
   const adjustedFontSize = (fontSize / defaultFontSize) * componentBaseFontSize;
   const finalFontSize = Math.min(adjustedFontSize, maxFontSize);
   const iconSize = Math.min(Math.max(fontSize * 1.5, minIconSize), maxIconSize);
-  
+
   const [image, setImage] = useState(user?.profileImageUrl || null);
   const [uploading, setUploading] = useState(false);
 
@@ -79,7 +79,6 @@ const ProfileImagePicker: React.FC = () => {
     try {
       setUploading(true);
 
-      // Ensure 'user' and 'user.id' are defined
       if (!user || !user.id) {
         Alert.alert('Error', 'User is not authenticated.');
         return;
@@ -87,20 +86,29 @@ const ProfileImagePicker: React.FC = () => {
 
       const fileExt = uri.split('.').pop();
       const fileName = `${user.id}.${fileExt}`;
-      const filePath = `${fileName}`;
+      const filePath = fileName; // Save in root directory
 
-      // Convert the image to a blob
-      const response = await fetch(uri);
-      const blob = await response.blob();
+      // Read the file as Base64
+      const base64 = await FileSystem.readAsStringAsync(uri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+
+      // Convert Base64 to ArrayBuffer
+      const arrayBuffer = decode(base64);
+
+      // Set the correct MIME type
+      const mimeType = fileExt === 'png' ? 'image/png' : 'image/jpeg';
 
       // Upload the image to Supabase Storage
       const { error: uploadError } = await supabase.storage
         .from('profile-images')
-        .upload(filePath, blob, {
+        .upload(filePath, arrayBuffer, {
           upsert: true,
+          contentType: mimeType,
         });
 
       if (uploadError) {
+        console.log('Upload Error:', uploadError);
         throw uploadError;
       }
 
@@ -117,8 +125,8 @@ const ProfileImagePicker: React.FC = () => {
 
       // Update the user's profileImageUrl in Supabase
       const { error: updateError } = await supabase
-        .from('User')
-        .update({ profileImage: publicUrl })
+        .from('Users')
+        .update({ profileImageUrl: publicUrl })
         .eq('id', user.id);
 
       if (updateError) {
@@ -131,6 +139,7 @@ const ProfileImagePicker: React.FC = () => {
         profileImageUrl: publicUrl,
       });
       setImage(publicUrl);
+      console.log('image', publicUrl);
     } catch (error: any) {
       Alert.alert('Error', error.message || 'An error occurred while uploading the image.');
     } finally {
@@ -145,7 +154,7 @@ const ProfileImagePicker: React.FC = () => {
       ) : image ? (
         <Image source={{ uri: image }} style={[styles.profileImage, { width: iconSize, height: iconSize }]} />
       ) : (
-        <View style={[styles.profileImage, styles.placeholder]} />
+        <Image source={require('@/assets/images/Placeholder.png')} style={[styles.profileImage, { width: iconSize, height: iconSize }]} />
       )}
     </TouchableOpacity>
   );
@@ -157,8 +166,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   profileImage: {
-  
     borderRadius: 50,
+    width: 100,
+    height: 100,
   },
   placeholder: {
     backgroundColor: '#ccc',

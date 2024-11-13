@@ -1,6 +1,6 @@
 // src/stores/selectedPostStore.ts
 import { create } from 'zustand';
-import { Post } from '../types/post';
+import { Post } from '@/components/types/post';
 
 type SelectedPostState = {
   selectedPost: Post | null;

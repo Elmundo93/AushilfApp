@@ -9,11 +9,19 @@ import { signInWithPassword } from '@/components/services/AuthService';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Link } from 'expo-router';
 import { AntDesign } from '@expo/vector-icons';
+import useKeyboard from '@/components/Keyboard/useKeyboard';
+import { Animated } from 'react-native';
+import { useLoading } from '@/components/provider/LoadingContext';
 
-const Page = () => {
+
+
+
+const login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+ const { opacity } = useKeyboard();
+ const { setIsLoading } = useLoading();
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -27,7 +35,7 @@ const Page = () => {
       if (!userData) {
         Alert.alert('Anmeldefehler', 'Ungültige Anmeldeinformationen');
       } else {
-        // Erfolgreiche Anmeldung
+        setIsLoading(true); 
         router.replace('/(authenticated)/(aushilfapp)/pinnwand');
       }
     } catch (error) {
@@ -48,12 +56,12 @@ const Page = () => {
       />
       <View style={styles.contentContainer} >
       <View style={styles.welcomeView}>
-            <Link href=".." asChild  style={styles.backButton}>
-            <TouchableOpacity  >
+            <Link href=".." asChild  >
+            <TouchableOpacity style={styles.backButton} >
             <AntDesign name="left" size={24} color="black" />
             </TouchableOpacity>
             </Link>
-                      <Text style={styles.welcomeText}>Anmelden</Text>
+                      <Animated.Text style={[styles.welcomeText, {opacity: opacity}]}>Anmelden</Animated.Text>
                     </View>
       <KeyboardAvoidingView behavior="padding" style={styles.content}>
         <View style={styles.headerContainer}>
@@ -98,7 +106,7 @@ const Page = () => {
   );
 };
 
-export default Page;
+export default login;
 
 const styles = createRStyle({
   container: {
@@ -118,7 +126,7 @@ const styles = createRStyle({
     position: 'absolute',
     top: '150rs',
     opacity: 0.8,
-    zIndex: 1, // Fügen Sie diese Zeile hinzu
+    zIndex: 1, 
   },
   contentContainer: {
     flex: 1,
@@ -131,23 +139,28 @@ const styles = createRStyle({
 
     width: '100%',
     padding: 10,
-    justifyContent: 'center', // Zentriert den Inhalt horizontal
-    position: 'relative', // Ermöglicht absolute Positionierung des backButton
+    justifyContent: 'center', 
+    position: 'relative', 
     marginTop: 18,
 },
-  backButton: {
-    position: 'absolute',
-    top: 10, // Angepasst, um mit dem Padding des welcomeView übereinzustimmen
-    left: 10,
-    zIndex: 1, // Stellt sicher, dass der Button über dem Text liegt
-  },
+backButton: {
+  position: 'absolute',
+  top: 10,
+  left: 10,
+  zIndex: 10,
+
+  padding: 10,  
+  width: 44,    
+  height: 44,   
+  justifyContent: 'center',
+  alignItems: 'center',
+},
   welcomeText: {
     fontSize: 32,
     fontWeight: 'bold',
     color: 'white',  
     letterSpacing: 0.5,
     alignSelf: 'center',
-    // Entfernen Sie jegliche Positionierungseigenschaften, falls vorhanden
   },
   content: {
     flex: 1,

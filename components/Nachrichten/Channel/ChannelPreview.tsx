@@ -10,21 +10,21 @@ import {
   ImageSourcePropType,
 } from 'react-native';
 import { format } from 'date-fns';
-import { ChannelPreviewProps } from '../types/stream';
-import { useAuthStore } from '../stores/AuthStore';
+import { ChannelPreviewProps } from '@/components/types/stream';
+import { useAuthStore } from '@/components/stores/AuthStore';
 
-import RaisingHandImage from '@/assets/images/RaisingHandBackgroundColor.png';
-import LookingForImage from '@/assets/images/LookingForBackgroundColor.png';
 import DefaultAvatar from '@/assets/images/DefaultAvatar.png';
 import GartenIconWithBackground from '@/assets/images/GartenIconWithBackground.png';
 import HaushaltWithBackground from '@/assets/images/HaushaltWithBackground.png';
 import SozialesIconWithBackground from '@/assets/images/SozialesIconWithBackground.png';
 import GastroIconWithBackground from '@/assets/images/GastroIconWithBackground.png';
 import { FontSizeContext } from '@/components/provider/FontSizeContext';
+import HandwerkIconWithBackground from '@/assets/images/HandwerkIconWithBackground.png';
+import BildungsIconWithBackground from '@/assets/images/BildungsIconWithBackground.png';
 import { UserProfile } from '@/components/types/auth';
 import { useSelectedUserStore } from '@/components/stores/selectedUserStore';
 import { useRouter } from 'expo-router';
-import { Swipeable } from 'react-native-gesture-handler';
+
 
 const ChannelPreview: React.FC<ChannelPreviewProps> = React.memo(
   ({ channel, onSelect }) => {
@@ -59,7 +59,7 @@ const ChannelPreview: React.FC<ChannelPreviewProps> = React.memo(
               userId: user.id,
               vorname: user.vorname || '',
               nachname: user.nachname || '',
-              profileImage: user.image || '',
+              profileImageUrl: user.image || '',
               userBio: user.userBio || '',
             };
 
@@ -94,51 +94,36 @@ const ChannelPreview: React.FC<ChannelPreviewProps> = React.memo(
 
     const unreadCount = channel.countUnread();
 
-    const postOption = channel.data?.custom_post_option;
     const postCategory = channel.data?.custom_post_category;
 
-    const optionIcons: { [key: string]: ImageSourcePropType } = {
-      bieten: RaisingHandImage as ImageSourcePropType,
-      suchen: LookingForImage as ImageSourcePropType,
-    };
+    
 
     const categoryIcons: { [key: string]: ImageSourcePropType } = {
       gastro: GastroIconWithBackground as ImageSourcePropType,
       garten: GartenIconWithBackground as ImageSourcePropType,
       haushalt: HaushaltWithBackground as ImageSourcePropType,
       soziales: SozialesIconWithBackground as ImageSourcePropType,
+      handwerk: HandwerkIconWithBackground as ImageSourcePropType,
+      bildung: BildungsIconWithBackground as ImageSourcePropType,
     };
 
-    const optionIcon =
-      (postOption && optionIcons[postOption as keyof typeof optionIcons]) ||
-      null;
+  
     const categoryIcon =
       (postCategory &&
         categoryIcons[postCategory as keyof typeof categoryIcons]) ||
       null;
 
-      const renderLeftActions = () => {
-        return (
-          <View style={styles.leftActionsContainer}>
-          <TouchableOpacity style={ styles.leftActionInnerContainer} onPress={() => onSelect(channel)}>
-            <Text>Löschen</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={ styles.leftActionInnerContainer} onPress={() => onSelect(channel)}>
-            <Text>Blocken</Text>
-          </TouchableOpacity>
-          </View>
-        );
-      };
+    
 
       return (
-        <Swipeable renderLeftActions={() => renderLeftActions()}>
+
         <View style={styles.outerContainer}>
           <TouchableOpacity onPress={handleAvatarPress}>
             <View style={styles.avatarContainer}>
               <Image
                 source={
-                  partnerData?.profileImage
-                    ? { uri: partnerData.profileImage }
+                  partnerData?.profileImageUrl
+                    ? { uri: partnerData.profileImageUrl }
                     : DefaultAvatar as ImageSourcePropType
                 }
                 style={[styles.avatar, { width: iconSize + 12, height: iconSize + 12 }]}
@@ -179,7 +164,7 @@ const ChannelPreview: React.FC<ChannelPreviewProps> = React.memo(
           </View>
         </TouchableOpacity>
       </View>
-      </Swipeable>
+
     );
   }
 );
@@ -190,6 +175,7 @@ const styles = StyleSheet.create({
   outerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: 'white',
   },
   leftActionsContainer: {
     flexDirection: 'row',

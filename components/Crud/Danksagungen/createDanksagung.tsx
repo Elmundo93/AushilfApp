@@ -1,17 +1,21 @@
 import React, { useState, useCallback } from 'react';
 import { View, TextInput, TouchableOpacity, Text, StyleSheet } from 'react-native';
-import { supabase } from '../../config/supabase';
-import { useAuthStore } from '../../stores/AuthStore';
-import { CreateDanksagungProps } from '../../types/Danksagungen';
-import { useDanksagungStore } from '../../stores/danksagungStores';
+import { supabase } from '@/components/config/supabase';
+import { useAuthStore } from '@/components/stores/AuthStore';
+import { CreateDanksagungProps } from '@/components/types/Danksagungen';
+import { useDanksagungStore } from '@/components/stores/danksagungStores';
 import { v4 as uuidv4 } from 'uuid';
 import 'react-native-get-random-values';
 import { FontSizeContext } from '@/components/provider/FontSizeContext'; 
 import { useContext } from 'react';
+import { useLocationStore } from '@/components/stores/locationStore';
+
 
 const CreateDanksagung: React.FC<CreateDanksagungProps> = ({ userId:recipientUserId }) => {
   const [writtenText, setWrittenText] = useState('');
+  const location = useLocationStore((state: any) => state.location);
   const incrementDanksagungCount = useDanksagungStore(state => state.incrementDanksagungCount);
+  
   const { fontSize } = useContext(FontSizeContext);
   const maxFontSize = 38; // Passen Sie diesen Wert nach Bedarf an
   const defaultFontSize = 22; // Standard-Schriftgröße im Kontext
@@ -52,9 +56,13 @@ const CreateDanksagung: React.FC<CreateDanksagungProps> = ({ userId:recipientUse
         authorId: userData.id, // Autor der Danksagung
         created_at: new Date().toISOString(),
         profileImage: userData.profileImageUrl || '',
+        userBio: userData.bio || '',
         vorname: userData.vorname,
         nachname: userData.nachname,
         location: userData.location,
+        lat: location?.latitude,  
+        long: location?.longitude,
+
       });
       if (error) {
         throw error;

@@ -1,11 +1,11 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, Alert } from 'react-native';
-import { createRStyle } from 'react-native-full-responsive';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
+import { View, Animated } from 'react-native';
+
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { fetchPosts } from '@/components/Crud/Post/FetchPost';
+
 import { FlatList } from 'react-native-gesture-handler';
 import { usePostStore } from '@/components/stores/postStores';
-import * as Location from 'expo-location';
+import LottieView from 'lottie-react-native';
 import { useLocationStore } from '@/components/stores/locationStore';
 import {
   Platform,
@@ -17,16 +17,26 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 }
 import { Post } from '@/components/types/post';
 import PinnwandHeader from '@/components/Pinnwand/PinnwandHeader';
-import { applyFilters } from '@/components/utils/FilterLogic';
-import FilterAccordion from '@/components/Accordion/FilterAccordion';
-import { handleSuchenBietenChange, handleCategoryChange } from '@/components/utils/FilterHelpers';
-import CustomCheckbox from '@/components/Checkboxes/CustomCheckbox';
+import { applyFilters } from '@/components/Pinnwand/utils/FilterLogic';
+import FilterAccordion from '@/components/Pinnwand/Accordion/FilterAccordion';
+import { handleSuchenBietenChange, handleCategoryChange } from '@/components/Pinnwand/utils/FilterHelpers';
+import CustomCheckbox from '@/components/Pinnwand/Checkboxes/CustomCheckbox';
 import PostItem from '@/components/Pinnwand/PostItem';
 import RefreshHandler from '@/components/Pinnwand/RefreshHandler';
 import { useLocationRequest } from '@/components/Location/locationRequest';
 import { StyleSheet } from 'react-native';
+import EmptyListComponent from '@/components/Pinnwand/EmptyListComponent';
+import { useLoading } from '@/components/provider/LoadingContext';
+import { initPostsDatabase } from '@/components/Crud/SQLite/Create/create&save&getPostDB';
+import { initDanksagungenDatabase, saveDanksagungenToSQLite } from '@/components/Crud/SQLite/Create/create&save&getDanksagungenDB';
+import { getPostsFromSQLite, savePostsToSQLite } from '@/components/Crud/SQLite/Create/create&save&getPostDB';
+
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 const PinnwandFilters: React.FC = () => {
+  const { isLoading, setIsLoading } = useLoading();
   const [posts, setPosts] = useState<Post[]>([]);
   const [filteredPosts, setFilteredPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,25 +46,39 @@ const PinnwandFilters: React.FC = () => {
   const [haushaltChecked, setHaushaltChecked] = useState(false);
   const [sozialesChecked, setSozialesChecked] = useState(false);
   const [gastroChecked, setGastroChecked] = useState(false);
+  const [handwerkChecked, setHandwerkChecked] = useState(false);
+  const [bildungChecked, setBildungChecked] = useState(false);
   const [isAccordionExpanded, setIsAccordionExpanded] = useState(false);
   const postCount = usePostStore((state: any) => state.postCount);
   const setLocation = useLocationStore((state: any) => state.setLocation);
+
+  const fadeAnim = useRef(new Animated.Value(0)).current; // 
 
   const toggleAccordion = useCallback(() => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setIsAccordionExpanded(!isAccordionExpanded);
   }, [isAccordionExpanded]);
 
-useLocationRequest();
+  useLocationRequest();
+
 
 
   useEffect(() => {
-    const loadPosts = async () => {
+    const loadPostsAndDanksagungen = async () => {
       setLoading(true);
       try {
-        const postsList = await fetchPosts();
-        setPosts(postsList);
-        setFilteredPosts(postsList);
+        // Datenbanken initialisieren
+        await initPostsDatabase();
+        await initDanksagungenDatabase();
+
+        // Daten von Supabase abrufen und in SQLite speichern
+        await savePostsToSQLite();
+        await saveDanksagungenToSQLite();
+
+        // Daten aus SQLite abrufen
+        const postsList = await getPostsFromSQLite();
+        setPosts(postsList as Post[]);
+        setFilteredPosts(postsList as Post[]);
       } catch (error) {
         console.error('Fehler beim Laden der Posts:', error);
       } finally {
@@ -62,8 +86,22 @@ useLocationRequest();
       }
     };
 
-    loadPosts();
+    loadPostsAndDanksagungen();
   }, [postCount]);
+
+
+useEffect(() => {
+  console.log('Loading state:', loading); // For debugging
+
+  if (!loading) {
+    fadeAnim.setValue(0); // Reset to invisible
+    Animated.timing(fadeAnim, {
+      toValue: 1, // Fade in to full opacity
+      duration: 1000, // 1 second duration
+      useNativeDriver: true,
+    }).start();
+  }
+}, [loading, fadeAnim]);
 
   const applyFiltersCallback = useCallback(() => {
     const filtered = applyFilters(
@@ -73,10 +111,12 @@ useLocationRequest();
       gartenChecked,
       haushaltChecked,
       sozialesChecked,
-      gastroChecked
+      gastroChecked,
+      handwerkChecked,
+      bildungChecked
     );
     setFilteredPosts(filtered);
-  }, [posts, suchenChecked, bietenChecked, gartenChecked, haushaltChecked, sozialesChecked, gastroChecked]);
+  }, [posts, suchenChecked, bietenChecked, gartenChecked, haushaltChecked, sozialesChecked, gastroChecked, handwerkChecked, bildungChecked]);
 
 
   useEffect(() => {
@@ -89,7 +129,7 @@ useLocationRequest();
   }, [suchenChecked, bietenChecked]);
 
   const handleCategoryChangeCallback = useCallback((category: string) => {
-    handleCategoryChange(category, setGartenChecked, setHaushaltChecked, setSozialesChecked, setGastroChecked);
+    handleCategoryChange(category, setGartenChecked, setHaushaltChecked, setSozialesChecked, setGastroChecked, setHandwerkChecked, setBildungChecked);
   }, []);
 
 
@@ -122,9 +162,16 @@ useLocationRequest();
     <SafeAreaView style={styles.container}>
       {loading ? (
         <View style={styles.loaderContainer}>
-          <Text>Lädt...</Text>
+          <View style={styles.spacer} />
+          <LottieView
+            source={require('@/assets/animations/LoadingWarp.json')}
+            autoPlay
+            loop
+            style={styles.lottie}
+          />
         </View>
       ) : (
+        <Animated.View style={{ opacity: fadeAnim, flex: 1 }}>
         <FlatList
           ListHeaderComponent={
             <>
@@ -133,12 +180,14 @@ useLocationRequest();
                 isExpanded={isAccordionExpanded}
                 onToggle={toggleAccordion}
                 renderCheckbox={renderCheckbox}
-                suchenChecked={suchenChecked}
+                suchenChecked={suchenChecked}   
                 bietenChecked={bietenChecked}
                 gartenChecked={gartenChecked}
                 haushaltChecked={haushaltChecked}
                 sozialesChecked={sozialesChecked}
                 gastroChecked={gastroChecked}
+                handwerkChecked={handwerkChecked}
+                bildungChecked={bildungChecked}
                 handleSuchenBietenChange={handleSuchenBietenChangeCallback}
                 handleCategoryChange={handleCategoryChangeCallback}
               />
@@ -148,15 +197,13 @@ useLocationRequest();
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
           ListEmptyComponent={
-            <View style={styles.emptyListContainer}>
-              <Text style={styles.emptyListText}>Kein Eintrag für diese Kategorie gefunden 🤷</Text>
-              <Text style={styles.emptyListText}>Bitte wähle einen anderen Filter!✌️</Text>
-            </View>
+            <EmptyListComponent />
           }
           refreshControl={
             <RefreshHandler onRefreshComplete={handleRefreshComplete} />
           }
         />
+        </Animated.View>
       )}
     </SafeAreaView>
   );
@@ -169,7 +216,15 @@ const styles = StyleSheet.create({
   marginTop:-50}
   ,
   loaderContainer: {
-    justifyContent: 'space-between'
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  lottie: {
+    width: 300,
+    height: 300,
+  },
+  spacer: {
+    height: 150,
   },
   emptyListContainer: {
     borderWidth: 1,

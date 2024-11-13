@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { View, Text, FlatList, Animated } from 'react-native';
+import { View, Text, Animated } from 'react-native';
 import { Danksagung } from '@/components/types/Danksagungen';
 import { useFetchDanksagungen } from '@/components/Crud/Danksagungen/fetchDanksagung';
 import { useDanksagungStore } from '@/components/stores/danksagungStores';

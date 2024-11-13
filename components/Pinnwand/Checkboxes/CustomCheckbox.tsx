@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
 import { View, Text, Image, TouchableHighlight, StyleSheet } from 'react-native';
-import { getCheckboxImage, getUnderlayColor } from '../utils/FilterHelpers';
+import { getCheckboxImage, getUnderlayColor } from '@/components/Pinnwand/utils/FilterHelpers';
 import { FontSizeContext } from '@/components/provider/FontSizeContext';
 
 interface CustomCheckboxProps {

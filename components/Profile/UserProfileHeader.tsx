@@ -1,13 +1,13 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, TextInput } from 'react-native';
-import ProfileImagePicker from '@/components/ProfileImage/ProfileImagePicker';
+import ProfileImagePicker from '@/components/Profile/ProfileImage/ProfileImagePicker';
 import LottieView from 'lottie-react-native';
 import { User } from '@/components/types/auth';
 import { styles } from '@/components/Profile/styles';
 import { useBioUpdate } from '@/components/Crud/Profile/createÜberMich';
 import { FontSizeContext } from '@/components/provider/FontSizeContext';
 import { useContext } from 'react';
-import { LinearGradient } from 'expo-linear-gradient';
+
 
 interface UserProfileHeaderProps {
   user: User | null;

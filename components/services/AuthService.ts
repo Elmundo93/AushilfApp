@@ -1,8 +1,8 @@
-import { supabase } from "../config/supabase";
-import { User } from "../types/auth";
+import { supabase } from "@/components/config/supabase";
+import { User } from "@/components/types/auth";
 import * as SecureStore from 'expo-secure-store';
 import { StreamChat } from 'stream-chat';
-import { useAuthStore } from '../stores/AuthStore';
+import { useAuthStore } from '@/components/stores/AuthStore';
 import { Session } from '@supabase/supabase-js';
 
 const initializeStreamClient = (apiKey: string) => {

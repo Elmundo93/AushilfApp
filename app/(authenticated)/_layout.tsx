@@ -4,7 +4,7 @@ import { TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'react-native';
 import { Link } from 'expo-router';
-import  ProfileAvatar  from '@/components/ProfileImage/ProfileAvatar';
+import  ProfileAvatar  from '@/components/Profile/ProfileImage/ProfileAvatar';
 import { StyleSheet } from 'react-native';
 import { FontSizeContext } from '@/components/provider/FontSizeContext';
 import { useContext } from 'react';

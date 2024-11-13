@@ -1,12 +1,16 @@
 export interface Danksagung {
     id: string;
     writtenText: string;
-    userid: string;
+    userId: string;
   created_at: string;
   profileImage: string;
-   vorname: string;
+  vorname: string;
   nachname: string;
   location: string;
+  long: number;
+  lat: number;
+  userBio: string;
+  authorId: string;
   }
 
 export interface CreateDanksagungProps {

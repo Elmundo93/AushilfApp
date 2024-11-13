@@ -1,5 +1,4 @@
 import React from 'react';
-import type { PropsWithChildren } from 'react';
 import {
   View,
   Text,
@@ -7,8 +6,8 @@ import {
   StyleSheet,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { createRStyle } from 'react-native-full-responsive';
-import { AccordionItemProps } from '../types/components';
+
+import { AccordionItemProps } from '@/components/types/components';
 import { useContext } from 'react';
 import { FontSizeContext } from '@/components/provider/FontSizeContext';
 

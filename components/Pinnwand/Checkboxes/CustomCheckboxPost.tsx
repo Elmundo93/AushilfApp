@@ -3,7 +3,7 @@ import { Text } from 'react-native';
 import {Image} from 'react-native';
 import { createRStyle } from 'react-native-full-responsive';
 import { TouchableOpacity } from 'react-native-gesture-handler';
-import { CustomCheckboxProps } from '../types/checkbox';
+import { CustomCheckboxProps } from '@/components/types/checkbox';
 import { useContext } from 'react';
 import { FontSizeContext } from '@/components/provider/FontSizeContext';
 
@@ -29,6 +29,10 @@ const CustomCheckbox: React.FC<CustomCheckboxProps> = ({ label, isChecked, onChe
         return 'rgb(255, 102, 102)';
       case 'Gastro':
         return 'rgb(255, 255, 102)';
+      case 'Handwerk':
+        return 'orange';
+      case 'Bildung':
+        return 'lightgrey';
       default:
         return 'grey';
     }
@@ -44,6 +48,10 @@ const CustomCheckbox: React.FC<CustomCheckboxProps> = ({ label, isChecked, onChe
         return require('@/assets/images/SozialesIcon.png');
       case 'Gastro':
         return require('@/assets/images/GastroIcon.png');
+      case 'Handwerk':
+        return require('@/assets/images/HandwerkIcon.png');
+      case 'Bildung':
+        return require('@/assets/images/BildungsIcon.png');
       default:
         return require('@/assets/images/GastroIcon.png');
     }
@@ -59,6 +67,10 @@ const CustomCheckbox: React.FC<CustomCheckboxProps> = ({ label, isChecked, onChe
       return 'Soziales';
     case 'Gastro':
       return 'Gastro';
+    case 'Handwerk':
+      return 'Handwerk';
+    case 'Bildung':
+      return 'Bildung';
     default:
       return 'Garten';
   }

@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { createRStyle } from 'react-native-full-responsive';
-import { FilterAccordionProps } from '../types/components';
+import { FilterAccordionProps } from '@/components/types/components';
 import { useContext } from 'react';
 import { FontSizeContext } from '@/components/provider/FontSizeContext';
 
@@ -18,6 +18,8 @@ const FilterAccordion: React.FC<FilterAccordionProps> = React.memo(({
   haushaltChecked,
   sozialesChecked,
   gastroChecked,
+  handwerkChecked,
+  bildungChecked,
   handleSuchenBietenChange,
   handleCategoryChange
 }) => {
@@ -52,6 +54,8 @@ const FilterAccordion: React.FC<FilterAccordionProps> = React.memo(({
           {renderCheckbox('Haushalt', haushaltChecked, () => handleCategoryChange('haushalt'))}
           {renderCheckbox('Soziales', sozialesChecked, () => handleCategoryChange('soziales'))}
           {renderCheckbox('Gastro', gastroChecked, () => handleCategoryChange('gastro'))}
+          {renderCheckbox('Handwerk', handwerkChecked, () => handleCategoryChange('handwerk'))}
+          {renderCheckbox('Bildung', bildungChecked, () => handleCategoryChange('bildung'))}
         </View>
       )}
     </View>

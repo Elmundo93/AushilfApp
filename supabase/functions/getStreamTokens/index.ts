@@ -20,6 +20,7 @@ const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
 const apiKey = Deno.env.get('GETSTREAM_API_KEY');
 const apiSecret = Deno.env.get('GETSTREAM_API_SECRET');
 
+console.log(supabaseUrl, supabaseAnonKey, apiKey, apiSecret);
 // Check if environment variables are loaded
 if (!supabaseUrl || !supabaseAnonKey || !apiKey || !apiSecret) {
   console.error("Environment variables are missing");
@@ -116,9 +117,9 @@ if (!supabaseUrl || !supabaseAnonKey || !apiKey || !apiSecret) {
       { headers: corsHeaders }
     );
   } catch (error) {
-    console.error("Error:", error.message);
+    console.error("Error:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error }),
       { status: 401, headers: corsHeaders }
     );
   }

@@ -1,8 +1,8 @@
 import React, { PropsWithChildren } from 'react';
 import { Chat, OverlayProvider } from 'stream-chat-expo';
 import { AuthState } from '@/components/types/auth'; 
-import { useAuthStore } from '../stores/AuthStore';
-import { Text } from 'react-native';
+import { useAuthStore } from '@/components/stores/AuthStore';
+
 import { useSegments } from "expo-router";
 import { router } from "expo-router";
 import { useEffect } from "react";

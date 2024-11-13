@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text } from 'react-native';
 import { createRStyle } from 'react-native-full-responsive';
-import { Post } from '../types/post'; 
+import { Post } from '@/components/types/post'; 
 import { useContext } from 'react';
 import { FontSizeContext } from '@/components/provider/FontSizeContext';
 import { Image } from 'react-native';
@@ -34,7 +34,7 @@ const PostHeader: React.FC<PostHeaderProps> = ({ item }) => {
       userId: item.userId,
       vorname: item.vorname,
       nachname: item.nachname,
-      profileImage: item.profileImage,
+      profileImageUrl: item.profileImageUrl,
       userBio: item.userBio,
     };
   
@@ -45,57 +45,65 @@ const PostHeader: React.FC<PostHeaderProps> = ({ item }) => {
   };
 
 
-
   return (
-  <View style={styles.header}>
-     <TouchableOpacity onPress={handleViewProfile}>
-    <Image 
-      source={{ uri: item.profileImage }} 
-      style={[styles.icon, { width: iconSize, height: iconSize }]} 
-    />
-  </TouchableOpacity>
-    <Text style={[styles.name, { fontSize: finalFontSize }]}>
-      {item.vorname} {item.nachname?.charAt(0)}.
-    </Text>
-    <Text style={[styles.location, { fontSize: finalFontSize -2}]}>{item.location}</Text>
-    <Text style={[styles.date, { fontSize: finalFontSize -2 }]}>
-      {new Date(item.created_at).getDate().toString().padStart(2, '0')}.
-      {(new Date(item.created_at).getMonth() + 1).toString().padStart(2, '0')}
-    </Text>
+    <View style={styles.header}>
+
+
+        
+          <View style={styles.locationContainer}>
+            <Text style={[styles.location, { fontSize: finalFontSize -2}]}>{item.location}</Text>
+            <Text style={[styles.date, { fontSize: finalFontSize -2 }]}>
+              {new Date(item.created_at).getDate().toString().padStart(2, '0')}.
+              {(new Date(item.created_at).getMonth() + 1).toString().padStart(2, '0')}
+            </Text>
+
+        </View>
+        <View style={styles.profileContainer}>
+        <TouchableOpacity onPress={handleViewProfile}>
+            <Image 
+              source={{ uri: item.profileImageUrl }} 
+              style={[styles.icon, { width: iconSize, height: iconSize }]} 
+            />
+          </TouchableOpacity>
+        <Text style={[styles.name, { fontSize: finalFontSize }]}>
+          {item.vorname} {item.nachname?.charAt(0)}.
+        </Text>
+        </View>
     </View>
   );
-};
+}
+  const styles = createRStyle({
+    header: {
+      width: '100%',
+      marginBottom: 5,
+    },
+    profileContainer: {
+      width: '100%',
+      flexDirection: 'row',
+      alignItems: 'center',
 
-const styles = createRStyle({
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 5,
-    width: '100%',
-  },
-  name: {
-
-    fontWeight: 'bold',
-    flex: 1,
-    alignSelf: 'center',
-    marginLeft: 10,
-  },
-  location: {
-    fontSize: 12,
-    color: '#555',
-    marginLeft: 'auto',
-  },
-  date: {
-    fontSize: 12,
-    color: '#555',
-    marginLeft: 10,
-  },
-
-  icon: {
-   
-    marginBottom: 5,
-    borderRadius: 50,
-  },
-});
+    },
+    
+    locationContainer: {
+      flexDirection: 'row',
+      justifyContent: 'flex-end',
+      gap:5,
+      marginVertical: -8,
+    },
+    name: {
+      fontWeight: 'bold',
+      marginLeft: 15,// Adjust this value based on your icon size
+      marginTop: 5,
+    },
+    location: {
+      color: '#555',
+    },
+    date: {
+      color: '#555',
+    },
+    icon: {
+      borderRadius: 50,
+    },
+  });
 
 export default React.memo(PostHeader);

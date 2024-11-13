@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { User } from '../types/auth';
+import { User } from '@/components/types/auth';
 import { StreamChat } from 'stream-chat';
 
 interface AuthState {

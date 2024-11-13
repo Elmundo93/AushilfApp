@@ -1,54 +1,107 @@
 import {
 	createMaterialTopTabNavigator,
 	MaterialTopTabNavigationOptions,
-	MaterialTopTabNavigationEventMap
-} from '@react-navigation/material-top-tabs';
-import { withLayoutContext } from 'expo-router';
-import { ParamListBase, TabNavigationState } from '@react-navigation/native';
-import { FontSizeContext } from '@/components/provider/FontSizeContext';
-import { useContext } from 'react';
-
-const { Navigator } = createMaterialTopTabNavigator();
-
-export const MaterialTopTabs = withLayoutContext<
+	MaterialTopTabNavigationEventMap, // Import the missing type
+  } from '@react-navigation/material-top-tabs';
+  import { withLayoutContext } from 'expo-router';
+  import { ParamListBase, TabNavigationState } from '@react-navigation/native';
+  import { FontSizeContext } from '@/components/provider/FontSizeContext';
+  import { useContext } from 'react';
+  import { Text } from 'react-native';
+  
+  const { Navigator } = createMaterialTopTabNavigator();
+  
+  export const MaterialTopTabs = withLayoutContext<
 	MaterialTopTabNavigationOptions & { href?: any },
 	typeof Navigator,
 	TabNavigationState<ParamListBase>,
-	MaterialTopTabNavigationEventMap
->(Navigator);
-const TabLayout = () => {
+	MaterialTopTabNavigationEventMap // Include the missing type argument
+  >(Navigator);
+  
+  const TabLayout = () => {
 	const { fontSize } = useContext(FontSizeContext);
-	const maxFontSize = 15; // Passen Sie diesen Wert nach Bedarf an
-	const defaultFontSize = 15; // Standard-Schriftgröße im Kontext
-	const componentBaseFontSize = 15; // Ausgangsschriftgröße für das Label
-	const minIconSize = 35;
-	const maxIconSize = 60;
+	const maxFontSize = 22;
+	const defaultFontSize = 15;
+	const componentBaseFontSize = 28;
 	const adjustedFontSize = (fontSize / defaultFontSize) * componentBaseFontSize;
 	const finalFontSize = Math.min(adjustedFontSize, maxFontSize);
-	const iconSize = Math.min(Math.max(fontSize * 1.5, minIconSize), maxIconSize);
-	
+  
 	const screenOptions: MaterialTopTabNavigationOptions = {
-		tabBarActiveTintColor: 'orange',
+	  tabBarActiveTintColor: 'orange',
+	  tabBarInactiveTintColor: '#131620',
+	  tabBarStyle: {
+		display: 'flex',
+	  },
 
-		tabBarInactiveTintColor: '#131620',
-		tabBarLabelStyle: { 
-		  fontSize: finalFontSize, 
-		  textTransform: 'capitalize', 
-		  fontWeight: 'bold',
-		  lineHeight: 25 
-		},
-		tabBarIndicatorStyle: { backgroundColor: 'orange' },
-		
-	  };
-
+	  tabBarIndicatorStyle: { backgroundColor: 'orange' },
+	  tabBarItemStyle: { width: 'auto' },
+	  tabBarScrollEnabled: true,
+	};
+  
 	return (
-	    <MaterialTopTabs screenOptions={screenOptions}>
-			<MaterialTopTabs.Screen name="nachrichten" options={{ title: 'Nachrichten', tabBarLabelStyle: {lineHeight: 25, fontSize: finalFontSize, fontWeight: 'bold' } }} />
-			<MaterialTopTabs.Screen name="pinnwand" options={{ title: 'Pinnwand', tabBarLabelStyle: {lineHeight: 25, fontSize: finalFontSize, fontWeight: 'bold' } }} />
-			
-			<MaterialTopTabs.Screen name="anmeldung" options={{ title: 'Anmeldung', tabBarLabelStyle: {lineHeight: 25, fontSize: finalFontSize, fontWeight: 'bold' } }} />
-		</MaterialTopTabs>
+	  <MaterialTopTabs screenOptions={screenOptions}>
+		<MaterialTopTabs.Screen
+		  name="nachrichten"
+		  options={{
+			title: 'Nachrichten',
+			tabBarLabel: ({ color }) => (
+			  <Text
+				numberOfLines={1}
+				adjustsFontSizeToFit
+				style={{
+				  lineHeight: 25,
+				  fontSize: finalFontSize,
+				  fontWeight: 'bold',
+				  color,
+				}}
+			  >
+				Nachrichten
+			  </Text>
+			),
+		  }}
+		/>
+		<MaterialTopTabs.Screen
+		  name="pinnwand"
+		  options={{
+			title: 'Pinnwand',
+			tabBarLabel: ({ color }) => (
+			  <Text
+				numberOfLines={1}
+				adjustsFontSizeToFit
+				style={{
+				  lineHeight: 25,
+				  fontSize: finalFontSize,
+				  fontWeight: 'bold',
+				  color,
+				}}
+			  >
+				Pinnwand
+			  </Text>
+			),
+		  }}
+		/>
+		<MaterialTopTabs.Screen
+		  name="anmeldung"
+		  options={{
+			title: 'Anmeldung',
+			tabBarLabel: ({ color }) => (
+			  <Text
+				numberOfLines={1}
+				adjustsFontSizeToFit
+				style={{
+				  lineHeight: 25,
+				  fontSize: finalFontSize,
+				  fontWeight: 'bold',
+				  color,
+				}}
+			  >
+				Anmeldung
+			  </Text>
+			),
+		  }}
+		/>
+	  </MaterialTopTabs>
 	);
-};
-
-export default TabLayout;
+  };
+  
+  export default TabLayout;
