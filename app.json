@@ -37,8 +37,7 @@
           "locationAlwaysAndWhenInUsePermission": "Die App benötigt Zugriff auf deinen Standort, um relevante Posts in deiner Nähe zu zeigen. Bitte aktiviere die Standortberechtigung in den Einstellungen.",
           "isAndroidForegroundServiceEnabled": true
         }
-      ],
-      "expo-sqlite"
+      ]
     ],
     "experiments": {
       "typedRoutes": true
