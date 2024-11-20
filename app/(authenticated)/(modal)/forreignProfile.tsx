@@ -5,7 +5,7 @@ import { Danksagung } from '@/components/types/Danksagungen';
 import { createRStyle } from 'react-native-full-responsive';
 import LottieView from 'lottie-react-native';
 import CreateDanksagung from '@/components/Crud/Danksagungen/createDanksagung';
-import { getDanksagungenFromSQLite } from '@/components/Crud/SQLite/Create/create&save&getDanksagungenDB';
+
 import { useDanksagungStore } from '@/components/stores/danksagungStores';
 import { useSelectedUserStore } from '@/components/stores/selectedUserStore';
 import { FontSizeContext } from '@/components/provider/FontSizeContext';
@@ -97,22 +97,7 @@ const ForreignProfile: React.FC = () => {
     </View>
   );
 
-  useEffect(() => {
-    const loadDanksagungen = async () => {
-      if (selectedUser?.userId) {
-        try {
-          setDanksagungenLoading(true);
-          const data = await getDanksagungenFromSQLite(selectedUser.userId);
-          setDanksagungen(data as Danksagung[]);
-        } catch (error) {
-          setDanksagungenError((error as Error).message);
-        } finally {
-          setDanksagungenLoading(false);
-        }
-      }
-    };
-    loadDanksagungen();
-  }, [selectedUser?.userId]);
+
 
   if (danksagungenLoading) {
     return <Text style={[styles.emptyListText, { fontSize: finalFontSize }]}>Lade Daten...</Text>;

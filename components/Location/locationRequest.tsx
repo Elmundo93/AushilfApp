@@ -1,13 +1,17 @@
-import { useEffect } from 'react';
+// useLocationRequest.js
+import { useEffect, useState } from 'react';
 import * as Location from 'expo-location';
-import { Alert } from 'react-native';
 import { useLocationStore } from '@/components/stores/locationStore';
 import { useAuthStore } from '@/components/stores/AuthStore';
+import { Alert, Linking } from 'react-native';
+import { PermissionStatus } from 'expo-location';
 
 export const useLocationRequest = () => {
-  const setLocation = useLocationStore((state: any) => state.setLocation);
-  const setUser = useAuthStore((state) => state.setUser);  // Zugriff auf den AuthStore
-  const user = useAuthStore((state) => state.user);  // Aktueller User
+  const location = useLocationStore((state) => state.location);
+  const setLocation = useLocationStore((state) => state.setLocation);
+  const setUser = useAuthStore((state) => state.setUser);
+  const [permissionStatus, setPermissionStatus] = useState<PermissionStatus | null>(null);
+  const setLocationPermission = useAuthStore((state) => state.setLocationPermission);
 
   const reverseGeocode = async (latitude: number, longitude: number) => {
     try {
@@ -15,83 +19,71 @@ export const useLocationRequest = () => {
         `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`
       );
       const data = await response.json();
-      return data.address.city || data.address.town || data.address.village; // Stadt, Dorf oder Ort
+      return data.address.city || data.address.town || data.address.village;
     } catch (error) {
-      console.error("Fehler beim Reverse Geocoding:", error);
+      console.error('Error during reverse geocoding:', error);
       return null;
     }
   };
 
-  useEffect(() => {
-    const getLocationPermission = async () => {
-      const { status } = await Location.getForegroundPermissionsAsync();
-      
-      if (status === 'undetermined') {
-        return new Promise((resolve) => {
-          Alert.alert(
-            "Standortberechtigung",
-            "Diese App benötigt Zugriff auf Ihren Standort, um Ihnen relevante Inhalte anzuzeigen. Möchten Sie den Zugriff erlauben?",
-            [
-              {
-                text: "Nein",
-                onPress: () => resolve(false),
-                style: "cancel"
+  const requestLocation = async () => {
+    if (location) {
+      return true;
+    }
+
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      setPermissionStatus(status);
+
+      if (status !== 'granted') {
+        console.error('Location permission denied');
+
+        Alert.alert(
+          'Standortberechtigung benötigt',
+          'Die App benötigt Zugriff auf deinen Standort, um relevante Posts in deiner Nähe zu zeigen. Bitte aktiviere die Standortberechtigung in den Einstellungen.',
+          [
+            {
+              text: 'Einstellungen öffnen',
+              onPress: () => {
+                Linking.openSettings();
               },
-              {
-                text: "Ja",
-                onPress: () => resolve(true)
-              }
-            ]
-          );
-        });
+            },
+            {
+              text: 'Abbrechen',
+              style: 'cancel',
+            },
+          ],
+          { cancelable: false }
+        );
+        return false;
       }
-      
-      return status === 'granted';
-    };
 
-    const requestAndSetLocation = async () => {
-      const hasPermission = await getLocationPermission();
-      
-      if (hasPermission) {
-        try {
-          let { status } = await Location.requestForegroundPermissionsAsync();
-          if (status !== 'granted') {
-            console.error('Standortberechtigung wurde verweigert');
-            return;
-          }
+      const { coords } = await Location.getCurrentPositionAsync({});
+      const { latitude, longitude } = coords;
 
-          let location = await Location.getCurrentPositionAsync({});
-          const { latitude, longitude } = location.coords;
+      setLocation({ latitude, longitude });
+      setLocationPermission(true);
 
-          // Standort im LocationStore setzen
-          setLocation({
-            latitude,
-            longitude,
+      const city = await reverseGeocode(latitude, longitude);
+
+      if (city) {
+        const currentUser = useAuthStore.getState().user;
+        if (currentUser?.id) {
+          setUser({
+            ...currentUser,
+            location: city,
           });
-
-          // Reverse Geocoding durchführen, um Städtenamen zu erhalten
-          const city = await reverseGeocode(latitude, longitude);
-          
-          if (city) {
-            // Aktuellen User holen und mit dem Städtenamen aktualisieren
-            if (user) {
-              setUser({
-                ...user,
-                location: city,  // Städtename in user.location speichern
-              });
-            }
-          } else {
-            console.error("Fehler beim Abrufen des Städtenamens");
-          }
-
-        } catch (error) {
-          console.error('Fehler beim Abrufen des Standorts:', error);
         }
       } else {
-        console.log('Standortberechtigung wurde nicht erteilt');
+        console.error('Error retrieving city name');
       }
-    };
 
-    requestAndSetLocation();
-  }, [setLocation, setUser, user]);
+      return true;
+    } catch (error) {
+      console.error('Error fetching location:', error);
+      return false;
+    }
+  };
+
+  return { permissionStatus, requestLocation };
 };

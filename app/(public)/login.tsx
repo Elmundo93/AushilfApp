@@ -12,6 +12,8 @@ import { AntDesign } from '@expo/vector-icons';
 import useKeyboard from '@/components/Keyboard/useKeyboard';
 import { Animated } from 'react-native';
 import { useLoading } from '@/components/provider/LoadingContext';
+import { PermissionStatus } from 'expo-location';
+
 
 
 
@@ -23,7 +25,10 @@ const login = () => {
  const { opacity } = useKeyboard();
  const { setIsLoading } = useLoading();
 
-  const handleLogin = async () => {
+ 
+ 
+ 
+ const handleLogin = async () => {
     if (!email || !password) {
       Alert.alert('Fehler', 'Bitte füllen Sie alle Felder aus.');
       return;
@@ -32,11 +37,15 @@ const login = () => {
     setLoading(true);
     try {
     const { userData } = await signInWithPassword(email, password);
+
       if (!userData) {
         Alert.alert('Anmeldefehler', 'Ungültige Anmeldeinformationen');
-      } else {
+      } else if (PermissionStatus.GRANTED === "granted") {
         setIsLoading(true); 
         router.replace('/(authenticated)/(aushilfapp)/pinnwand');
+      }
+      else {
+        router.replace('/(public)/(onBoarding)/locationPermission');
       }
     } catch (error) {
       Alert.alert('Fehler', 'Ein unerwarteter Fehler ist aufgetreten.');

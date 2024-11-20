@@ -15,5 +15,6 @@ export default function PublicLayout() {
     <Stack.Screen name="registration" options={{ headerShown: false}} />
     <Stack.Screen name="aufklaerung" options={{ headerShown: false}} />
     <Stack.Screen name="manuellRegistration" options={{ headerShown: false}} />
+    <Stack.Screen name="(onBoarding)" options={{ headerShown: false }}  />
     </Stack>
 }

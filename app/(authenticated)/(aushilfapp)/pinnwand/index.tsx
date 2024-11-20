@@ -27,9 +27,11 @@ import { useLocationRequest } from '@/components/Location/locationRequest';
 import { StyleSheet } from 'react-native';
 import EmptyListComponent from '@/components/Pinnwand/EmptyListComponent';
 import { useLoading } from '@/components/provider/LoadingContext';
-import { initPostsDatabase } from '@/components/Crud/SQLite/Create/create&save&getPostDB';
-import { initDanksagungenDatabase, saveDanksagungenToSQLite } from '@/components/Crud/SQLite/Create/create&save&getDanksagungenDB';
-import { getPostsFromSQLite, savePostsToSQLite } from '@/components/Crud/SQLite/Create/create&save&getPostDB';
+import { usePostService } from '@/components/Crud/SQLite/Services/postService';
+import { fetchPosts } from '@/components/Crud/Post/FetchPost';
+import PermissionDeniedScreen from '@/app/(public)/(onBoarding)/permissionDeniedScreen';
+
+
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -50,9 +52,12 @@ const PinnwandFilters: React.FC = () => {
   const [bildungChecked, setBildungChecked] = useState(false);
   const [isAccordionExpanded, setIsAccordionExpanded] = useState(false);
   const postCount = usePostStore((state: any) => state.postCount);
-  const setLocation = useLocationStore((state: any) => state.setLocation);
 
-  const fadeAnim = useRef(new Animated.Value(0)).current; // 
+  const location = useLocationStore((state: any) => state.location);
+  const { getPosts, addPosts } = usePostService();
+  const fadeAnim = useRef(new Animated.Value(0)).current; 
+  const { permissionStatus } = useLocationRequest();
+
 
   const toggleAccordion = useCallback(() => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -62,21 +67,12 @@ const PinnwandFilters: React.FC = () => {
   useLocationRequest();
 
 
-
   useEffect(() => {
-    const loadPostsAndDanksagungen = async () => {
+    const loadPosts = async () => {
       setLoading(true);
       try {
-        // Datenbanken initialisieren
-        await initPostsDatabase();
-        await initDanksagungenDatabase();
-
-        // Daten von Supabase abrufen und in SQLite speichern
-        await savePostsToSQLite();
-        await saveDanksagungenToSQLite();
-
-        // Daten aus SQLite abrufen
-        const postsList = await getPostsFromSQLite();
+        await addPosts(location);
+        const postsList = await getPosts();
         setPosts(postsList as Post[]);
         setFilteredPosts(postsList as Post[]);
       } catch (error) {
@@ -85,9 +81,11 @@ const PinnwandFilters: React.FC = () => {
         setLoading(false);
       }
     };
-
-    loadPostsAndDanksagungen();
-  }, [postCount]);
+  
+    if (location) {
+      loadPosts();
+    }
+  }, [postCount, location]);
 
 
 useEffect(() => {
@@ -157,6 +155,7 @@ useEffect(() => {
     return <PostItem item={item} />;
   }, []);
   
+
 
   return (
     <SafeAreaView style={styles.container}>

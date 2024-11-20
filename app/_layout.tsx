@@ -10,6 +10,7 @@ import { MenuProvider } from 'react-native-popup-menu';
 import { FontSizeProvider } from '@/components/provider/FontSizeContext';
 import { useColorScheme } from '@/components/useColorScheme';
 import { LoadingProvider } from '@/components/provider/LoadingContext';
+import { SQLiteProviderWrapper } from '@/components/provider/SQLiteProviderWrapper';
 
 export {
   ErrorBoundary, // Catch any errors thrown by the Layout component.
@@ -51,16 +52,18 @@ function RootLayoutNav() {
   return (
     <FontSizeProvider>
       <GestureHandlerRootView>
-        <MenuProvider>
-          <AuthProvider>
+        <SQLiteProviderWrapper>
+          <MenuProvider>
+            <AuthProvider>
             <LoadingProvider>
               <Stack screenOptions={{ headerShown: false }}>
                 <Stack.Screen name="(public)" />
                 <Stack.Screen name="(authenticated)" />
               </Stack>
             </LoadingProvider>
-          </AuthProvider>
-        </MenuProvider>
+            </AuthProvider>
+          </MenuProvider>
+        </SQLiteProviderWrapper>
       </GestureHandlerRootView>
     </FontSizeProvider>
   );

@@ -27,10 +27,13 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
     const inPublicGroup = segments[0] === "(public)";
     const inAuthenticatedGroup = segments[0] === "(authenticated)";
   
-    if (authenticated && !inAuthenticatedGroup) {
+    if (authenticated && !inAuthenticatedGroup && authState.locationPermission) {
       router.replace("/(authenticated)/pinnwand");
-    } else if (!authenticated && !inPublicGroup) {
+    } else if (!authenticated && !inPublicGroup ) {
       router.replace("/(public)/");
+    }
+    else if (authenticated && !inPublicGroup && !authState.locationPermission) {
+      router.replace("/(public)/(onBoarding)/locationPermission");
     }
   
     setTimeout(() => {
