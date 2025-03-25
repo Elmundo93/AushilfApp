@@ -60,7 +60,7 @@ const ChannelPreview: React.FC<ChannelPreviewProps> = React.memo(
               vorname: user.vorname || '',
               nachname: user.nachname || '',
               profileImageUrl: user.image || '',
-              userBio: user.userBio || '',
+              bio: user.userBio || '',
             };
 
             setPartnerData(newPartnerData);

@@ -39,7 +39,7 @@ export default function AuthenticatedLayout() {
      
       <SafeAreaView style={{ backgroundColor: 'white' }}>
          <LinearGradient
-      colors={['orange', '#e5b130', 'white']} // Passen Sie diese Farben nach Bedarf an
+      colors={['orange', '#e5b130', 'white']} 
       start={{ x: 0, y: 0 }}
       end={{ x: 0, y: 1 }}
       style={{
@@ -264,7 +264,57 @@ export default function AuthenticatedLayout() {
             ),
             }}
       />
-
+<Stack.Screen
+        name="(modal)/webView"
+        options={{ 
+            headerTitle: 'Anmeldung',
+            presentation: 'modal',
+            headerStyle: { backgroundColor: 'orange' },
+            headerTitleStyle: { fontSize: finalFontSize, color: 'white' } ,
+            headerShown: true, 
+            headerRight: () => (
+              <Link href=".." asChild>
+                <TouchableOpacity >
+                  <Ionicons name="close" size={iconSize} color="black" />
+                </TouchableOpacity>
+              </Link>
+            ),
+            }}
+      />
+     <Stack.Screen
+        name="(modal)/locationPermissionScreen"
+        options={{ 
+            headerTitle: 'Standortberechtigung',
+            presentation: 'modal',
+            headerTitleStyle: { fontSize: finalFontSize } ,
+            headerShown: true, 
+            header: () => (
+              <View style={{
+                backgroundColor: 'orange',
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                paddingHorizontal: 20,
+                height: headerHeight
+              }}>
+                <View style={{ width: iconSize }} />
+                <Text style={{
+                  fontSize: finalFontSize,
+                  fontWeight: 'bold',
+                  color: 'white',
+                  flex: 1,
+                  textAlign: 'center'
+                }}>
+                  Mein Profil
+                </Text>
+                <Link href=".." asChild>
+                  <TouchableOpacity>
+                    <Ionicons name="close" size={iconSize} color="black" />
+                  </TouchableOpacity>
+                </Link>
+              </View>
+            )}}
+      />
    
     </Stack>
   );

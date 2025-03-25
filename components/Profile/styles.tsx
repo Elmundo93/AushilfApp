@@ -6,6 +6,8 @@ export const styles = createRStyle({
     flex: 1,
     padding: 16,
     backgroundColor: 'white',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   profileImage: {
     width: 100,

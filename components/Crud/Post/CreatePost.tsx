@@ -4,12 +4,13 @@ import PostFilters from '@/components/Pinnwand/Checkboxes/CheckboxGroups/PostFil
 import { router } from 'expo-router';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { supabase } from '@/components/config/supabase';
-import { usePostStore } from '@/components/stores/postStores';
+import { usePostStore } from '@/components/stores/postStore';
 import { useAuthStore } from '@/components/stores/AuthStore';
 import { useLocationStore } from '@/components/stores/locationStore';
 import { FontSizeContext } from '@/components/provider/FontSizeContext';
 import { useContext } from 'react';
 import { StyleSheet } from 'react-native';
+import { usePostCountStore } from '@/components/stores/postCountStores';
 
 const CreatePost: React.FC = () => {
 
@@ -27,7 +28,7 @@ const CreatePost: React.FC = () => {
   const [selectedOption, setSelectedOption] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
 
-  const incrementPostCount = usePostStore((state) => state.incrementPostCount);
+  const incrementPostCount = usePostCountStore((state) => state.incrementPostCount);
   const location = useLocationStore((state) => state.location); 
 
   
@@ -57,6 +58,7 @@ const CreatePost: React.FC = () => {
         profileImageUrl: userData.profileImageUrl || '',
         lat: location?.latitude,
         long: location?.longitude,
+        userBio: userData.bio || '',
      
       });
 
@@ -65,7 +67,7 @@ const CreatePost: React.FC = () => {
       }
 
       console.log('Post erfolgreich erstellt');
-      incrementPostCount(); // Erhöht den postCount, was den useEffect in PinnwandFilters auslöst
+      incrementPostCount(); 
       router.back();
     } catch (error) {
       console.error('Fehler beim Erstellen des Posts:', error);

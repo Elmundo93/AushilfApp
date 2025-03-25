@@ -1,35 +1,28 @@
 import { Post } from '@/components/types/post';
 
-export const applyFilters = (
-  posts: Post[],
-  suchenChecked: boolean,
-  bietenChecked: boolean,
-  gartenChecked: boolean,
-  haushaltChecked: boolean,
-  sozialesChecked: boolean,
-  gastroChecked: boolean,
-  handwerkChecked: boolean,
-  bildungChecked: boolean
-): Post[] => {
+interface FilterState {
+  suchenChecked: boolean;
+  bietenChecked: boolean;
+  categories: Record<string, boolean>; // e.g., { garten: true, haushalt: false }
+}
+
+export const applyFilters = (posts: Post[], filters: FilterState): Post[] => {
+  const { suchenChecked, bietenChecked, categories } = filters;
+
   let filtered = posts;
 
+  // Option-based filtering
   if (suchenChecked || bietenChecked) {
     filtered = filtered.filter(post =>
       suchenChecked ? post.option === 'suchen' : post.option === 'bieten'
     );
   }
 
-  const categories = [
-    gartenChecked ? 'garten' : '',
-    haushaltChecked ? 'haushalt' : '',
-    sozialesChecked ? 'soziales' : '',
-    gastroChecked ? 'gastro' : '',
-    handwerkChecked ? 'handwerk' : '',
-    bildungChecked ? 'bildung' : '',
-  ].filter(Boolean);
+  // Category-based filtering
+  const activeCategories = Object.keys(categories).filter(key => categories[key]);
 
-  if (categories.length > 0) {
-    filtered = filtered.filter(post => categories.includes(post.category));
+  if (activeCategories.length > 0) {
+    filtered = filtered.filter(post => activeCategories.includes(post.category));
   }
 
   return filtered;

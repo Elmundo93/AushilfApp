@@ -12,10 +12,7 @@ function ChannelList() {
   const { fontSize } = useContext(FontSizeContext);
   const { channels, loading } = useChannels(selectedCategory);
 
-  // Font size calculations
-  const defaultFontSize = 22;
-  const componentBaseFontSize = 18;
-  const maxFontSize = 45;
+  
   const minIconSize = 75;
   const maxIconSize = 280;
   const iconSize = Math.min(Math.max(fontSize * 1.5, minIconSize), maxIconSize);
@@ -34,6 +31,8 @@ function ChannelList() {
       params: { cid: channel.cid },
     });
   };
+
+  console.log(channels);
 
   return (
     <View style={styles.container}>

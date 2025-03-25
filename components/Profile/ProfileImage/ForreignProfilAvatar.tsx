@@ -4,7 +4,9 @@ import { useSelectedUserStore } from '@/components/stores/selectedUserStore';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { FontSizeContext } from '@/components/provider/FontSizeContext';
 import { useContext } from 'react';
-
+import ShimmerPlaceholder from 'react-native-shimmer-placeholder';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useState } from 'react';
 
 interface ProfileAvatarProps {
   style?: ImageStyle;
@@ -22,7 +24,7 @@ const ForeignProfileAvatar: React.FC<ProfileAvatarProps> = ({ style }) => {
   const adjustedFontSize = (fontSize / defaultFontSize) * componentBaseFontSize;
   const iconSize = Math.min(Math.max(fontSize * 1.5, minIconSize), maxIconSize);
   const finalFontSize = Math.min(adjustedFontSize, maxFontSize);
-
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   const imageSource = selectedUser?.profileImageUrl
         ? { uri: selectedUser.profileImageUrl }
@@ -30,15 +32,24 @@ const ForeignProfileAvatar: React.FC<ProfileAvatarProps> = ({ style }) => {
 
   return (
    
+    <ShimmerPlaceholder
+    visible={imageLoaded}
+      style={[styles.avatar,  { width: iconSize, height: iconSize }]} 
+      LinearGradient={LinearGradient}
+      shimmerColors={['#FFE5B4', '#FFA500', '#FFE5B4']} shimmerStyle={{ locations: [0, 0.5, 1] }}
+    >
     <TouchableOpacity onPress={() => {
       console.log('ProfileAvatar pressed');
     }}>
     <Image
       source={imageSource}
       style={[styles.avatar, style, { width: iconSize, height: iconSize }]}
+      onLoadEnd={() => {
+        setImageLoaded(true);
+      }}
     />
     </TouchableOpacity>
-
+    </ShimmerPlaceholder>
   );
 };
 
@@ -46,6 +57,13 @@ const styles = StyleSheet.create({
   avatar: {
    
     borderRadius: 40,
+    marginBottom: 14,
+
+  },
+  shimmerImage: {
+   
+    borderRadius: 100,
+    marginBottom: 14,
   },
 });
 

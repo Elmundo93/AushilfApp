@@ -12,6 +12,12 @@ export interface User {
   bio?: string;
   profileImageUrl?: string;
   coverImageUrl?: string;
+  strasse?: string;
+  hausnummer?: string;
+  plz?: string;
+  wohnort?: string;
+  telefonnummer?: string;
+  steuernummer?: string;
 
   // Weitere Benutzerfelder hier
 }
@@ -22,7 +28,7 @@ export type UserProfile = {
   vorname: string;
   nachname: string;
   profileImageUrl: string;
-  userBio: string;
+  bio: string;
 };
 
 export type SignupData = Pick<User, 'email' | 'vorname' | 'nachname'  >;

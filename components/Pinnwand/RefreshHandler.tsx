@@ -1,54 +1,73 @@
-import React, { useCallback, useState, forwardRef } from 'react';
+import React, { forwardRef, LegacyRef as Ref, useCallback } from 'react';
 import { RefreshControl } from 'react-native';
-import { Post } from '@/components/types/post';
-import { refreshPosts } from '@/components/Crud/Post/FetchPost';
+import { usePostStore } from '@/components/stores/postStore'; 
+import { useLastFetchedAtStore } from '@/components/stores/lastFetchedAt';
+import { usePostService } from '@/components/Crud/SQLite/Services/postService';
+import { Location } from '@/components/stores/locationStore';
 
-interface RefreshHandlerProps {
-  onRefreshComplete: (refreshedPosts: Post[]) => void;
-}
+const THIRTY_MINUTES = 30 * 60 * 1000;
 
-const RefreshHandler = forwardRef<RefreshControl, RefreshHandlerProps>(
-  ({ onRefreshComplete, ...props }, ref) => {
-    const [refreshing, setRefreshing] = useState(false);
-  const [lastRefreshTime, setLastRefreshTime] = useState<number>(0);
+const RefreshHandler = forwardRef(({ location }: { location: Location | null }, ref) => {
+  const { loading, setLoading, setPosts } = usePostStore();
+  const { 
+    lastFetchedAtDragHandler, 
+    refreshCount, 
+    setRefreshCount, 
+    setLastFetchedAtDragHandler 
+  } = useLastFetchedAtStore();
+  const { addPosts, getPosts } = usePostService();
 
-  const onRefresh = useCallback(async () => {
-    const currentTime = Date.now();
-    const fiveMinutesInMs = 5 * 60 * 1000;
+  const refreshPosts = useCallback(async () => {
+    if (!location) return;
 
-    if (currentTime - lastRefreshTime < fiveMinutesInMs) {
-      alert('Bitte warten Sie 5 Minuten, bevor Sie erneut aktualisieren.');
+    const now = Date.now();
+    const withinWindow = lastFetchedAtDragHandler && (now - lastFetchedAtDragHandler < THIRTY_MINUTES);
+
+    // If we're outside the half-hour window or no window started yet, start a new one.
+    if (!withinWindow) {
+      // Reset counts and establish a new half-hour window
+      setRefreshCount(0);
+      setLastFetchedAtDragHandler(now);
+    }
+
+    // Now we are guaranteed to be in a window. Check how many refreshes we have left.
+    if (refreshCount >= 5) {
+      // User reached the limit in this half-hour window
+      console.log('Refresh limit reached. Please wait until the half-hour window resets.');
       return;
     }
-  
-    setRefreshing(true);
-    try {
-      const refreshedPosts = await refreshPosts();
-      onRefreshComplete(refreshedPosts);
-      setLastRefreshTime(currentTime);
-    } catch (error) {
-      console.error("Fehler beim Aktualisieren der Posts:", error);
-    } finally {
-      setRefreshing(false);
-    }
-  }, [lastRefreshTime, onRefreshComplete]);
 
-  const getRemainingRefreshTime = useCallback(() => {
-    const currentTime = Date.now();
-    const fiveMinutesInMs = 5 * 60 * 1000;
-    const timeSinceLastRefresh = currentTime - lastRefreshTime;
-    const remainingTime = Math.max(0, fiveMinutesInMs - timeSinceLastRefresh);
-    return Math.ceil(remainingTime / 1000);
-  }, [lastRefreshTime]);
+    // Proceed with the refresh
+    setLoading(true);
+    try {
+      await addPosts(location);
+      const newPosts = await getPosts();
+      setPosts(newPosts);
+
+      // Increment the refresh count since we successfully refreshed
+      setRefreshCount(refreshCount + 1);
+      
+      // Note: We do NOT reset lastFetchedAtDragHandler here. It remains the start of this window.
+      
+    } catch (error) {
+      console.error('Error during manual refresh:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [location, lastFetchedAtDragHandler, refreshCount, setRefreshCount, setLastFetchedAtDragHandler, setPosts, setLoading, addPosts, getPosts]);
+
+  const onRefresh = async () => {
+    await refreshPosts();
+  };
 
   return (
-    <RefreshControl 
-      refreshing={refreshing} 
+    <RefreshControl
+      ref={ref as Ref<RefreshControl>}
+      refreshing={loading}
       onRefresh={onRefresh}
-      title={getRemainingRefreshTime() > 0 ? `Warten Sie ${getRemainingRefreshTime()} Sekunden` : 'Zum Aktualisieren ziehen'}
+      title="Pinnwand aktualisieren"
     />
-    );
-  }
-);
+  );
+});
 
 export default RefreshHandler;

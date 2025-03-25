@@ -2,7 +2,7 @@
 
 
 export function getBoundingBox(latitude: number, longitude: number, radiusInKm: number) {
-    const earthRadius = 6371; // Erdradius in Kilometern
+    const earthRadius = 6371; 
   
     const maxLat = latitude + (radiusInKm / earthRadius) * (180 / Math.PI);
     const minLat = latitude - (radiusInKm / earthRadius) * (180 / Math.PI);

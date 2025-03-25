@@ -2,11 +2,12 @@ import { supabase } from '@/components/config/supabase';
 import { Danksagung } from '@/components/types/Danksagungen';
 import { useLocationStore } from '@/components/stores/locationStore';
 import { getBoundingBox } from '@/components/Location/boundingBox';
+import { Location } from '@/components/stores/locationStore';
 
-const location = useLocationStore.getState().location;
+
 const radiusInKm = 10; // Dieser Wert kann angepasst werden
 
-export const fetchDanksagungen = async (): Promise<Danksagung[]> => {
+export const fetchDanksagungen = async (location: Location | null): Promise<Danksagung[]> => {
   try {
     if (!location) {
       throw new Error('Benutzerstandort ist nicht verfügbar');
@@ -36,9 +37,9 @@ export const fetchDanksagungen = async (): Promise<Danksagung[]> => {
   }
 };
 
-export const refreshDanksagungen = async (): Promise<Danksagung[]> => {
+export const refreshDanksagungen = async (location: Location): Promise<Danksagung[]> => {
   try {
-    const danksagungen = await fetchDanksagungen();
+    const danksagungen = await fetchDanksagungen(location);
     console.log('Danksagungen erfolgreich aktualisiert');
     return danksagungen;
   } catch (error) {

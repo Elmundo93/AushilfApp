@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Image, StyleSheet, ImageStyle } from 'react-native';
 import { useContext } from 'react';
 import { FontSizeContext } from '@/components/provider/FontSizeContext';
+import ShimmerPlaceholder from 'react-native-shimmer-placeholder';
+import { LinearGradient } from 'expo-linear-gradient';
 
 interface ProfileImageProps {
   style?: ImageStyle;
@@ -18,12 +20,21 @@ const ProfileImage: React.FC<ProfileImageProps> = ({ style, imageUrl }) => {
   // Begrenzen Sie die Schriftgröße auf den maximalen Wert
   const adjustedFontSize = (fontSize / defaultFontSize) * componentBaseFontSize;
   const finalFontSize = Math.min(adjustedFontSize, maxFontSize);
+  const [imageLoaded, setImageLoaded] = useState(false);
   const iconSize = Math.min(Math.max(fontSize * 1.5, minIconSize), maxIconSize);
   return (
+    <ShimmerPlaceholder
+    visible={imageLoaded}
+      style={[styles.avatar,  { width: iconSize, height: iconSize }]} 
+      LinearGradient={LinearGradient}
+      shimmerColors={['#FFE5B4', '#FFA500', '#FFE5B4']} shimmerStyle={{ locations: [0, 0.5, 1] }}
+    >
     <Image
       source={imageUrl ? { uri: imageUrl } : require('@/assets/images/bienenlogo.png')}
-      style={[styles.avatar,  { width: iconSize, height: iconSize }]} // Stile zusammenführen
+      style={[styles.avatar,  { width: iconSize, height: iconSize }]} 
+      onLoadEnd={() => setImageLoaded(true)}
     />
+    </ShimmerPlaceholder>
   );
 };
 

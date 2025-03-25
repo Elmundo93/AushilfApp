@@ -1,32 +1,32 @@
-import React from 'react';
-import { View, Image } from 'react-native';
+import React, { useEffect, useState, useContext } from 'react';
+import { View, Image, Animated, StyleSheet } from 'react-native';
 import { Post } from '@/components/types/post';
-import { useAuthStore } from '@/components/stores/AuthStore';
-import { useContext } from 'react';
 import { FontSizeContext } from '@/components/provider/FontSizeContext';
-import { StyleSheet } from 'react-native';
-
+import ShimmerPlaceholder from 'react-native-shimmer-placeholder';
+import { LinearGradient } from 'expo-linear-gradient';
+import { usePlaceholderAnimation } from '@/components/Animation/PlaceholderAnimation';
 
 interface PostIconsProps {
   item: Post;
+  allLoaded: boolean;
+  updateLoadingState: (isLoading: boolean) => void;
 }
 
-const PostIcons: React.FC<PostIconsProps> = ({ item }) => {
-  const { user } = useAuthStore();
+const PostIcons: React.FC<PostIconsProps> = ({ item, allLoaded, updateLoadingState }) => {
   const { fontSize } = useContext(FontSizeContext);
-  const maxFontSize = 42; // Passen Sie diesen Wert nach Bedarf an
-  const defaultFontSize = 22; // Standard-Schriftgröße im Kontext
-  const componentBaseFontSize = 34; // Ausgangsschriftgröße für das Label
   const minIconSize = 45;
   const maxIconSize = 60;
   const iconSize = Math.min(Math.max(fontSize * 1.5, minIconSize), maxIconSize);
-  
-  
 
-  // Berechnung der angepassten Schriftgröße
-  const adjustedFontSize = (fontSize / defaultFontSize) * componentBaseFontSize;
+  const [imagesLoaded, setImagesLoaded] = useState({ optionIcon: false, categoryIcon: false });
 
-  const finalFontSize = Math.min(adjustedFontSize, maxFontSize);
+  useEffect(() => {
+    if (imagesLoaded.optionIcon && imagesLoaded.categoryIcon) {
+      updateLoadingState(false);
+    }
+  }, [imagesLoaded]);
+
+  const { fadeAnim} = usePlaceholderAnimation(allLoaded);
 
   const getOptionIcon = (option: string) => {
     switch (option) {
@@ -61,13 +61,29 @@ const PostIcons: React.FC<PostIconsProps> = ({ item }) => {
   const optionIcon = getOptionIcon(item.option);
   const categoryIcon = getCategoryIcon(item.category);
 
-  
-
   return (
     <View style={styles.iconContainer}>
-    
-      <Image source={optionIcon} style={[styles.icon, { width: iconSize, height: iconSize }]} />
-      <Image source={categoryIcon} style={[styles.icon, { width: iconSize, height: iconSize }]} />
+
+        <ShimmerPlaceholder LinearGradient={LinearGradient} visible={allLoaded} style={styles.ShimmerIcon} shimmerColors={['#FFE5B4', '#FFA500', '#FFE5B4']} shimmerStyle={{ locations: [0, 0.5, 1] }}>
+          <Image
+            source={optionIcon}
+            style={[styles.icon, { width: iconSize, height: iconSize }]}
+            onLoadEnd={() => setImagesLoaded((prev) => ({ ...prev, optionIcon: true }))}
+            onError={() => setImagesLoaded((prev) => ({ ...prev, optionIcon: true }))}
+          />
+          </ShimmerPlaceholder>
+
+
+          <ShimmerPlaceholder LinearGradient={LinearGradient} visible={allLoaded} style={styles.ShimmerIcon}shimmerColors={['#FFE5B4', '#FFA500', '#FFE5B4']} shimmerStyle={{ locations: [0, 0.5, 1] }}>
+          <Image
+            source={categoryIcon}
+            style={[styles.icon, { width: iconSize, height: iconSize }]}
+            onLoadEnd={() => setImagesLoaded((prev) => ({ ...prev, categoryIcon: true }))}
+            onError={() => setImagesLoaded((prev) => ({ ...prev, categoryIcon: true }))}
+          />
+        </ShimmerPlaceholder>
+
+
     </View>
   );
 };
@@ -79,9 +95,14 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   icon: {
-   
     marginBottom: 5,
     borderRadius: 50,
+  },
+  ShimmerIcon: {
+    width: 50,
+    height: 50,
+    borderRadius: 50,
+
   },
 });
 

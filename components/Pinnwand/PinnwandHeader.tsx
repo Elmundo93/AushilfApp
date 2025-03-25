@@ -104,11 +104,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     overflow: 'hidden',
     elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    borderWidth: 1,
+ 
     borderColor: 'rgba(255, 140, 0, 0.5)',
     marginBottom: 10,
   },

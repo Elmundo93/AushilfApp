@@ -19,6 +19,8 @@ export const useChannels = (selectedCategory: string | null) => {
       };
 
       const response = await streamChatClient.queryChannels(filters);
+
+      
       setAllChannels(response);
       
       if (selectedCategory) {
@@ -103,7 +105,6 @@ export const useChannels = (selectedCategory: string | null) => {
             break;
         }
 
-        // Update filtered channels based on selected category
         if (selectedCategory) {
           setChannels(
             updatedAllChannels.filter(

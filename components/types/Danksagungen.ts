@@ -3,7 +3,7 @@ export interface Danksagung {
     writtenText: string;
     userId: string;
   created_at: string;
-  profileImage: string;
+  profileImageUrl: string;
   vorname: string;
   nachname: string;
   location: string;

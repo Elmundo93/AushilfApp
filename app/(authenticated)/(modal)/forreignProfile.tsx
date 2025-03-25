@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { View, Text} from 'react-native';
 import ForeignProfileAvatar from '@/components/Profile/ProfileImage/ForreignProfilAvatar';
 import { Danksagung } from '@/components/types/Danksagungen';
@@ -13,11 +13,13 @@ import { useContext } from 'react';
 import {Animated} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRef } from 'react';
+import { useFetchDanksagungen } from '@/components/Crud/SQLite/Hook/fetchAndSetDanksagungen';
+import { Location, useLocationStore } from '@/components/stores/locationStore';
 const ForreignProfile: React.FC = () => {
 
-  const [danksagungen, setDanksagungen] = useState<Danksagung[]>([]);
-  const [danksagungenLoading, setDanksagungenLoading] = useState(false);
-  const [danksagungenError, setDanksagungenError] = useState<string | null>(null);
+
+
+
   const { selectedUser } = useSelectedUserStore();
   const danksagungCount = useDanksagungStore(state => state.danksagungCount);
   const { fontSize } = useContext(FontSizeContext);
@@ -29,11 +31,19 @@ const ForreignProfile: React.FC = () => {
   const adjustedFontSize = (fontSize / defaultFontSize) * componentBaseFontSize;
   const iconSize = Math.min(Math.max(fontSize * 1.5, minIconSize), maxIconSize);
   const finalFontSize = Math.min(adjustedFontSize, maxFontSize);
+  const location = useLocationStore(state => state.location);
+  const loading = useDanksagungStore(state => state.loading);
+  const error = useDanksagungStore(state => state.error);
+  const danksagungen = useDanksagungStore(state => state.danksagungen);
+  useFetchDanksagungen(location, selectedUser?.userId || ''); 
 
 
   const scrollY = useRef(new Animated.Value(0)).current;
 
   const headerHeight = 200; // Höhe des Gradienten, anpassen nach Bedarf
+
+
+
 
   const gradientTranslateY = scrollY.interpolate({
     inputRange: [0, headerHeight],
@@ -57,14 +67,14 @@ const ForreignProfile: React.FC = () => {
   const renderHeader = () => (
     <View style={styles.header}>
       <View style={styles.userInfoCard}>
-        <View>
+        <View style={styles.profileImageContainer}>
           <ForeignProfileAvatar style={styles.profileImage} />
           <Text style={[styles.userName, { fontSize: finalFontSize }]}>{formatName(selectedUser?.vorname || '', selectedUser?.nachname || '')}</Text>
         </View>
         <View style={styles.userBioContainer}>
           <Text style={[styles.userBioTitle, { fontSize: finalFontSize -8 }]}>Über mich:</Text>
 
-            <Text style={[styles.userBio, { fontSize: finalFontSize }]}>{selectedUser?.userBio || ''}</Text>
+            <Text style={[styles.userBio, { fontSize: finalFontSize }]}>{selectedUser?.bio || ''}</Text>
           
         </View>
       </View>
@@ -73,6 +83,7 @@ const ForreignProfile: React.FC = () => {
       
       <View style={styles.danksagungenHeader}>
         <Text style={[styles.danksagungenTitle, { fontSize: finalFontSize +8 }]}>Danksagungen</Text>
+        <Text style={[styles.danksagungenTitleText, { fontSize: finalFontSize }]}>{selectedUser?.vorname} war dir eine helfende Hand? dann hinterlass' gerne eine Danksagung!</Text>
       </View>
 
       <CreateDanksagung 
@@ -99,12 +110,12 @@ const ForreignProfile: React.FC = () => {
 
 
 
-  if (danksagungenLoading) {
+  if (loading ) {
     return <Text style={[styles.emptyListText, { fontSize: finalFontSize }]}>Lade Daten...</Text>;
   }
 
-  if (danksagungenError) {
-    return <Text style={[styles.emptyListText, { fontSize: finalFontSize }]}>Fehler beim Laden der Daten: {danksagungenError}</Text>;
+  if (error) {
+    return <Text style={[styles.emptyListText, { fontSize: finalFontSize }]}>Fehler beim Laden der Daten: {error}</Text>;
   }
 
   if (!selectedUser) {
@@ -136,6 +147,7 @@ const ForreignProfile: React.FC = () => {
         ListEmptyComponent={
           <View style={styles.emptyListContainer}>
             <Text style={[styles.emptyListText, { fontSize: finalFontSize }]}>Keine Danksagungen für diesen Benutzer gefunden.</Text>
+            <Text style={[styles.emptyListText, { fontSize: finalFontSize }]}>Du kannst der/die erste sein!</Text>
           </View>
         }
         extraData={danksagungCount} // Fügen Sie dies hinzu, um die Liste bei Änderungen neu zu rendern
@@ -164,7 +176,7 @@ const styles = createRStyle({
   profileImage: {
     
     alignSelf: 'center',
-    marginBottom: 16,
+
     borderRadius: 100,
   },
   trenner: {
@@ -243,6 +255,8 @@ const styles = createRStyle({
   }, 
   header: {
     marginBottom: 20,
+
+
   },
   danksagungenHeader: {
     marginBottom: 16,
@@ -252,6 +266,12 @@ const styles = createRStyle({
 
     fontWeight: 'bold',
     color: 'orange',
+    marginBottom: 8,
+    letterSpacing: 2,
+  },
+  danksagungenTitleText: {
+
+    color: 'grey',
     marginBottom: 8,
     letterSpacing: 2,
   },
@@ -270,6 +290,10 @@ const styles = createRStyle({
     alignSelf: 'center',
     fontSize: 20,
     textAlign: 'center',
+  },
+  profileImageContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 

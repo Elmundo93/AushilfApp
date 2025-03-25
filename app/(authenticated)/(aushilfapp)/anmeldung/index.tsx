@@ -1,58 +1,80 @@
-import { Link } from 'expo-router';
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useCallback, useContext, useState } from 'react';
+import { View, Text, StyleSheet, LayoutAnimation } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
-import * as Linking from 'expo-linking';
 import { FontSizeContext } from '@/components/provider/FontSizeContext';
-import { useContext } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import AnmeldenAccordion from '@/components/Anmelden/AnmeldenAccordion';
+import { ScrollView } from 'react-native';
 const AnmeldungPage = () => {
   const { fontSize } = useContext(FontSizeContext);
-  const defaultFontSize = 20; // Standard-Schriftgröße im Kontext
-  const componentBaseFontSize = 26; // Ausgangsschriftgröße für das Label
-
-  // Berechnung der angepassten Schriftgröße
+  const defaultFontSize = 20; 
+  const componentBaseFontSize = 26; 
   const adjustedFontSize = (fontSize / defaultFontSize) * componentBaseFontSize;
-
-  // Optional: Grenzen setzen
   const maxFontSize = 40;
   const finalFontSize = Math.min(adjustedFontSize, maxFontSize);
+  const router = useRouter(); 
+    const [isExpanded, setIsExpanded] = useState(false);
+
+
+
+  const toggleAccordion = useCallback(() => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setIsExpanded(prev => !prev);
+  }, []);
+
+
+
+
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
+       <AnmeldenAccordion
+          isExpanded={isExpanded}
+          onToggle={toggleAccordion}
+          accordionTitle="Anmeldedaten speichern"
+          style={styles.accordion}
+        />
       <View style={styles.textContainer}>
         <LinearGradient
-        colors={['orange', 'white']}
-        start={{ x: 1, y: 1 }}
-        end={{ x: 0, y: 0 }}
-        style={styles.gradient}
-      />
+          colors={['orange', 'white']}
+          start={{ x: 1, y: 1 }}
+          end={{ x: 0, y: 0 }}
+          style={styles.gradient}
+        />
+       
         <Text style={[styles.text, { fontSize: finalFontSize }]}>
           Du hast eine helfende Hand gefunden, oder hast die Möglichkeit eine zu sein?
         </Text>
         <Text style={[styles.text, { fontSize: finalFontSize }]}>
           Dann erfahre alles was du über die Anmeldung wissen musst, schnell und einfach
         </Text>
-        <Link href='/pinnwand'>
-          <TouchableOpacity 
-            style={styles.button} 
-            onPress={() => Linking.openURL('https://www.minijob-zentrale.de/DE/service/formulare/haushaltshilfe-anmelden/_node.html')}
-          >
-            <Text style={[styles.buttonText, { fontSize: finalFontSize }]}>Hier!</Text>
-          </TouchableOpacity>
-        </Link>
+        
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => router.push('/webView')}
+        >
+          <Text style={[styles.buttonText, { fontSize: finalFontSize }]}>
+            Hier!
+          </Text>
+        </TouchableOpacity>
+        <Text style={[styles.text, { fontSize: finalFontSize }]}>
+          (Deine Anmeldedaten werden automatisch übertragen! ✌️)
+        </Text>
       </View>
-    </View>
+      
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-
-    alignItems: 'center',
+   
     backgroundColor: 'white',
     padding: 20,
-    
+  },
+  accordion: {
+    marginBottom: 20,
   },
   gradient: {
     position: 'absolute',
@@ -71,14 +93,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e0e0e0',
     width: '100%',
-    maxWidth: 500, // Maximale Breite hinzugefügt
-    
+    maxWidth: 500,
+    marginBottom: 40,
   },
   text: {
     color: '#444',
     textAlign: 'center',
     marginBottom: 15,
-    lineHeight: 40, // Erhöht für besseren Zeilenabstand
+    lineHeight: 40,
   },
   button: {
     backgroundColor: '#ff8c00',

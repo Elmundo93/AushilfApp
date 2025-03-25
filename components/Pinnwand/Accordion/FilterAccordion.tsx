@@ -5,6 +5,7 @@ import { createRStyle } from 'react-native-full-responsive';
 import { FilterAccordionProps } from '@/components/types/components';
 import { useContext } from 'react';
 import { FontSizeContext } from '@/components/provider/FontSizeContext';
+import { usePostStore } from '@/components/stores/postStore';
 
 
 
@@ -12,18 +13,10 @@ const FilterAccordion: React.FC<FilterAccordionProps> = React.memo(({
   isExpanded,
   onToggle,
   renderCheckbox,
-  suchenChecked,
-  bietenChecked,
-  gartenChecked,
-  haushaltChecked,
-  sozialesChecked,
-  gastroChecked,
-  handwerkChecked,
-  bildungChecked,
-  handleSuchenBietenChange,
-  handleCategoryChange
 }) => {
   const { fontSize } = useContext(FontSizeContext);
+  const { filters, setFilters } = usePostStore(); 
+
   const maxFontSize = 45; // Passen Sie diesen Wert nach Bedarf an
 
   const defaultFontSize = 24; // Standard-Schriftgröße im Kontext
@@ -35,6 +28,22 @@ const FilterAccordion: React.FC<FilterAccordionProps> = React.memo(({
   const adjustedFontSize = (fontSize / defaultFontSize) * componentBaseFontSize;
   const finalFontSize = Math.min(adjustedFontSize, maxFontSize);
   const iconSize = Math.min(Math.max(fontSize * 1.5, minIconSize), maxIconSize);
+  const handleSuchenBietenChange = (option: string) => {
+    setFilters({
+      suchenChecked: option === 'suchen' ? !filters.suchenChecked : false,
+      bietenChecked: option === 'bieten' ? !filters.bietenChecked : false,
+    });
+  };
+
+  const handleCategoryChange = (category: string) => {
+    setFilters({
+      categories: {
+
+        [category]: !filters.categories[category],
+      },
+    });
+  };
+
   return (
     <View style={styles.accordContainer}>
       <TouchableOpacity style={styles.accordHeader} onPress={onToggle}>
@@ -47,15 +56,15 @@ const FilterAccordion: React.FC<FilterAccordionProps> = React.memo(({
       </TouchableOpacity>
       {isExpanded && (
         <View style={styles.filtersContainer}>
-          {renderCheckbox('Suchen', suchenChecked, () => handleSuchenBietenChange('suchen'))}
-          {renderCheckbox('Bieten', bietenChecked, () => handleSuchenBietenChange('bieten'))}
+          {renderCheckbox('Suchen', filters.suchenChecked, () => handleSuchenBietenChange('suchen'))}
+          {renderCheckbox('Bieten', filters.bietenChecked, () => handleSuchenBietenChange('bieten'))}
           <View style={styles.trenner} />
-          {renderCheckbox('Garten', gartenChecked, () => handleCategoryChange('garten'))}
-          {renderCheckbox('Haushalt', haushaltChecked, () => handleCategoryChange('haushalt'))}
-          {renderCheckbox('Soziales', sozialesChecked, () => handleCategoryChange('soziales'))}
-          {renderCheckbox('Gastro', gastroChecked, () => handleCategoryChange('gastro'))}
-          {renderCheckbox('Handwerk', handwerkChecked, () => handleCategoryChange('handwerk'))}
-          {renderCheckbox('Bildung', bildungChecked, () => handleCategoryChange('bildung'))}
+          {renderCheckbox('Garten', filters.categories.garten, () => handleCategoryChange('garten'))}
+          {renderCheckbox('Haushalt', filters.categories.haushalt, () => handleCategoryChange('haushalt'))}
+          {renderCheckbox('Soziales', filters.categories.soziales, () => handleCategoryChange('soziales'))}
+          {renderCheckbox('Gastro', filters.categories.gastro, () => handleCategoryChange('gastro'))}
+          {renderCheckbox('Handwerk', filters.categories.handwerk, () => handleCategoryChange('handwerk'))}
+          {renderCheckbox('Bildung', filters.categories.bildung, () => handleCategoryChange('bildung'))}
         </View>
       )}
     </View>
@@ -95,7 +104,7 @@ const styles = createRStyle({
     backgroundColor: 'lightgrey',
     
   },
-  // ... andere Stile ...
+
 });
 
 export default FilterAccordion;

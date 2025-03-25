@@ -1,59 +1,30 @@
-import React, { PropsWithChildren } from 'react';
+// AuthProvider.tsx
+import React, { PropsWithChildren} from 'react';
 import { Chat, OverlayProvider } from 'stream-chat-expo';
-import { AuthState } from '@/components/types/auth'; 
 import { useAuthStore } from '@/components/stores/AuthStore';
 
-import { useSegments } from "expo-router";
-import { router } from "expo-router";
-import { useEffect } from "react";
-import { SplashScreen } from "expo-router";
-
-const AuthContext = React.createContext<AuthState | null>(null);
-
-export function useAuth() {
-  const context = React.useContext(AuthContext);
-  if (context === null) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-}
-
-export const AuthProvider = ({ children }: PropsWithChildren) => {
-  const authState = useAuthStore(); // Hole das gesamte AuthStore-Objekt
-  const authenticated = useAuthStore((state) => state.authenticated);
-  const segments = useSegments();
-
-  useEffect(() => {
-    const inPublicGroup = segments[0] === "(public)";
-    const inAuthenticatedGroup = segments[0] === "(authenticated)";
-  
-    if (authenticated && !inAuthenticatedGroup && authState.locationPermission) {
-      router.replace("/(authenticated)/pinnwand");
-    } else if (!authenticated && !inPublicGroup ) {
-      router.replace("/(public)/");
-    }
-    else if (authenticated && !inPublicGroup && !authState.locationPermission) {
-      router.replace("/(public)/(onBoarding)/locationPermission");
-    }
-  
-    setTimeout(() => {
-      SplashScreen.hideAsync();
-    }, 500);
-  }, [authenticated, segments]);
 
 
-  // Der Chat wird nur gerendert, wenn der Stream-Client, der Benutzer und der Token vorhanden sind
+const AuthProvider = ({ children }: PropsWithChildren) => {
+  const authState = useAuthStore();
+  const { 
+    user, 
+    token, 
+    streamChatClient
+  } = authState;
+
+
+
   return (
-    <AuthContext.Provider value={authState}>
-      <OverlayProvider>
-        {authState.user && authState.token && authState.streamChatClient ? (
-          <Chat client={authState.streamChatClient}>
-            {children}
-          </Chat>
-        ) : (
-          children
-        )}
-      </OverlayProvider>
-    </AuthContext.Provider>
+    <OverlayProvider>
+     
+      {user && token && streamChatClient ? (
+        <Chat client={streamChatClient}>{children}</Chat>
+      ) : (
+        children
+      )}
+    </OverlayProvider>
   );
 };
+
+export default AuthProvider;

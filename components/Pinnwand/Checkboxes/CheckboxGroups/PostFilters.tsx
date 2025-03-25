@@ -89,7 +89,7 @@ const PostFilters: React.FC<PostFiltersProps>  = ({ onOptionChange, onCategoryCh
               
               <TouchableOpacity
                 style={[styles.bieteAnButton, {
-                  backgroundColor: bietenChecked ? 'rgb(184,0,211)' : 'white',
+                  backgroundColor: bietenChecked ? 'blue' : 'white',
                   width: adjustedWidth,
                   height: adjustedHeight
                 }]}

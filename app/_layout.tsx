@@ -4,13 +4,14 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { AuthProvider } from '@/components/provider/AuthProvider';
+import AuthProvider  from '@/components/provider/AuthProvider';
 import 'react-native-reanimated';
 import { MenuProvider } from 'react-native-popup-menu';
 import { FontSizeProvider } from '@/components/provider/FontSizeContext';
 import { useColorScheme } from '@/components/useColorScheme';
 import { LoadingProvider } from '@/components/provider/LoadingContext';
 import { SQLiteProviderWrapper } from '@/components/provider/SQLiteProviderWrapper';
+
 
 export {
   ErrorBoundary, // Catch any errors thrown by the Layout component.
@@ -19,9 +20,7 @@ export {
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
-export const unstable_settings = {
-  initialRouteName: '(tabs)', // Ensure that reloading on `/modal` keeps a back button present.
-};
+
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
@@ -56,12 +55,16 @@ function RootLayoutNav() {
           <MenuProvider>
             <AuthProvider>
             <LoadingProvider>
-              <Stack screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="(public)" />
+
+                <Stack screenOptions={{ headerShown: false }}>
+                  <Stack.Screen name="(public)" />
+
                 <Stack.Screen name="(authenticated)" />
-              </Stack>
+
+                </Stack>
+
             </LoadingProvider>
-            </AuthProvider>
+          </AuthProvider>
           </MenuProvider>
         </SQLiteProviderWrapper>
       </GestureHandlerRootView>

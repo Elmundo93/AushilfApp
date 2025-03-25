@@ -1,10 +1,10 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, TextInput } from 'react-native';
 import ProfileImagePicker from '@/components/Profile/ProfileImage/ProfileImagePicker';
-import LottieView from 'lottie-react-native';
+
 import { User } from '@/components/types/auth';
 import { styles } from '@/components/Profile/styles';
-import { useBioUpdate } from '@/components/Crud/Profile/createÜberMich';
+import { useBioUpdate } from '@/components/Crud/Profile/createÜberMich';
 import { FontSizeContext } from '@/components/provider/FontSizeContext';
 import { useContext } from 'react';
 
@@ -67,24 +67,7 @@ const UserProfileHeaderComponent: React.FC<UserProfileHeaderProps> = ({
       <View style={styles.trenner2} />
 
       <View style={styles.danksagungenHeader}>
-        <Text style={[styles.danksagungenTitle, { fontSize: finalFontSize }]}>Danksagungen</Text>
-      </View>
-
-
-
-      <View style={styles.lottieContainer}>
-        <LottieView
-          source={require('@/assets/animations/SpinnigGreenArrow.json')}
-          autoPlay
-          loop
-          style={styles.lottie}
-        />
-        <LottieView
-          source={require('@/assets/animations/SpinnigGreenArrow.json')}
-          autoPlay
-          loop
-          style={styles.lottie}
-        />
+        <Text style={[styles.danksagungenTitle, { fontSize: finalFontSize +8}]}>Danksagungen</Text>
       </View>
     </View>
   );

@@ -6,6 +6,8 @@ import { supabase } from '@/components/config/supabase';
 import { useAuthStore } from '@/components/stores/AuthStore';
 import { FontSizeContext } from '@/components/provider/FontSizeContext';
 import { decode } from 'base64-arraybuffer';
+import ShimmerPlaceholder from 'react-native-shimmer-placeholder';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const ProfileImagePicker: React.FC = () => {
   const { user, setUser } = useAuthStore();
@@ -13,12 +15,12 @@ const ProfileImagePicker: React.FC = () => {
   const maxFontSize = 38; // Adjust as needed
   const defaultFontSize = 22; // Default font size in context
   const componentBaseFontSize = 18; // Base font size for the label
-  const minIconSize = 80;
-  const maxIconSize = 300;
+  const minIconSize = 120;
+  const maxIconSize = 200;
   const adjustedFontSize = (fontSize / defaultFontSize) * componentBaseFontSize;
   const finalFontSize = Math.min(adjustedFontSize, maxFontSize);
   const iconSize = Math.min(Math.max(fontSize * 1.5, minIconSize), maxIconSize);
-
+  const [imageLoaded, setImageLoaded] = useState(false);
   const [image, setImage] = useState(user?.profileImageUrl || null);
   const [uploading, setUploading] = useState(false);
 
@@ -148,15 +150,24 @@ const ProfileImagePicker: React.FC = () => {
   };
 
   return (
+    <ShimmerPlaceholder
+    visible={imageLoaded}
+      style={[styles.avatar,  { width: iconSize, height: iconSize }]} 
+      LinearGradient={LinearGradient}
+      shimmerColors={['#FFE5B4', '#FFA500', '#FFE5B4']} shimmerStyle={{ locations: [0, 0.5, 1] }}
+    >
     <TouchableOpacity onPress={pickImage} style={styles.container}>
       {uploading ? (
         <ActivityIndicator size="large" color="#0000ff" />
       ) : image ? (
-        <Image source={{ uri: image }} style={[styles.profileImage, { width: iconSize, height: iconSize }]} />
+        <Image source={{ uri: image }} style={[styles.profileImage, { width: iconSize, height: iconSize }]} onLoadEnd={() => {
+          setImageLoaded(true);
+        }} />
       ) : (
         <Image source={require('@/assets/images/Placeholder.png')} style={[styles.profileImage, { width: iconSize, height: iconSize }]} />
       )}
     </TouchableOpacity>
+    </ShimmerPlaceholder> 
   );
 };
 
@@ -166,12 +177,17 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   profileImage: {
-    borderRadius: 50,
-    width: 100,
-    height: 100,
+    borderRadius: 100,
+  
+    alignSelf: 'center',
   },
   placeholder: {
     backgroundColor: '#ccc',
+  },
+  avatar: {
+    borderRadius: 100,
+    alignSelf: 'center',
+    marginBottom: 16,
   },
 });
 

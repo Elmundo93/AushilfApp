@@ -28,6 +28,8 @@ const CreateDanksagung: React.FC<CreateDanksagungProps> = ({ userId:recipientUse
   const adjustedFontSize = (fontSize / defaultFontSize) * componentBaseFontSize;
   const finalFontSize = Math.min(adjustedFontSize, maxFontSize);
 
+  const isTextValid = writtenText.length >= 5;
+
   const generateCustomId = (): string => {
     const id = uuidv4();
     console.log("Generated UUID: ", id);
@@ -55,8 +57,7 @@ const CreateDanksagung: React.FC<CreateDanksagungProps> = ({ userId:recipientUse
         userId: recipientUserId, // Empfänger der Danksagung
         authorId: userData.id, // Autor der Danksagung
         created_at: new Date().toISOString(),
-        profileImage: userData.profileImageUrl || '',
-        userBio: userData.bio || '',
+        profileImageUrl: userData.profileImageUrl || '',
         vorname: userData.vorname,
         nachname: userData.nachname,
         location: userData.location,
@@ -85,8 +86,13 @@ const CreateDanksagung: React.FC<CreateDanksagungProps> = ({ userId:recipientUse
         onChangeText={setWrittenText}
         multiline
       />
-      <TouchableOpacity style={styles.button} onPress={onSubmit}>
-        <Text style={[styles.buttonText, { fontSize: finalFontSize }]}>Abschicken</Text>
+      <TouchableOpacity  style={[
+          styles.button, 
+          !isTextValid && styles.disabledButton
+        ]} 
+        onPress={onSubmit}
+        disabled={!isTextValid}>
+        <Text style={[styles.buttonText, { fontSize: finalFontSize }, !isTextValid && styles.disabledButtonText]}>Abschicken</Text>
       </TouchableOpacity>
     </View>
   );
@@ -97,10 +103,12 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   input: {
+    minHeight: 100,
+    maxHeight: 150,
     padding: 18,
     borderWidth: 1,
     borderColor: 'gray',
-    borderRadius: 55,
+    borderRadius: 20,
     marginBottom: 8,
   },
   button: {
@@ -114,6 +122,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
+   disabledButton: {
+    backgroundColor: 'lightgrey',
+
+    opacity: 0.5,
+  },
+  disabledButtonText: {
+    color: 'white',
+  }
 });
 
 export default CreateDanksagung;

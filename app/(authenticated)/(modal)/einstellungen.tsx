@@ -45,13 +45,17 @@ const EinstellungenPage: React.FC = () => {
         <Slider
           style={{ width: '100%', height: 40 }}
           minimumValue={20}
-          maximumValue={48}
-          step={1}
+          maximumValue={34}
+          step={6}
           value={fontSize}
           onValueChange={handleFontSizeChange}
-          minimumTrackTintColor="#1EB1FC"
+          minimumTrackTintColor="orange"
           maximumTrackTintColor="#d3d3d3"
           thumbTintColor="#1EB1FC"
+
+
+          
+
         />
       </View>
 
@@ -114,14 +118,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 10,
+
+    flexWrap: 'wrap',
   },
   cardContent: {
     flexDirection: 'row',
     alignItems: 'center',
+
   },
   cardText: {
     fontSize: 18,
     marginLeft: 10,
+    flex: 1,
   },
   slider: {
     width: '100%',

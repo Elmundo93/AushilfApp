@@ -8,22 +8,26 @@ export function usePostService() {
   const db = useSQLiteContext();
 
   async function getPosts() {
-    return await db.getAllAsync<Post>('SELECT * FROM posts');
+    const posts = await db.getAllAsync<Post>('SELECT * FROM posts_fetched');
+    console.log('getPosts', posts)
+    return posts
   }
 
   async function addPosts(location: Location) {
     try {
-      const posts = await fetchPosts(location as Location);
+      const posts = await fetchPosts(location);
+      console.log('posts', posts)
   
       await db.execAsync('BEGIN TRANSACTION;');
   
-      await db.execAsync('DELETE FROM Posts;');
+
+      await db.execAsync('DELETE FROM posts_fetched;');
   
       for (const post of posts) {
         await db.runAsync(
-          `INSERT OR REPLACE INTO Posts (
-            id, created_at, location, nachname, vorname, option, category, profileImageUrl, long, lat, userBio, userId
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+          `INSERT INTO posts_fetched (
+              id, created_at, location, nachname, vorname, option, category, profileImageUrl, long, lat, userBio, userId, postText
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
           [
             post.id,
             post.created_at,
@@ -36,19 +40,25 @@ export function usePostService() {
             post.long,
             post.lat,
             post.userBio,
-            post.userId
+            post.userId,
+            post.postText,
           ]
+          
         );
+        console.log('post', post) 
       }
   
       await db.execAsync('COMMIT;');
-  
-      console.log('Alle Posts wurden erfolgreich in SQLite gespeichert.');
+      console.log('Fetched posts successfully stored in posts_fetched table.');
     } catch (error) {
       await db.execAsync('ROLLBACK;');
-      console.error('Fehler beim Speichern der Posts in SQLite:', error);
+      console.error('Error storing fetched posts in posts_fetched table:', error);
     }
-  };
+  }
+  
 
-  return { getPosts, addPosts };
+  return {
+    getPosts,
+    addPosts,
+  };
 }

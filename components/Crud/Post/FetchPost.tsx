@@ -1,6 +1,6 @@
 import { supabase } from '@/components/config/supabase';
 import { Post } from '@/components/types/post';
-import { useLocationStore } from '@/components/stores/locationStore';  
+ 
 import { getBoundingBox } from '@/components/Location/boundingBox';
 import { Location } from '@/components/stores/locationStore';
 // Definiere den Typ Post

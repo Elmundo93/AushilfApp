@@ -1,14 +1,58 @@
 import { supabase } from "@/components/config/supabase";
 import { User } from "@/components/types/auth";
 import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StreamChat } from 'stream-chat';
 import { useAuthStore } from '@/components/stores/AuthStore';
 import { Session } from '@supabase/supabase-js';
+
+/* =======================
+   Storage Service Helpers
+   ======================= */
+
+// Save sensitive session data in SecureStore
+const saveSecureSessionData = async (session: Session, streamToken: string) => {
+  console.log('Saving sensitive session data in SecureStore...');
+  await SecureStore.setItemAsync('supabaseSession', JSON.stringify(session));
+  await SecureStore.setItemAsync('accessToken', session.access_token);
+  await SecureStore.setItemAsync('refreshToken', session.refresh_token);
+  await SecureStore.setItemAsync('streamToken', streamToken);
+  console.log('Sensitive session data saved');
+};
+
+// Save non-sensitive user data in AsyncStorage
+const saveUserData = async (userData: User) => {
+  console.log('Saving user data in AsyncStorage...');
+  await AsyncStorage.setItem('user', JSON.stringify(userData));
+  // Store token expiry (non-sensitive)
+  const expiryDate = new Date(Date.now() + 60 * 60 * 24 * 6 * 1000); // 6 days expiry
+  await AsyncStorage.setItem('tokenExpiry', expiryDate.toString());
+  console.log('User data saved in AsyncStorage');
+};
+
+// Clear both SecureStore and AsyncStorage
+const clearStorage = async () => {
+  console.log('Clearing storage...');
+  // Clear SecureStore (sensitive)
+  await SecureStore.deleteItemAsync('supabaseSession');
+  await SecureStore.deleteItemAsync('accessToken');
+  await SecureStore.deleteItemAsync('refreshToken');
+  await SecureStore.deleteItemAsync('streamToken');
+
+  // Clear AsyncStorage (non-sensitive)
+  await AsyncStorage.removeItem('user');
+  await AsyncStorage.removeItem('tokenExpiry');
+
+  console.log('Storage cleared');
+};
+
 
 const initializeStreamClient = (apiKey: string) => {
   return StreamChat.getInstance(apiKey);
 };
 
+// Authenticate user: request GetStream token, initialize StreamChat client, connect user,
+// and update in-memory AuthStore (without storage)
 const authenticateUser = async (userData: User, session: Session) => {
   if (!session) {
     throw new Error('No valid session found');
@@ -16,7 +60,7 @@ const authenticateUser = async (userData: User, session: Session) => {
 
   console.log('Authenticating user:', userData.id);
 
-  // Generate GetStream token
+  // Request GetStream token
   console.log('Requesting GetStream token...');
   const response = await fetch('https://rorjehxddmuelbakcyqo.supabase.co/functions/v1/getStreamTokens', {
     method: 'POST',
@@ -41,11 +85,9 @@ const authenticateUser = async (userData: User, session: Session) => {
     throw new Error('GetStream token or API key is missing');
   }
 
-  // Initialize StreamChat client
+  // Initialize StreamChat client and connect user
   console.log('Initializing StreamChat client...');
   const client = initializeStreamClient(streamApiKey);
-
-  // Connect user to StreamChat
   console.log('Connecting user to StreamChat...');
   await client.connectUser(
     {
@@ -57,31 +99,22 @@ const authenticateUser = async (userData: User, session: Session) => {
     },
     streamToken
   );
-console.log('getStreamUser:', client.user);
-  console.log('User connected to StreamChat');
+  console.log('User connected to StreamChat', client.user);
 
-  // Calculate expiry date (6 days from now)
-  const expiryDate = new Date(Date.now() + 60 * 60 * 24 * 6 * 1000);
-
-  // Save data in SecureStore
-  console.log('Saving data in SecureStore...');
-  await SecureStore.setItemAsync('user', JSON.stringify(userData));
-  await SecureStore.setItemAsync('streamToken', streamToken);
-  await SecureStore.setItemAsync('tokenExpiry', expiryDate.toString());
-
-  // Update AuthStore
-  console.log('Updating AuthStore...');
+  // Update in-memory AuthStore
   const authStore = useAuthStore.getState();
   authStore.setUser(userData);
   authStore.setToken(streamToken);
   authStore.setStreamChatClient(client);
-  authStore.setAuthenticated(true);
 
   console.log('AuthState:', useAuthStore.getState());
   console.log('Authentication process completed');
 
-  return { userData, streamClient: client };
+  
+  return { userData, streamClient: client, streamToken };
 };
+
+
 
 export const signUp = async (email: string, password: string, userData: User) => {
   try {
@@ -95,12 +128,10 @@ export const signUp = async (email: string, password: string, userData: User) =>
       email,
       password,
     });
-
     if (authError) {
       console.error('Supabase sign-up error:', authError.message);
       throw authError;
     }
-
     console.log('Supabase sign-up successful');
 
     if (!authData.user || !authData.session) {
@@ -108,17 +139,10 @@ export const signUp = async (email: string, password: string, userData: User) =>
       throw new Error('User or session not found after sign-up');
     }
 
-    console.log('Saving session data...');
-    await SecureStore.setItemAsync('supabaseSession', JSON.stringify(authData.session));
-    const { access_token, refresh_token } = authData.session;
-    await SecureStore.setItemAsync('accessToken', access_token);
-    await SecureStore.setItemAsync('refreshToken', refresh_token);
-    console.log('Session data saved');
-
     console.log('Setting Supabase session...');
     await supabase.auth.setSession({
-      access_token,
-      refresh_token,
+      access_token: authData.session.access_token,
+      refresh_token: authData.session.refresh_token,
     });
 
     console.log('Inserting user data into database...');
@@ -134,22 +158,27 @@ export const signUp = async (email: string, password: string, userData: User) =>
       })
       .select()
       .single();
-
     if (insertError) {
       console.error('Error inserting user data:', insertError.message);
       throw insertError;
     }
-
     console.log('User data inserted successfully');
 
     console.log('Starting user authentication...');
-    const result = await authenticateUser(insertedUser as User, authData.session);
+    const { userData: authUserData, streamClient, streamToken } = await authenticateUser(
+      insertedUser as User,
+      authData.session
+    );
     console.log('User authentication completed');
+
+    // Save sensitive data to SecureStore and non-sensitive data to AsyncStorage
+    await saveSecureSessionData(authData.session, streamToken);
+    await saveUserData(authUserData);
 
     authStore.setIsLoading(false);
     console.log('Registration process completed successfully');
 
-    return { success: true, data: result };
+    return { success: true, data: { userData: authUserData, streamClient } };
   } catch (error: unknown) {
     console.error('Registration error:', error instanceof Error ? error.message : error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -172,14 +201,12 @@ export const signInWithPassword = async (email: string, password: string) => {
       email,
       password,
     });
-
     if (error) {
       console.error('Supabase sign-in error:', error.message);
       authStore.setError(error.message);
       authStore.setIsLoading(false);
       throw error;
     }
-
     console.log('Supabase sign-in successful');
 
     if (!data.session || !data.user) {
@@ -193,29 +220,28 @@ export const signInWithPassword = async (email: string, password: string) => {
       .select('*')
       .eq('id', data.user.id)
       .single();
-
     if (userError) {
       console.error('Error fetching user data:', userError.message);
       throw userError;
     }
-
     console.log('User data retrieved successfully');
 
-    console.log('Saving session data...');
-    await SecureStore.setItemAsync('supabaseSession', JSON.stringify(data.session));
-    const { access_token, refresh_token } = data.session;
-    await SecureStore.setItemAsync('accessToken', access_token);
-    await SecureStore.setItemAsync('refreshToken', refresh_token);
-    console.log('Session data saved');
-
     console.log('Starting user authentication...');
-    const result = await authenticateUser(userData, data.session);
+    const { userData: authUserData, streamClient, streamToken } = await authenticateUser(
+      userData,
+      data.session
+    );
     console.log('User authentication completed');
+
+
+    await saveSecureSessionData(data.session, streamToken);
+    await saveUserData(authUserData);
 
     authStore.setIsLoading(false);
     console.log('Sign-in process completed successfully');
+    authStore.setAuthenticated(true);
 
-    return result;
+    return { userData: authUserData, streamClient };
   } catch (error) {
     console.error('Sign-in error:', error instanceof Error ? error.message : error);
     const authStore = useAuthStore.getState();
@@ -238,7 +264,6 @@ export const signOut = async () => {
       console.error('Supabase sign-out error:', error.message);
       throw error;
     }
-
     console.log('Supabase sign-out successful');
 
     const streamClient = authStore.streamChatClient;
@@ -248,13 +273,8 @@ export const signOut = async () => {
       console.log('User disconnected from StreamChat');
     }
 
-    console.log('Deleting stored data...');
-    await SecureStore.deleteItemAsync('user');
-    await SecureStore.deleteItemAsync('streamToken');
-    await SecureStore.deleteItemAsync('supabaseSession');
-    await SecureStore.deleteItemAsync('accessToken');
-    await SecureStore.deleteItemAsync('refreshToken');
-    console.log('Stored data deleted');
+    // Clear all stored data (both SecureStore and AsyncStorage)
+    await clearStorage();
 
     console.log('Resetting AuthStore...');
     authStore.reset();

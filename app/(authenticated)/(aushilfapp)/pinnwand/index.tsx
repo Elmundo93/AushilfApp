@@ -1,35 +1,21 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { View, Animated } from 'react-native';
-
+import React, { useEffect, useCallback, useRef } from 'react';
+import { View, Animated, StyleSheet, Platform, UIManager, LayoutAnimation } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
 import { FlatList } from 'react-native-gesture-handler';
-import { usePostStore } from '@/components/stores/postStores';
 import LottieView from 'lottie-react-native';
-import { useLocationStore } from '@/components/stores/locationStore';
-import {
-  Platform,
-  UIManager,
-  LayoutAnimation
-} from 'react-native';
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
-import { Post } from '@/components/types/post';
+
 import PinnwandHeader from '@/components/Pinnwand/PinnwandHeader';
-import { applyFilters } from '@/components/Pinnwand/utils/FilterLogic';
 import FilterAccordion from '@/components/Pinnwand/Accordion/FilterAccordion';
-import { handleSuchenBietenChange, handleCategoryChange } from '@/components/Pinnwand/utils/FilterHelpers';
+
 import CustomCheckbox from '@/components/Pinnwand/Checkboxes/CustomCheckbox';
 import PostItem from '@/components/Pinnwand/PostItem';
-import RefreshHandler from '@/components/Pinnwand/RefreshHandler';
-import { useLocationRequest } from '@/components/Location/locationRequest';
-import { StyleSheet } from 'react-native';
 import EmptyListComponent from '@/components/Pinnwand/EmptyListComponent';
-import { useLoading } from '@/components/provider/LoadingContext';
-import { usePostService } from '@/components/Crud/SQLite/Services/postService';
-import { fetchPosts } from '@/components/Crud/Post/FetchPost';
-import PermissionDeniedScreen from '@/app/(public)/(onBoarding)/permissionDeniedScreen';
+
+import { usePostStore } from '@/components/stores/postStore';
+import { useFetchPosts } from '@/components/Crud/SQLite/Hook/fetchAndSetPosts';
+import RefreshHandler from '@/components/Pinnwand/RefreshHandler';
+import AskForLocation from '@/components/Pinnwand/AskForLocation';
+import { useLocationStore } from '@/components/stores/locationStore'
 
 
 
@@ -37,105 +23,40 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-const PinnwandFilters: React.FC = () => {
-  const { isLoading, setIsLoading } = useLoading();
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [filteredPosts, setFilteredPosts] = useState<Post[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [suchenChecked, setSuchenChecked] = useState(false);
-  const [bietenChecked, setBietenChecked] = useState(false);
-  const [gartenChecked, setGartenChecked] = useState(false);
-  const [haushaltChecked, setHaushaltChecked] = useState(false);
-  const [sozialesChecked, setSozialesChecked] = useState(false);
-  const [gastroChecked, setGastroChecked] = useState(false);
-  const [handwerkChecked, setHandwerkChecked] = useState(false);
-  const [bildungChecked, setBildungChecked] = useState(false);
-  const [isAccordionExpanded, setIsAccordionExpanded] = useState(false);
-  const postCount = usePostStore((state: any) => state.postCount);
+const Pinnwand: React.FC = () => {
+  const location = useLocationStore((state) => state.location);
+  const { locationPermission } = useLocationStore();
+  const { filteredPosts, loading} = usePostStore();
 
-  const location = useLocationStore((state: any) => state.location);
-  const { getPosts, addPosts } = usePostService();
-  const fadeAnim = useRef(new Animated.Value(0)).current; 
-  const { permissionStatus } = useLocationRequest();
+
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const [isAccordionExpanded, setIsAccordionExpanded] = React.useState(false);
+
+  const { error } = useFetchPosts(location);
+
+  const reversedPosts = [...filteredPosts].reverse();
 
 
   const toggleAccordion = useCallback(() => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setIsAccordionExpanded(!isAccordionExpanded);
-  }, [isAccordionExpanded]);
-
-  useLocationRequest();
+    setIsAccordionExpanded(prev => !prev);
+  }, []);
 
 
+
+  // Fade-in animation on loading complete
   useEffect(() => {
-    const loadPosts = async () => {
-      setLoading(true);
-      try {
-        await addPosts(location);
-        const postsList = await getPosts();
-        setPosts(postsList as Post[]);
-        setFilteredPosts(postsList as Post[]);
-      } catch (error) {
-        console.error('Fehler beim Laden der Posts:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-  
-    if (location) {
-      loadPosts();
+    if (!loading) {
+      fadeAnim.setValue(0);
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 1000,
+        useNativeDriver: true,
+      }).start();
     }
-  }, [postCount, location]);
+  }, [loading, fadeAnim]);
 
-
-useEffect(() => {
-  console.log('Loading state:', loading); // For debugging
-
-  if (!loading) {
-    fadeAnim.setValue(0); // Reset to invisible
-    Animated.timing(fadeAnim, {
-      toValue: 1, // Fade in to full opacity
-      duration: 1000, // 1 second duration
-      useNativeDriver: true,
-    }).start();
-  }
-}, [loading, fadeAnim]);
-
-  const applyFiltersCallback = useCallback(() => {
-    const filtered = applyFilters(
-      posts,
-      suchenChecked,
-      bietenChecked,
-      gartenChecked,
-      haushaltChecked,
-      sozialesChecked,
-      gastroChecked,
-      handwerkChecked,
-      bildungChecked
-    );
-    setFilteredPosts(filtered);
-  }, [posts, suchenChecked, bietenChecked, gartenChecked, haushaltChecked, sozialesChecked, gastroChecked, handwerkChecked, bildungChecked]);
-
-
-  useEffect(() => {
-    applyFiltersCallback();
-  }, [applyFiltersCallback]);
-
-
-  const handleSuchenBietenChangeCallback = useCallback((option: string) => {
-    handleSuchenBietenChange(option, suchenChecked, bietenChecked, setSuchenChecked, setBietenChecked);
-  }, [suchenChecked, bietenChecked]);
-
-  const handleCategoryChangeCallback = useCallback((category: string) => {
-    handleCategoryChange(category, setGartenChecked, setHaushaltChecked, setSozialesChecked, setGastroChecked, setHandwerkChecked, setBildungChecked);
-  }, []);
-
-
-  const handleRefreshComplete = useCallback((refreshedPosts: Post[]) => {
-    setPosts(refreshedPosts);
-    setFilteredPosts(refreshedPosts);
-  }, []);
-
+ 
 
   const renderCheckbox = useCallback((label: string, isChecked: boolean, onCheck: () => void) => (
     <CustomCheckbox
@@ -146,65 +67,50 @@ useEffect(() => {
     />
   ), []);
 
-
-  const renderItem = useCallback(({ item }: { item: Post }) => {
+  const renderItem = useCallback(({ item }: { item: any }) => {
     if (!item) {
-      console.error('Item ist null oder undefiniert');
+      console.error('Item is null or undefined');
       return null;
     }
     return <PostItem item={item} />;
   }, []);
-  
-
 
   return (
     <SafeAreaView style={styles.container}>
-      {loading ? (
-        <View style={styles.loaderContainer}>
-          <View style={styles.spacer} />
-          <LottieView
-            source={require('@/assets/animations/LoadingWarp.json')}
-            autoPlay
-            loop
-            style={styles.lottie}
-          />
-        </View>
-      ) : (
-        <Animated.View style={{ opacity: fadeAnim, flex: 1 }}>
+    {!locationPermission ? (
+      <AskForLocation />
+    ) : loading ? (
+      <View style={styles.loaderContainer}>
+        <View style={styles.spacer} />
+        <LottieView
+          source={require('@/assets/animations/LoadingWarp.json')}
+          autoPlay
+          loop
+          style={styles.lottie}
+        />
+      </View>
+    ) : (
+      <Animated.View style={{ opacity: fadeAnim, flex: 1 }}>
         <FlatList
           ListHeaderComponent={
             <>
               <PinnwandHeader />
-              <FilterAccordion 
+              <FilterAccordion
                 isExpanded={isAccordionExpanded}
                 onToggle={toggleAccordion}
                 renderCheckbox={renderCheckbox}
-                suchenChecked={suchenChecked}   
-                bietenChecked={bietenChecked}
-                gartenChecked={gartenChecked}
-                haushaltChecked={haushaltChecked}
-                sozialesChecked={sozialesChecked}
-                gastroChecked={gastroChecked}
-                handwerkChecked={handwerkChecked}
-                bildungChecked={bildungChecked}
-                handleSuchenBietenChange={handleSuchenBietenChangeCallback}
-                handleCategoryChange={handleCategoryChangeCallback}
               />
             </>
           }
-          data={filteredPosts}
+          data={reversedPosts}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
-          ListEmptyComponent={
-            <EmptyListComponent />
-          }
-          refreshControl={
-            <RefreshHandler onRefreshComplete={handleRefreshComplete} />
-          }
+          ListEmptyComponent={<EmptyListComponent />}
+          refreshControl={<RefreshHandler location={location} />}
         />
-        </Animated.View>
-      )}
-    </SafeAreaView>
+      </Animated.View>
+    )}
+  </SafeAreaView>
   );
 };
 
@@ -212,8 +118,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-  marginTop:-50}
-  ,
+    marginTop: -50,
+  },
   loaderContainer: {
     justifyContent: 'center',
     alignItems: 'center',
@@ -237,8 +143,7 @@ const styles = StyleSheet.create({
   emptyListText: {
     color: 'white',
     alignSelf: 'center',
-
   },
 });
 
-export default PinnwandFilters;
+export default Pinnwand;

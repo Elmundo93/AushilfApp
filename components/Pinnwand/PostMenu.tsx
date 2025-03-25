@@ -1,6 +1,4 @@
-import React from 'react';
-import { TouchableHighlight } from 'react-native';
-import { createRStyle } from 'react-native-full-responsive';
+import React, { useEffect } from 'react';
 import { Menu, MenuOption, MenuOptions, MenuTrigger } from 'react-native-popup-menu';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useRouter } from 'expo-router';
@@ -10,39 +8,45 @@ import { useContext } from 'react';
 import { FontSizeContext } from '@/components/provider/FontSizeContext';
 import { StyleSheet } from 'react-native';
 import { useAuthStore } from '@/components/stores/AuthStore';
+import ShimmerPlaceholder from 'react-native-shimmer-placeholder';
+import { LinearGradient } from 'expo-linear-gradient';
+
 interface PostMenuProps {
   item: Post;
+  updateLoadingState: (isLoading: boolean) => void;
+  allLoaded: boolean;
 }
 
-const PostMenu: React.FC<PostMenuProps> = ({ item }) => {
+const PostMenu: React.FC<PostMenuProps> = ({ item, allLoaded, updateLoadingState }) => {
   const router = useRouter();
   const { setSelectedUser } = useSelectedUserStore();
   const { fontSize } = useContext(FontSizeContext);
-  const maxFontSize = 28; // Passen Sie diesen Wert nach Bedarf an
-  const defaultFontSize = 24; // Standard-Schriftgröße im Kontext
-  const componentBaseFontSize = 22; // Ausgangsschriftgröße für das Label
+  const maxFontSize = 28;
+  const defaultFontSize = 24;
+  const componentBaseFontSize = 22;
   const { user } = useAuthStore();
 
-  // Begrenzen Sie die Schriftgröße auf den maximalen Wert
   const adjustedFontSize = (fontSize / defaultFontSize) * componentBaseFontSize;
   const finalFontSize = Math.min(adjustedFontSize, maxFontSize);
+
+  // Melde sofort, dass das Menü geladen ist
+  useEffect(() => {
+    updateLoadingState(false);
+  }, []);
+
   const handleWriteMessage = () => {
     alert('Nachricht schreiben');
   };
 
   const handleViewProfile = () => {
     setSelectedUser(item);
-    router.push({
-      pathname: '/(modal)/forreignProfile',
-
-    });
+    router.push({ pathname: '/(modal)/forreignProfile' });
   };
 
   const handleReportPost = () => {
-    router.push({
-      pathname: '/(modal)/postMelden',
-    });
+    router.push({ pathname: '/(modal)/postMelden' });
   };
+
   const handleDeletePost = () => {
     alert('Post löschen');
   };
@@ -67,46 +71,56 @@ const PostMenu: React.FC<PostMenuProps> = ({ item }) => {
       <MenuTrigger>
         <MaterialCommunityIcons name="dots-horizontal-circle-outline" size={24} color="black" />
       </MenuTrigger>
-      <MenuOptions customStyles={{
-        optionsWrapper: styles.optionsWrapper,
-        optionsContainer: styles.optionsContainer,
-        optionWrapper: styles.optionWrapper,
-        optionText: dynamicStyles.optionText,
-      }}>
-        <MenuOption
-          onSelect={handleWriteMessage}
-          customStyles={{
-            optionWrapper: styles.menuOptionWrapper,
-            optionText: styles.menuOptionText,
-          }}
-          text="Nachricht schreiben"
-        />
-        <MenuOption
-          onSelect={handleViewProfile}
-          customStyles={{
-            optionWrapper: styles.menuOptionWrapper,
-            optionText: styles.menuOptionText,
-          }}
-          text="Profil anzeigen"
-        />
+      <MenuOptions
+        customStyles={{
+          optionsWrapper: styles.optionsWrapper,
+          optionsContainer: styles.optionsContainer,
+          optionWrapper: styles.optionWrapper,
+          optionText: dynamicStyles.optionText,
+        }}
+      >
+        <ShimmerPlaceholder LinearGradient={LinearGradient} visible={allLoaded} shimmerColors={['#FFE5B4', '#FFA500', '#FFE5B4']} shimmerStyle={{ locations: [0, 0.5, 1] }}>
+          <MenuOption
+            onSelect={handleWriteMessage}
+            customStyles={{
+              optionWrapper: styles.menuOptionWrapper,
+              optionText: styles.menuOptionText,
+            }}
+            text="Nachricht schreiben"
+          />
+        </ShimmerPlaceholder>
+        <ShimmerPlaceholder LinearGradient={LinearGradient} visible={allLoaded} shimmerColors={['#FFE5B4', '#FFA500', '#FFE5B4']} shimmerStyle={{ locations: [0, 0.5, 1] }}>
+          <MenuOption
+            onSelect={handleViewProfile}
+            customStyles={{
+              optionWrapper: styles.menuOptionWrapper,
+              optionText: styles.menuOptionText,
+            }}
+            text="Profil anzeigen"
+          />
+        </ShimmerPlaceholder>
         {user?.id === item.userId ? (
-          <MenuOption
-            onSelect={handleDeletePost}
-            customStyles={{
-              optionWrapper: styles.deleteOptionWrapper,
-              optionText: styles.deleteOptionText,
-            }}
-            text="Post löschen"
-          />
+          <ShimmerPlaceholder LinearGradient={LinearGradient} visible={allLoaded} shimmerColors={['#FFE5B4', '#FFA500', '#FFE5B4']} shimmerStyle={{ locations: [0, 0.5, 1] }}>
+            <MenuOption
+              onSelect={handleDeletePost}
+              customStyles={{
+                optionWrapper: styles.deleteOptionWrapper,
+                optionText: styles.deleteOptionText,
+              }}
+              text="Post löschen"
+            />
+          </ShimmerPlaceholder>
         ) : (
-          <MenuOption
-            onSelect={handleReportPost}
-            customStyles={{
-              optionWrapper: styles.deleteOptionWrapper,
-              optionText: styles.deleteOptionText,
-            }}
-            text="Post melden"
-          />
+          <ShimmerPlaceholder LinearGradient={LinearGradient} visible={allLoaded} shimmerColors={['#FFE5B4', '#FFA500', '#FFE5B4']} shimmerStyle={{ locations: [0, 0.5, 1] }}>
+            <MenuOption
+              onSelect={handleReportPost}
+              customStyles={{
+                optionWrapper: styles.deleteOptionWrapper,
+                optionText: styles.deleteOptionText,
+              }}
+              text="Post melden"
+            />
+          </ShimmerPlaceholder>
         )}
       </MenuOptions>
     </Menu>
@@ -133,7 +147,6 @@ const styles = StyleSheet.create({
     borderBottomColor: '#f0f0f0',
   },
   optionText: {
-
     fontWeight: '500',
   },
   menuOptionWrapper: {
@@ -142,7 +155,6 @@ const styles = StyleSheet.create({
   },
   menuOptionText: {
     color: 'black',
-
   },
   deleteOptionWrapper: {
     backgroundColor: 'red',
@@ -151,11 +163,8 @@ const styles = StyleSheet.create({
   },
   deleteOptionText: {
     color: 'white',
-
     fontWeight: '600',
   },
 });
-
-
 
 export default React.memo(PostMenu);

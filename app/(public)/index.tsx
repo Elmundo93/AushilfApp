@@ -1,15 +1,30 @@
 
-import { View, Text } from 'react-native'
-import React from 'react'
-import { SafeAreaView } from 'react-native'
-import { Image} from 'react-native';
+import { View, Text, Animated, SafeAreaView, Image, StyleSheet } from 'react-native'
+import React, {useRef, useEffect} from 'react'
 import {  router } from 'expo-router';
-import { createRStyle} from 'react-native-full-responsive';
+import Svg, { Path } from 'react-native-svg';
+
+
 
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { LinearGradient } from 'expo-linear-gradient';
 
 const Page = () => {
+
+  const underlineWidth = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    // Verzögerung von 500ms
+    setTimeout(() => {
+      Animated.spring(underlineWidth, {
+        toValue: 1,
+        useNativeDriver: true,
+
+        tension: 20,  
+        friction: 7   
+      }).start();
+    }, 500);
+  }, []);
 
   const register = () => {
       router.push('/registration');
@@ -47,12 +62,33 @@ const Page = () => {
                 <Text style={styles.greenText}>
                   - oder eine zu werden!
                 </Text>
-                <Text style={styles.greenText} >
-                
-                  </Text>
+               
             
             </View>
-            <View style={styles.buttonContainer}>
+            <Text style={styles.schnellText} >
+                Schnell und einfach mit der AushilfApp!
+                  </Text>
+                  <Animated.View style={{
+  width: '100%',
+  height: 20,
+  transform: [{
+    scaleX: underlineWidth
+  }, {
+    scaleY: -1
+  }],
+  opacity: underlineWidth,
+  transformOrigin: 'left', // Setzt den Ursprungspunkt der Animation nach links
+}}>
+  <Svg width="100%" height="20" viewBox="0 0 100 20">
+    <Path
+      d="M0,10 Q50,20 100,10"
+      stroke="white"
+      strokeWidth="3"
+      fill="none"
+    />
+  </Svg>
+</Animated.View>
+        <View style={styles.buttonContainer}>
             <View style={styles.probemonat }>
             <TouchableOpacity onPress={register}>
   <Text style={styles.buttonText}>Zum Probemonat!  🚀</Text>
@@ -78,7 +114,7 @@ const Page = () => {
         
         export default Page;
 
-        const styles = createRStyle({
+        const styles = StyleSheet.create({
             container: {
                 flex: 1,
                 backgroundColor: 'white',
@@ -96,7 +132,7 @@ const Page = () => {
               width: '100%',
               height: '100%',
               position: 'absolute',
-              top: '150rs',
+              top: 150,
               opacity: 0.8,
               zIndex: 1, // Fügen Sie diese Zeile hinzu
             },
@@ -107,34 +143,43 @@ const Page = () => {
             },
             
             welcomeView: {
-                marginTop: '25rs'
+                marginTop: 25,
             },
             welcomeText: {
-              fontSize: '32rs',
+              fontSize: 32,
               fontWeight: 'bold',
             color: 'white',  
-              letterSpacing: '0.5rs',
+              letterSpacing: 0.5,
               alignSelf: 'center'
           },
           greenView: {
-            marginTop: '30rs',
-            padding: '15rs',
-            borderRadius: '30rs',
+            marginTop: 30,
+            padding: 15,
+            borderRadius: 30,
             backgroundColor: 'rgba(255, 255, 255, 0.7)',
             elevation: 3,
             borderWidth: 1,
             borderColor: '#e0e0e0',
-            backdropFilter: 'blur(10px)'
+           
         },
         greenText: {
-          fontSize: '24rs',
+          fontSize: 26,
           color: 'black',
-          padding: '5rs',
+          padding: 5,
           fontWeight: 'bold'
+      },
+      schnellText: {
+        fontSize: 28,
+        color: 'black',
+        padding: 5,
+        fontWeight: 'bold',
+        marginTop: 20,
+        alignSelf: 'center',
+        textAlign: 'center'
       },
       buttonContainer: {
             
- 
+        marginTop: 80,
         alignItems: 'center',
         
       },
@@ -142,13 +187,13 @@ const Page = () => {
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: 'green', 
-        padding: '15rs',
-        borderRadius: '30rs',
+        padding: 15,
+        borderRadius: 30,
         color: 'white',
-        marginTop: '100rs',
-        height: '70rs',
-        width: '350rs',
-        marginBottom: '25rs',
+        marginTop: 100,
+        height: 70,
+        width: 350,
+        marginBottom: 25,
 
 
 
@@ -160,7 +205,7 @@ const Page = () => {
       },
      buttonText: {
         color: 'white',
-        fontSize: '20rs'
+        fontSize: 20
     },
 
  
@@ -170,8 +215,8 @@ const Page = () => {
      alignItems: 'center',
      justifyContent: 'center',
      borderRadius: 25,
-     height: '60rs',
-     width: '350rs',
+     height: 60,
+     width: 350,
    
      elevation: 4,
      
