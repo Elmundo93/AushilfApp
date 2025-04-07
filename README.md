@@ -1,6 +1,6 @@
 # 🤝 Wir helfen aus e.V. – Die AushilfApp 📱
 
-![Logo](https://www.wir-helfen-aus.de/assets/logo.png)
+
 
 > **"Wir helfen Ihnen, eine helfende Hand zu finden, oder eine zu werden!"**  
 > Ein gemeinnütziges Projekt für echte Nachbarschaftshilfe und soziales Miteinander.
