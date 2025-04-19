@@ -12,7 +12,7 @@ export interface User {
   bio?: string;
   profileImageUrl?: string;
   coverImageUrl?: string;
-  strasse?: string;
+  straße?: string;
   hausnummer?: string;
   plz?: string;
   wohnort?: string;

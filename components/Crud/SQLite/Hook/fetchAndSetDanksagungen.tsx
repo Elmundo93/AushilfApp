@@ -1,16 +1,17 @@
 import { useState } from 'react';
 import { useDanksagungStore } from '@/components/stores/danksagungStores';
 import { Location } from '@/components/stores/locationStore';
-import { router } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { useLastFetchedAtStore } from '@/components/stores/lastFetchedAt';
 import React from 'react';
 import { useDanksagungenService } from '../Services/danksagungenService';
+import { useLocationRequest } from '@/components/Location/locationRequest';
 
 export function useFetchDanksagungen(location: Location | null, userId: string) {
   const { setDanksagungen, setLoading } = useDanksagungStore();
   const { lastFetchedAt, setLastFetchedAt } = useLastFetchedAtStore();
   const [error, setError] = useState<string | null>(null);
+  const { requestLocation } = useLocationRequest();
 
   // Hook-Aufruf jetzt hier im Custom Hook
   const { addDanksagungen, getDanksagungenForUser } = useDanksagungenService();
@@ -19,8 +20,11 @@ export function useFetchDanksagungen(location: Location | null, userId: string) 
     React.useCallback(() => {
       const fetchData = async () => {
         if (!location) {
-          router.push('/locationPermission');
-          return;
+          const locationGranted = await requestLocation();
+          if (!locationGranted) {
+            setError('Standortberechtigung wurde nicht erteilt');
+            return;
+          }
         }
 
         setLoading(true);
@@ -32,7 +36,7 @@ export function useFetchDanksagungen(location: Location | null, userId: string) 
           const needsRefresh = !lastFetchedAt || (now - lastFetchedAt > THIRTY_MINUTES);
 
           // Wenn ein Refresh nötig ist, hole neue Daten von extern und speichere sie in der DB
-          if (needsRefresh) {
+          if (needsRefresh && location) {
             await addDanksagungen(location);
             setLastFetchedAt(now);
           }
@@ -42,7 +46,7 @@ export function useFetchDanksagungen(location: Location | null, userId: string) 
           setDanksagungen(danksagungen);
         } catch (e: any) {
           console.error('Error fetching danksagungen:', e);
-          setError(e?.message || 'An unknown error occurred.');
+          setError(e?.message || 'Ein unbekannter Fehler ist aufgetreten.');
         } finally {
           setLoading(false);
         }

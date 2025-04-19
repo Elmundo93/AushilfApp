@@ -109,7 +109,7 @@ export const getUnderlayColor = (label: string): string => {
     case 'Gastro':
       return 'rgb(255, 255, 102)';
     case 'Bieten':
-      return 'rgb(184,0,211)';
+      return 'blue';
     case 'Suchen':
       return 'orange';
     case 'Handwerk':

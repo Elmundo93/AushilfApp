@@ -8,7 +8,7 @@ import AuthProvider  from '@/components/provider/AuthProvider';
 import 'react-native-reanimated';
 import { MenuProvider } from 'react-native-popup-menu';
 import { FontSizeProvider } from '@/components/provider/FontSizeContext';
-import { useColorScheme } from '@/components/useColorScheme';
+import { useColorScheme } from '@/components/hooks/useColorScheme';
 import { LoadingProvider } from '@/components/provider/LoadingContext';
 import { SQLiteProviderWrapper } from '@/components/provider/SQLiteProviderWrapper';
 

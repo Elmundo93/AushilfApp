@@ -124,3 +124,6 @@ if (!supabaseUrl || !supabaseAnonKey || !apiKey || !apiSecret) {
     );
   }
 });
+
+
+// check for deleted user for validation instead of simply accepting the token, think about cleaning up the token on the client side

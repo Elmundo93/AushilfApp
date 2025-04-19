@@ -1,17 +1,14 @@
-// useLocationRequest.js
-import { useEffect, useState } from 'react';
+// useLocationRequest.ts
 import * as Location from 'expo-location';
+import { Alert, Linking } from 'react-native';
 import { useLocationStore } from '@/components/stores/locationStore';
 import { useAuthStore } from '@/components/stores/AuthStore';
-import { Alert, Linking } from 'react-native';
-import { PermissionStatus } from 'expo-location';
 
 export const useLocationRequest = () => {
   const location = useLocationStore((state) => state.location);
   const setLocation = useLocationStore((state) => state.setLocation);
+  const setLocationPermission = useLocationStore((state) => state.setLocationPermission); // 👈 oder aus AuthStore, je nach Struktur
   const setUser = useAuthStore((state) => state.setUser);
-  const [permissionStatus, setPermissionStatus] = useState<PermissionStatus | null>(null);
-  const setLocationPermission = useAuthStore((state) => state.setLocationPermission);
 
   const reverseGeocode = async (latitude: number, longitude: number) => {
     try {
@@ -21,69 +18,70 @@ export const useLocationRequest = () => {
       const data = await response.json();
       return data.address.city || data.address.town || data.address.village;
     } catch (error) {
-      console.error('Error during reverse geocoding:', error);
+      console.error('Fehler beim Reverse-Geocoding:', error);
       return null;
     }
   };
 
   const requestLocation = async () => {
-    if (location) {
-      return true;
-    }
-
     try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      setPermissionStatus(status);
+      // ✅ Prüfen, ob dauerhaft abgelehnt
+      const existingPermission = await Location.getForegroundPermissionsAsync();
 
-      if (status !== 'granted') {
-        console.error('Location permission denied');
-
+      if (existingPermission.status === 'denied' && !existingPermission.canAskAgain) {
         Alert.alert(
-          'Standortberechtigung benötigt',
-          'Die App benötigt Zugriff auf deinen Standort, um relevante Posts in deiner Nähe zu zeigen. Bitte aktiviere die Standortberechtigung in den Einstellungen.',
+          'Standortberechtigung erforderlich',
+          'Du hast die Standortfreigabe dauerhaft deaktiviert. Bitte öffne die Einstellungen und aktiviere sie manuell.',
           [
-            {
-              text: 'Einstellungen öffnen',
-              onPress: () => {
-                Linking.openSettings();
-              },
-            },
-            {
-              text: 'Abbrechen',
-              style: 'cancel',
-            },
+            { text: 'Einstellungen öffnen', onPress: () => Linking.openSettings() },
+            { text: 'Abbrechen', style: 'cancel' },
           ],
           { cancelable: false }
         );
         return false;
       }
 
+      // ✅ Jetzt Anfrage stellen
+      const { status } = await Location.requestForegroundPermissionsAsync();
+
+      if (status !== 'granted') {
+        Alert.alert(
+          'Standortberechtigung benötigt',
+          'Die App benötigt Zugriff auf deinen Standort, um Beiträge in deiner Nähe anzuzeigen.',
+          [
+            { text: 'Einstellungen öffnen', onPress: () => Linking.openSettings() },
+            { text: 'Abbrechen', style: 'cancel' },
+          ],
+          { cancelable: false }
+        );
+        return false;
+      }
+
+      // 📍 Standort abrufen
       const { coords } = await Location.getCurrentPositionAsync({});
       const { latitude, longitude } = coords;
 
       setLocation({ latitude, longitude });
       setLocationPermission(true);
 
+      // 🏙 Stadtname via reverse geocoding holen
       const city = await reverseGeocode(latitude, longitude);
 
       if (city) {
         const currentUser = useAuthStore.getState().user;
         if (currentUser?.id) {
-          setUser({
-            ...currentUser,
-            location: city,
-          });
+          setUser({ ...currentUser, location: city });
         }
       } else {
-        console.error('Error retrieving city name');
+        console.warn('Keine Stadt ermittelbar');
       }
 
       return true;
     } catch (error) {
-      console.error('Error fetching location:', error);
+      console.error('Fehler beim Standortabruf:', error);
       return false;
     }
   };
 
-  return { permissionStatus, requestLocation };
+  return { requestLocation };
 };

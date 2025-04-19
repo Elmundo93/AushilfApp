@@ -1,28 +1,66 @@
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
-import { router } from "expo-router";
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useLocationRequest } from '@/components/Location/locationRequest';
+import { useLocationStore } from '@/components/stores/locationStore';
+import { useState } from 'react';
+import React from 'react';
 
 const AskForLocation = () => {
+  const { requestLocation } = useLocationRequest();
+  const { setLocationPermission } = useLocationStore();
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const requestLocationPermission = async () => {
+    if (loading) return;
+
+    setLoading(true);
+    setErrorMsg('');
+
+    const permissionGranted = await requestLocation();
+
+    if (permissionGranted) {
+      try {
+        setLocationPermission(true);
+      } catch (error) {
+        console.error('Fehler bei setLocationPermission:', error);
+        setErrorMsg('Ein unerwarteter Fehler ist aufgetreten.');
+      }
+    } else {
+      setErrorMsg('Standort konnte nicht aktiviert werden. Bitte prüfe die Einstellungen.');
+    }
+
+    setLoading(false);
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.card}>
         <Ionicons name="location" size={50} color="orange" style={styles.icon} />
         
         <Text style={styles.title}>Standort erforderlich</Text>
-        
         <Text style={styles.description}>
-          Bitte aktivieren Sie die Standortfunktion, um Beiträge aus Ihrer Nähe zu sehen und das beste Erlebnis zu gewährleisten.
+          Damit dir Beiträge aus deiner Nähe angezeigt werden können, benötigt die App Zugriff auf deinen Standort.
         </Text>
 
         <TouchableOpacity 
-          style={styles.button}
-          onPress={() => {
-            router.push("/(authenticated)/(modal)/locationPermissionScreen" as any);
-          }}
+          style={[styles.button, loading && styles.buttonDisabled]}
+          onPress={requestLocationPermission}
+          disabled={loading}
+          accessibilityLabel="Standort aktivieren"
+          accessibilityHint="Ermöglicht das Anzeigen von Beiträgen in deiner Umgebung"
         >
-          <Ionicons name="navigate" size={20} color="white" style={styles.buttonIcon} />
-          <Text style={styles.buttonText}>Standort aktivieren</Text>
+          {loading ? (
+            <ActivityIndicator color="white" />
+          ) : (
+            <>
+              <Ionicons name="navigate" size={20} color="white" style={styles.buttonIcon} />
+              <Text style={styles.buttonText}>Standort aktivieren</Text>
+            </>
+          )}
         </TouchableOpacity>
+
+        {errorMsg ? <Text style={styles.error}>{errorMsg}</Text> : null}
       </View>
     </View>
   );
@@ -34,18 +72,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+    backgroundColor: '#fff',
   },
   card: {
     backgroundColor: 'white',
     borderRadius: 20,
     padding: 24,
     width: '100%',
+    maxWidth: 400,
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
@@ -56,7 +93,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 16,
+    marginBottom: 12,
     textAlign: 'center',
     color: '#333',
   },
@@ -64,7 +101,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     color: '#666',
-    marginBottom: 24,
+    marginBottom: 20,
     lineHeight: 24,
   },
   button: {
@@ -76,6 +113,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     width: '100%',
   },
+  buttonDisabled: {
+    opacity: 0.6,
+  },
   buttonIcon: {
     marginRight: 8,
   },
@@ -83,6 +123,12 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  error: {
+    marginTop: 16,
+    color: 'red',
+    textAlign: 'center',
+    fontSize: 14,
   },
 });
 

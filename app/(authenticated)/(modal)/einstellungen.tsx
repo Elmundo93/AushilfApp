@@ -4,7 +4,7 @@ import Slider from '@react-native-community/slider';
 import Entypo from '@expo/vector-icons/Entypo';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { signOut } from '@/components/services/AuthService';
+import { signOut } from '@/components/services/Auth/AuthService';
 import { FontSizeContext } from '@/components/provider/FontSizeContext';
 import { LinearGradient } from 'expo-linear-gradient';
 const EinstellungenPage: React.FC = () => {

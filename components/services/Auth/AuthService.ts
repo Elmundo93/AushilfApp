@@ -53,7 +53,7 @@ const initializeStreamClient = (apiKey: string) => {
 
 // Authenticate user: request GetStream token, initialize StreamChat client, connect user,
 // and update in-memory AuthStore (without storage)
-const authenticateUser = async (userData: User, session: Session) => {
+export const authenticateUser = async (userData: User, session: Session) => {
   if (!session) {
     throw new Error('No valid session found');
   }
@@ -286,5 +286,95 @@ export const signOut = async () => {
     authStore.setError(error instanceof Error ? error.message : 'Unknown error');
     authStore.setIsLoading(false);
     throw error;
+  }
+};
+
+export const signInWithOAuthProvider = async (provider: 'google' | 'apple') => {
+  if (!['google', 'apple'].includes(provider)) {
+    throw new Error('Ungültiger OAuth-Provider');
+  }
+  
+  try {
+    const authStore = useAuthStore.getState();
+    authStore.setIsLoading(true);
+    authStore.setError(null);
+
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo: process.env.EXPO_PUBLIC_AUTH_CALLBACK_URL,
+      },
+    });
+
+    if (error) throw error;
+    return { success: true };
+  } catch (error) {
+    console.error(`OAuth sign-in error with ${provider}:`, error);
+    const authStore = useAuthStore.getState();
+    authStore.setError(error instanceof Error ? error.message : 'Unbekannter Fehler');
+    authStore.setIsLoading(false);
+    return { success: false, error };
+  }
+};
+
+export const finalizeOAuthLogin = async () => {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw new Error('Keine gültige Session nach OAuth');
+
+    const { data: { user: supabaseUser } } = await supabase.auth.getUser();
+    if (!supabaseUser) throw new Error('Kein Benutzer gefunden');
+
+    const { data: userData, error: userError } = await supabase
+      .from('Users')
+      .select('*')
+      .eq('id', supabaseUser.id)
+      .single();
+
+    let finalUser = userData;
+
+    if (userError) {
+      console.warn('Benutzer nicht gefunden in Users-Tabelle, wird neu angelegt...');
+
+      const defaultName = supabaseUser.user_metadata?.full_name || 'OAuth Nutzer';
+      const [vorname, ...nachnameParts] = defaultName.split(' ');
+      const nachname = nachnameParts.join(' ') || '';
+
+      const { data: inserted, error: insertError } = await supabase
+        .from('Users')
+        .insert({
+          id: supabaseUser.id,
+          email: supabaseUser.email,
+          vorname,
+          nachname,
+          profileImageUrl: supabaseUser.user_metadata?.avatar_url || '',
+          created_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (insertError) throw insertError;
+      finalUser = inserted;
+    }
+
+    const { userData: authUserData, streamClient, streamToken } = await authenticateUser(
+      finalUser,
+      session
+    );
+
+    await saveSecureSessionData(session, streamToken);
+    await saveUserData(authUserData);
+
+    const authStore = useAuthStore.getState();
+    authStore.setIsLoading(false);
+    authStore.setAuthenticated(true);
+
+    return { success: true, userData: authUserData, streamClient };
+  } catch (error) {
+    console.error('OAuth-Finalisierung fehlgeschlagen:', error);
+    const authStore = useAuthStore.getState();
+    authStore.setError(error instanceof Error ? error.message : 'Unbekannter Fehler');
+    authStore.setIsLoading(false);
+    return { success: false, error };
   }
 };

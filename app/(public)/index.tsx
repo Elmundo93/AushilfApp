@@ -1,11 +1,7 @@
-
 import { View, Text, Animated, SafeAreaView, Image, StyleSheet } from 'react-native'
 import React, {useRef, useEffect} from 'react'
 import {  router } from 'expo-router';
 import Svg, { Path } from 'react-native-svg';
-
-
-
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -26,20 +22,14 @@ const Page = () => {
     }, 500);
   }, []);
 
-  const register = () => {
-      router.push('/registration');
-    };
+
 
     const login = () => {
-      router.push('/login');
+      router.push('/(public)/loginScreen' as any);
     };
 
             return (
-               
-                 
-                       <SafeAreaView style={styles.container}>
-               
-                 
+<SafeAreaView style={styles.container}>
 <LinearGradient
        colors={['orange', 'white']}
       start={{ x: 0, y: 0 }}
@@ -77,7 +67,7 @@ const Page = () => {
     scaleY: -1
   }],
   opacity: underlineWidth,
-  transformOrigin: 'left', // Setzt den Ursprungspunkt der Animation nach links
+  transformOrigin: 'left', 
 }}>
   <Svg width="100%" height="20" viewBox="0 0 100 20">
     <Path
@@ -89,15 +79,11 @@ const Page = () => {
   </Svg>
 </Animated.View>
         <View style={styles.buttonContainer}>
-            <View style={styles.probemonat }>
-            <TouchableOpacity onPress={register}>
-  <Text style={styles.buttonText}>Zum Probemonat!  🚀</Text>
-</TouchableOpacity>
-                  </View>
+           
                   
                   <View style={styles.loginContainer}>
                     <TouchableOpacity onPress={login}>
-                      <Text style={styles.buttonText}>Einloggen   🟢
+                      <Text style={styles.buttonText}>Los geht's! 🟢
                       </Text>
                     </TouchableOpacity>
                   </View>
@@ -140,6 +126,7 @@ const Page = () => {
               flex: 1,
               width: '100%',
               zIndex: 3,
+              justifyContent: 'flex-start',
             },
             
             welcomeView: {
@@ -148,65 +135,65 @@ const Page = () => {
             welcomeText: {
               fontSize: 32,
               fontWeight: 'bold',
-            color: 'white',  
+              color: 'white',  
               letterSpacing: 0.5,
               alignSelf: 'center'
+            },
+            greenView: {
+              marginTop: 30,
+              padding: 15,
+              borderRadius: 30,
+              backgroundColor: 'rgba(255, 255, 255, 0.7)',
+              elevation: 3,
+              borderWidth: 1,
+              borderColor: '#e0e0e0',
+            },
+            greenText: {
+              fontSize: 26,
+              color: 'black',
+              padding: 5,
+              fontWeight: 'bold'
           },
-          greenView: {
-            marginTop: 30,
+          schnellText: {
+            fontSize: 28,
+            color: 'black',
+            padding: 5,
+            fontWeight: 'bold',
+            marginTop: 20,
+            alignSelf: 'center',
+            textAlign: 'center'
+          },
+          buttonContainer: {
+            position: 'absolute',
+            bottom: '20%',
+            left: 0,
+            right: 0,
+            alignItems: 'center',
+          },
+          probemonat: {
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: 'green', 
             padding: 15,
             borderRadius: 30,
-            backgroundColor: 'rgba(255, 255, 255, 0.7)',
-            elevation: 3,
-            borderWidth: 1,
-            borderColor: '#e0e0e0',
-           
+            color: 'white',
+            marginTop: 100,
+            height: 70,
+            width: 350,
+            marginBottom: 25,
+
+
+
+
+            elevation: 4,
+            borderWidth: 2,
+            borderColor: '#45a049',
+            transform: [{ scale: 1.02 }],
+          },
+         buttonText: {
+            color: 'white',
+            fontSize: 20
         },
-        greenText: {
-          fontSize: 26,
-          color: 'black',
-          padding: 5,
-          fontWeight: 'bold'
-      },
-      schnellText: {
-        fontSize: 28,
-        color: 'black',
-        padding: 5,
-        fontWeight: 'bold',
-        marginTop: 20,
-        alignSelf: 'center',
-        textAlign: 'center'
-      },
-      buttonContainer: {
-            
-        marginTop: 80,
-        alignItems: 'center',
-        
-      },
-      probemonat: {
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'green', 
-        padding: 15,
-        borderRadius: 30,
-        color: 'white',
-        marginTop: 100,
-        height: 70,
-        width: 350,
-        marginBottom: 25,
-
-
-
-
-        elevation: 4,
-        borderWidth: 2,
-        borderColor: '#45a049',
-        transform: [{ scale: 1.02 }],
-      },
-     buttonText: {
-        color: 'white',
-        fontSize: 20
-    },
 
  
 

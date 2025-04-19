@@ -4,7 +4,7 @@ import { ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { KeyboardAvoidingView, Platform } from 'react-native';
 import { router } from 'expo-router';
-import { signUp } from '@/components/services/AuthService';
+import { signUp } from '@/components/services/Auth/AuthService';
 import { User } from '@/components/types/auth';
 
 const Page = () => {
