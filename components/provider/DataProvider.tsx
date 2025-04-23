@@ -57,14 +57,14 @@ export const DataProvider = ({ children }: PropsWithChildren) => {
     if (location) {
       syncAll();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-depsb
   }, [location]);
 
   useEffect(() => {
-    if (location) {
+    if (location && postCount) {
       syncPosts(location);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [postCount]);
   
 

@@ -1,16 +1,17 @@
 import { useState } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { Post } from '@/components/types/post';
+
 import { supabase } from '@/components/config/supabase';
-import { Ionicons } from '@expo/vector-icons';
 
 interface DeletePostProps {
   post: Post;
-  onDelete?: () => void;
 }
 
-export function DeletePost({ post, onDelete }: DeletePostProps) {
+export function DeletePost({ post }: DeletePostProps) {
   const [isLoading, setIsLoading] = useState(false);
+  
+
 
   const handleDelete = async () => {
     try {
@@ -22,10 +23,8 @@ export function DeletePost({ post, onDelete }: DeletePostProps) {
 
       if (error) throw error;
 
-      // UI-Aktualisierung durch Callback
-      if (onDelete) {
-        onDelete();
-      }
+      // Hier können Sie eine Aktualisierung der UI implementieren
+      // z.B. durch einen Callback oder Context
     } catch (error) {
       console.error('Fehler beim Löschen des Posts:', error);
       Alert.alert('Fehler', 'Der Post konnte nicht gelöscht werden.');
@@ -58,21 +57,15 @@ export function DeletePost({ post, onDelete }: DeletePostProps) {
       disabled={isLoading}
       style={{
         backgroundColor: '#ef4444',
-        padding: 8,
-        borderRadius: 8,
+        padding: 10,
+        borderRadius: 5,
         opacity: isLoading ? 0.7 : 1,
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 4,
       }}
     >
       {isLoading ? (
-        <ActivityIndicator color="white" size="small" />
+        <ActivityIndicator color="white" />
       ) : (
-        <>
-          <Ionicons name="trash-outline" size={16} color="white" />
-          <Text style={{ color: 'white', fontSize: 14 }}>Löschen</Text>
-        </>
+        <Text style={{ color: 'white', textAlign: 'center' }}>Löschen</Text>
       )}
     </TouchableOpacity>
   );
