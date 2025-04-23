@@ -52,7 +52,7 @@ const CreatePost: React.FC = () => {
         vorname: userData.vorname,
         nachname: userData.nachname,
         created_at: new Date().toISOString(),
-        location: userData.location,
+        location: userData.wohnort,
         option: selectedOption,
         userId: userData.id,
         profileImageUrl: userData.profileImageUrl || '',

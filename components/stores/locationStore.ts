@@ -1,9 +1,6 @@
 import { create } from 'zustand';
+import { Location } from '@/components/types/location';
 
-export interface Location {
-  latitude: number;
-  longitude: number;
-}
 
 interface LocationStore {
   locationPermission: boolean;

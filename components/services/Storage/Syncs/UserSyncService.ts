@@ -35,6 +35,7 @@ export async function syncFromSupabase(db: SQLiteDatabase, userId: string): Prom
 
   await saveUserInfo(db, user);
   useAuthStore.getState().setUser(user);
+  console.log('synced from supabase as user:', user);
   return user;
 }
 
@@ -55,7 +56,6 @@ export async function pushUserToSupabase(user: User): Promise<boolean> {
       plz: user.plz,
       wohnort: user.wohnort,
       telefonnummer: user.telefonnummer,
-      
     })
     .eq('id', user.id);
 
@@ -76,6 +76,7 @@ export async function saveAndSyncUserLocally(db: SQLiteDatabase, updatedUser: Us
 export async function loadUserFromLocal(db: SQLiteDatabase): Promise<User | null> {
   const user = await loadUserInfo(db);
   if (user) useAuthStore.getState().setUser(user);
+  console.log('synced from local as user:', useAuthStore.getState());
   return user;
 }
 

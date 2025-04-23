@@ -9,6 +9,7 @@ export const useLocationRequest = () => {
   const setLocation = useLocationStore((state) => state.setLocation);
   const setLocationPermission = useLocationStore((state) => state.setLocationPermission); // 👈 oder aus AuthStore, je nach Struktur
   const setUser = useAuthStore((state) => state.setUser);
+  const user = useAuthStore((state) => state.user);
 
   const reverseGeocode = async (latitude: number, longitude: number) => {
     try {
@@ -62,20 +63,20 @@ export const useLocationRequest = () => {
       const { latitude, longitude } = coords;
 
       setLocation({ latitude, longitude });
-      setLocationPermission(true);
-
+      
       // 🏙 Stadtname via reverse geocoding holen
       const city = await reverseGeocode(latitude, longitude);
 
       if (city) {
         const currentUser = useAuthStore.getState().user;
         if (currentUser?.id) {
-          setUser({ ...currentUser, location: city });
+          setUser({ ...currentUser, wohnort: city });
         }
       } else {
         console.warn('Keine Stadt ermittelbar');
       }
 
+      setLocationPermission(true);
       return true;
     } catch (error) {
       console.error('Fehler beim Standortabruf:', error);

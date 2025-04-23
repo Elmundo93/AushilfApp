@@ -10,6 +10,7 @@ import { StyleSheet } from 'react-native';
 import { useAuthStore } from '@/components/stores/AuthStore';
 import ShimmerPlaceholder from 'react-native-shimmer-placeholder';
 import { LinearGradient } from 'expo-linear-gradient';
+import { DeletePost } from '../Crud/Post/DeletePost';
 
 interface PostMenuProps {
   item: Post;
@@ -39,7 +40,15 @@ const PostMenu: React.FC<PostMenuProps> = ({ item, allLoaded, updateLoadingState
   };
 
   const handleViewProfile = () => {
-    setSelectedUser(item);
+    // Hier erstellen wir das UserProfile-Objekt aus den Post-Daten
+    const userProfile = {
+      userId: item.userId,
+      vorname: item.vorname,
+      nachname: item.nachname,
+      profileImageUrl: item.profileImageUrl,
+      bio: item.userBio,
+    };
+    setSelectedUser(userProfile);
     router.push({ pathname: '/(modal)/forreignProfile' });
   };
 
@@ -48,7 +57,7 @@ const PostMenu: React.FC<PostMenuProps> = ({ item, allLoaded, updateLoadingState
   };
 
   const handleDeletePost = () => {
-    alert('Post löschen');
+    return <DeletePost post={item} />;
   };
 
   const dynamicStyles = {

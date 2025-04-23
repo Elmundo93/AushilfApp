@@ -1,68 +1,62 @@
+// services/Storage/Syncs/DanksagungsService.ts
 import { useSQLiteContext } from 'expo-sqlite';
 import { fetchDanksagungen } from '@/components/Crud/Danksagungen/fetchDanksagung';
-import { Danksagung } from '@/components/types/Danksagungen';
-import { Location } from '@/components/stores/locationStore';
-
+import { Danksagung }        from '@/components/types/Danksagungen';
+import { Location }          from '@/components/types/location';
 
 export function useDanksagungenService() {
   const db = useSQLiteContext();
 
-    async function getDanksagungen() {
-    const danksagungen = await db.getAllAsync<Danksagung>('SELECT * FROM danksagungen_fetched');
-    console.log('getDanksagungen', danksagungen)
-    return danksagungen
-  }
-
-  async function getDanksagungenForUser(userId: string) {
-    return await db.getAllAsync<Danksagung>('SELECT * FROM danksagungen_fetched WHERE userId = ?', [userId]);
+  async function getDanksagungen() {
+    return db.getAllAsync<Danksagung>('SELECT * FROM danksagungen_fetched');
   }
 
   async function addDanksagungen(location: Location) {
-    try {
-      const danksagungen = await fetchDanksagungen(location);
-      console.log('danksagungen', danksagungen)
-  
-      await db.execAsync('BEGIN TRANSACTION;');
-  
+    const arr = await fetchDanksagungen(location);
+    console.log('Fetched danksagungen:', arr);
 
+    try {
+      // Alte Danksagungen löschen
       await db.execAsync('DELETE FROM danksagungen_fetched;');
-  
-      for (const danksagung of danksagungen) {
+
+      // In der Reihenfolge genau wie im CREATE TABLE
+      for (const d of arr) {
         await db.runAsync(
-          `INSERT INTO danksagungen_fetched (
-                id, created_at, location, nachname, vorname, profileImageUrl, long, lat, userId, writtenText, authorId
+          `INSERT OR REPLACE INTO danksagungen_fetched (
+            id,
+            created_at,
+            vorname,
+            nachname,
+            writtenText,
+            userId,
+            location,
+            authorId,
+            long,
+            lat,
+            profileImageUrl
           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
           [
-            danksagung.id,
-            danksagung.created_at,
-            danksagung.location,
-            danksagung.nachname,
-            danksagung.vorname,
-            danksagung.profileImageUrl,
-            danksagung.long,
-            danksagung.lat,
-            danksagung.userId,
-            danksagung.writtenText,
-            danksagung.authorId,
-
+            d.id,               // INTEGER
+            d.created_at,       // TEXT
+            d.vorname,          // TEXT
+            d.nachname,         // TEXT
+            d.writtenText,      // TEXT
+            d.userId,           // TEXT
+            d.location,         // TEXT
+            d.authorId,         // TEXT → passt auf authorID
+            d.long,             // REAL
+            d.lat,              // REAL
+            d.profileImageUrl,  // TEXT
           ]
-          
         );
-        console.log('danksagung', danksagung) 
       }
-  
-      await db.execAsync('COMMIT;');
-      console.log('Fetched danksagungen successfully stored in danksagungen_fetched table.');
+
+      console.log('✅ Danksagungen in SQLite gespeichert');
     } catch (error) {
-      await db.execAsync('ROLLBACK;');
-      console.error('Error storing fetched danksagungen in danksagungen_fetched table:', error);
+      console.error('❌ Error storing fetched danksagungen:', error);
+      throw error;
     }
   }
-  
 
-  return {
-    getDanksagungen,
-    addDanksagungen,
-    getDanksagungenForUser,
-  };
+  return { getDanksagungen, addDanksagungen };
 }

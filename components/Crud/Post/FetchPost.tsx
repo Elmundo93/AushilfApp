@@ -2,7 +2,7 @@ import { supabase } from '@/components/config/supabase';
 import { Post } from '@/components/types/post';
  
 import { getBoundingBox } from '@/components/Location/boundingBox';
-import { Location } from '@/components/stores/locationStore';
+import { Location } from '@/components/types/location';
 // Definiere den Typ Post
 export const fetchPosts = async (location: Location | null): Promise<Post[]> => {
   try {

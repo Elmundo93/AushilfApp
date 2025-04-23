@@ -8,7 +8,7 @@ import { AnmeldeAccordionProps } from '@/components/types/components';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSQLiteContext } from 'expo-sqlite/next';
 import { saveUserInfo } from '@/components/Crud/SQLite/Services/UserInfoService';
-import { pushUserToSupabase } from '@/components/services/Storage/UserSyncService';
+import { pushUserToSupabase } from '@/components/services/Storage/Syncs/UserSyncService';
 
 const AnmeldenAccordion = ({ isExpanded, onToggle, accordionTitle }: AnmeldeAccordionProps) => {
   const { fontSize } = useContext(FontSizeContext);

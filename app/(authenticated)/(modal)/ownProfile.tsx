@@ -10,16 +10,12 @@ import { FontSizeContext } from '@/components/provider/FontSizeContext';
 import { useContext } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRef } from 'react';
-import { useFetchDanksagungen } from '@/components/Crud/SQLite/Hook/fetchAndSetDanksagungen';
-import { Location, useLocationStore } from '@/components/stores/locationStore';
-
-
 
 const UserProfile: React.FC = () => {
   const { user, isLoading: userLoading, error: userError } = useAuthStore();
 
   const danksagungCount = useDanksagungStore(state => state.danksagungCount);
-  const danksagungen = useDanksagungStore(state => state.danksagungen);
+  const allDanksagungen = useDanksagungStore(state => state.danksagungen);
   const loading = useDanksagungStore(state => state.loading);
   const error = useDanksagungStore(state => state.error);
   const { fontSize } = useContext(FontSizeContext);
@@ -31,12 +27,9 @@ const UserProfile: React.FC = () => {
   const adjustedFontSize = (fontSize / defaultFontSize) * componentBaseFontSize;
   const iconSize = Math.min(Math.max(fontSize * 1.5, minIconSize), maxIconSize);
   const finalFontSize = Math.min(adjustedFontSize, maxFontSize);
-  const location = useLocationStore(state => state.location);
-  
-  useFetchDanksagungen(location, user?.id || '');
 
-
-
+  // Filtere Danksagungen für den aktuellen Benutzer
+  const danksagungen = allDanksagungen.filter(danksagung => danksagung.userId === user?.id);
 
   const formatName = useCallback(
     (vorname: string, nachname: string) => `${vorname} ${nachname.charAt(0)}.`,

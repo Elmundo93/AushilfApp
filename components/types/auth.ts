@@ -1,5 +1,6 @@
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { StreamChat } from 'stream-chat';
+import { Location } from '@/components/types/location';
 
 // Benutzer-Typ
 export interface User {
@@ -8,7 +9,7 @@ export interface User {
   vorname: string;
   nachname: string;
   created_at: string;
-  location: string;
+  location: Location;
   bio?: string;
   profileImageUrl?: string;
   coverImageUrl?: string;

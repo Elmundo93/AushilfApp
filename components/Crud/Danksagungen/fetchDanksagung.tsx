@@ -1,8 +1,7 @@
 import { supabase } from '@/components/config/supabase';
 import { Danksagung } from '@/components/types/Danksagungen';
-import { useLocationStore } from '@/components/stores/locationStore';
 import { getBoundingBox } from '@/components/Location/boundingBox';
-import { Location } from '@/components/stores/locationStore';
+import { Location } from '@/components/types/location';
 
 
 const radiusInKm = 10; // Dieser Wert kann angepasst werden
@@ -29,7 +28,7 @@ export const fetchDanksagungen = async (location: Location | null): Promise<Dank
     if (error) {
       throw error;
     }
-
+    console.log(data)
     return data as Danksagung[];
   } catch (error) {
     console.error("Fehler beim Abrufen der Danksagungen:", error);

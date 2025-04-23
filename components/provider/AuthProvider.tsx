@@ -1,10 +1,10 @@
-// ✅ Updated AuthProvider.tsx
+//AuthProvider.tsx
 import React, { PropsWithChildren, useEffect } from 'react';
 import { Chat, OverlayProvider } from 'stream-chat-expo';
 import { useAuthStore } from '@/components/stores/AuthStore';
 import { useSegments, usePathname, router } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite/next';
-import { syncFromSupabase, loadUserFromLocal } from '@/components/services/Storage/UserSyncService';
+import { syncFromSupabase, loadUserFromLocal } from '@/components/services/Storage/Syncs/UserSyncService';
 
 const AuthProvider = ({ children }: PropsWithChildren) => {
   const {
@@ -42,8 +42,10 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
     const preloadUserData = async () => {
       if (!user?.id) return;
       try {
+        console.log("starting user sync...")
         await syncFromSupabase(db, user.id);
         await loadUserFromLocal(db); // Lädt SQLite → Zustand
+        console.log(user)
       } catch (error) {
         console.error("Fehler beim Laden von Benutzerdaten:", error);
       }

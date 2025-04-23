@@ -5,10 +5,7 @@ import { authenticateUser } from './AuthService';
 import { OAuthFlowManager } from './OAuthFlowManager';
 import { useAuthStore } from '@/components/stores/AuthStore';
 import { User } from '@/components/types/auth';
-import { deleteUserInfo } from '@/components/Crud/SQLite/Services/UserInfoService';
-import { useSQLiteContext } from 'expo-sqlite/next';
-import * as SQLite from 'expo-sqlite';
-import { clearUserData } from '../Storage/UserSyncService';
+
 
 export const AuthController = {
 

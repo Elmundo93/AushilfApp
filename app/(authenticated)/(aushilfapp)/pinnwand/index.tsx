@@ -12,10 +12,11 @@ import PostItem from '@/components/Pinnwand/PostItem';
 import EmptyListComponent from '@/components/Pinnwand/EmptyListComponent';
 
 import { usePostStore } from '@/components/stores/postStore';
-import { useFetchPosts } from '@/components/Crud/SQLite/Hook/fetchAndSetPosts';
+
 import RefreshHandler from '@/components/Pinnwand/RefreshHandler';
 import AskForLocation from '@/components/Pinnwand/AskForLocation';
 import { useLocationStore } from '@/components/stores/locationStore'
+
 
 
 
@@ -26,15 +27,21 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 const Pinnwand: React.FC = () => {
   const location = useLocationStore((state) => state.location);
   const { locationPermission } = useLocationStore();
-  const { filteredPosts, loading} = usePostStore();
+  const { filteredPosts, loading } = usePostStore();
+  const reversedPosts = [...filteredPosts].reverse();
+
 
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const [isAccordionExpanded, setIsAccordionExpanded] = React.useState(false);
 
-  const { error } = useFetchPosts(location);
 
-  const reversedPosts = [...filteredPosts].reverse();
+
+  
+
+
+
+
 
 
   const toggleAccordion = useCallback(() => {

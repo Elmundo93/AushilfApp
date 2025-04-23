@@ -14,7 +14,7 @@ import {Animated} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRef } from 'react';
 import { useFetchDanksagungen } from '@/components/Crud/SQLite/Hook/fetchAndSetDanksagungen';
-import { Location, useLocationStore } from '@/components/stores/locationStore';
+import { useLocationStore } from '@/components/stores/locationStore';
 const ForreignProfile: React.FC = () => {
 
 
@@ -34,15 +34,15 @@ const ForreignProfile: React.FC = () => {
   const location = useLocationStore(state => state.location);
   const loading = useDanksagungStore(state => state.loading);
   const error = useDanksagungStore(state => state.error);
-  const danksagungen = useDanksagungStore(state => state.danksagungen);
-  useFetchDanksagungen(location, selectedUser?.userId || ''); 
+  const allDanksagungen = useDanksagungStore(state => state.danksagungen);
+
 
 
   const scrollY = useRef(new Animated.Value(0)).current;
 
   const headerHeight = 200; // Höhe des Gradienten, anpassen nach Bedarf
 
-
+  const danksagungen = allDanksagungen.filter(danksagung => danksagung.userId === selectedUser?.userId);
 
 
   const gradientTranslateY = scrollY.interpolate({

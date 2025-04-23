@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useDanksagungStore } from '@/components/stores/danksagungStores';
-import { Location } from '@/components/stores/locationStore';
+
 import { useFocusEffect } from '@react-navigation/native';
 import { useLastFetchedAtStore } from '@/components/stores/lastFetchedAt';
 import React from 'react';
@@ -13,7 +13,7 @@ export function useFetchDanksagungen(location: Location | null, userId: string) 
   const [error, setError] = useState<string | null>(null);
   const { requestLocation } = useLocationRequest();
 
-  // Hook-Aufruf jetzt hier im Custom Hook
+
   const { addDanksagungen, getDanksagungenForUser } = useDanksagungenService();
 
   useFocusEffect(

@@ -1,33 +1,33 @@
+// components/Crud/SQLite/Services/postService.ts
 import { useSQLiteContext } from 'expo-sqlite';
-import { fetchPosts } from '@/components/Crud/Post/FetchPost';
-import { Post } from '@/components/types/post';
-import { Location } from '@/components/stores/locationStore';
-
+import { fetchPosts }        from '@/components/Crud/Post/FetchPost';
+import { Post }              from '@/components/types/post';
+import { Location }          from '@/components/types/location';
 
 export function usePostService() {
   const db = useSQLiteContext();
 
   async function getPosts() {
     const posts = await db.getAllAsync<Post>('SELECT * FROM posts_fetched');
-    console.log('getPosts', posts)
-    return posts
+    console.log('getPosts', posts);
+    return posts;
   }
 
   async function addPosts(location: Location) {
-    try {
-      const posts = await fetchPosts(location);
-      console.log('posts', posts)
-  
-      await db.execAsync('BEGIN TRANSACTION;');
-  
+    const posts = await fetchPosts(location);
+    console.log('Fetched posts:', posts);
 
+    try {
+      // Alte Posts löschen
       await db.execAsync('DELETE FROM posts_fetched;');
-  
+      // Neue Posts einfügen (OR REPLACE vermeidet UNIQUE-Fehler)
       for (const post of posts) {
         await db.runAsync(
-          `INSERT INTO posts_fetched (
-              id, created_at, location, nachname, vorname, option, category, profileImageUrl, long, lat, userBio, userId, postText
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+          `INSERT OR REPLACE INTO posts_fetched (
+             id, created_at, location, nachname, vorname,
+             option, category, profileImageUrl, long, lat,
+             userBio, userId, postText
+           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
           [
             post.id,
             post.created_at,
@@ -39,26 +39,18 @@ export function usePostService() {
             post.profileImageUrl,
             post.long,
             post.lat,
-            post.userBio,
+            post.userBio ?? '',
             post.userId,
             post.postText,
           ]
-          
         );
-        console.log('post', post) 
       }
-  
-      await db.execAsync('COMMIT;');
-      console.log('Fetched posts successfully stored in posts_fetched table.');
+      console.log('Posts in SQLite gespeichert');
     } catch (error) {
-      await db.execAsync('ROLLBACK;');
-      console.error('Error storing fetched posts in posts_fetched table:', error);
+      console.error('Error storing posts in posts_fetched table:', error);
+      throw error;
     }
   }
-  
 
-  return {
-    getPosts,
-    addPosts,
-  };
+  return { getPosts, addPosts };
 }
