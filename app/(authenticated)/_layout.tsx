@@ -269,7 +269,7 @@ export default function AuthenticatedLayout() {
         options={{ 
             headerTitle: 'Anmeldung',
             presentation: 'modal',
-            headerStyle: { backgroundColor: 'orange' },
+            headerStyle: { backgroundColor: '#ff862e' },
             headerTitleStyle: { fontSize: finalFontSize, color: 'white' } ,
             headerShown: true, 
             headerRight: () => (

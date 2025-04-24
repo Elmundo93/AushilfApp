@@ -61,7 +61,7 @@ export default function LoginScreen() {
     setIsLoading(true);
     try {
       const user = await loginWithEmail(email, password);
-      if (user) router.replace('/(authenticated)/(aushilfapp)/pinnwand');
+
     } catch (e) {
       Alert.alert('Login fehlgeschlagen', 'Prüfen Sie Ihre Zugangsdaten.');
     } finally {

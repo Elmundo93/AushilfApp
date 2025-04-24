@@ -21,26 +21,12 @@ export default function NachrichtenLayout() {
         }} />
       <Stack.Screen
         name="channel/[cid]"
+        
         options={{
-          headerShown: true,
-          headerTitle: 'Nachrichten',
-          headerLeft: () => (
-            
-              <Link href="/(aushilfapp)/nachrichten" asChild>
-            <TouchableOpacity style={{padding: 10,  
-  width: 44,    
-  height: 44,   }}>
-                <Ionicons name="arrow-back" size={24} color="black" />
-              </TouchableOpacity>
-            </Link>
-          ),
-          headerRight: () => (
+          presentation: 'formSheet',
+          headerShown: false,
+         
 
-              <TouchableOpacity>
-                <NachrichtenMenu  />
-              </TouchableOpacity>
-
-          ),
           
         }}
       />

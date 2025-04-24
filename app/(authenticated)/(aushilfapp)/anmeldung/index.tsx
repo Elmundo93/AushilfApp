@@ -1,22 +1,28 @@
-import React, { useCallback, useContext, useState } from 'react';
-import { View, Text, StyleSheet, LayoutAnimation, Animated } from 'react-native';
+import React, { useCallback, useContext, useRef, useState } from 'react';
+import { View, Text, StyleSheet, LayoutAnimation, Animated, ScrollView } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { FontSizeContext } from '@/components/provider/FontSizeContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import AnmeldenAccordion from '@/components/Anmelden/AnmeldenAccordion';
-import { ScrollView } from 'react-native';
+import { FortschrittAnzeige } from '@/components/Anmelden/FortschrittsAnzeige';
+import { FortschrittCircle } from '@/components/Anmelden/FortschrittsCircle';
 
 const AnmeldungPage = () => {
   const { fontSize } = useContext(FontSizeContext);
+  const router = useRouter();
+
   const defaultFontSize = 20;
   const componentBaseFontSize = 26;
   const adjustedFontSize = (fontSize / defaultFontSize) * componentBaseFontSize;
   const maxFontSize = 40;
   const finalFontSize = Math.min(adjustedFontSize, maxFontSize);
-  const router = useRouter();
+
   const [isExpanded, setIsExpanded] = useState(false);
-  const buttonScale = new Animated.Value(1);
+  const [filledFields, setFilledFields] = useState(0);
+  const totalFields = 9;
+
+  const buttonScale = useRef(new Animated.Value(1)).current;
 
   const toggleAccordion = useCallback(() => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -40,40 +46,34 @@ const AnmeldungPage = () => {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.textContainer}>
-        <Text style={[styles.heading, { fontSize: finalFontSize * 1.2 }]}>
-          Minijob anmelden
-        </Text>
-        
-        <View style={styles.ul}>
-          <View style={styles.li}>
-            <View style={styles.bullet} />
-            <Text style={[styles.liText, { fontSize: finalFontSize }]}>
-              Direkt zur Anmeldung mit einem Klick
-            </Text>
-          </View>
-          
-          <View style={styles.li}>
-            <View style={styles.bullet} />
-            <Text style={[styles.liText, { fontSize: finalFontSize }]}>
-              Anmeldedaten sicher speichern
-            </Text>
-          </View>
-          
-          <View style={styles.li}>
-            <View style={styles.bullet} />
-            <Text style={[styles.liText, { fontSize: finalFontSize }]}>
-              Automatische Datenübertragung ✌️
-            </Text>
-          </View>
-        </View>
+    
+        {/* Fortschrittsanzeige */}
+        <FortschrittCircle filled={filledFields} total={totalFields} />
 
+        {/* Accordion mit Callback zur Fortschrittsanzeige */}
         <AnmeldenAccordion
           isExpanded={isExpanded}
           onToggle={toggleAccordion}
           accordionTitle="Anmeldedaten speichern"
-          style={styles.accordion}
+          onFieldChange={setFilledFields}
         />
-        
+
+        {/* Vorteile */}
+        <View style={styles.ul}>
+          <View style={styles.li}>
+            <Text style={styles.arrowIcon}>⬆️</Text>
+            <Text style={[styles.liText, { fontSize: finalFontSize }]}>
+              Automatische Datenübertragung
+            </Text>
+          </View>
+          <View style={styles.li}>
+            <Text style={styles.arrowIcon}>⬇️</Text>
+            <Text style={[styles.liText, { fontSize: finalFontSize }]}>
+              Mit einem Klick zur Anmeldung
+            </Text>
+          </View>
+        </View>
+
         <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
           <TouchableOpacity
             style={styles.button}
@@ -93,9 +93,6 @@ const AnmeldungPage = () => {
             </LinearGradient>
           </TouchableOpacity>
         </Animated.View>
-
-       
-       
       </View>
     </ScrollView>
   );
@@ -104,11 +101,8 @@ const AnmeldungPage = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#fff',
     padding: 20,
-  },
-  accordion: {
-    marginBottom: 20,
   },
   textContainer: {
     backgroundColor: '#ffffff',
@@ -116,10 +110,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 5,
@@ -129,12 +120,10 @@ const styles = StyleSheet.create({
     maxWidth: 500,
     marginBottom: 40,
   },
-  heading: {
-    color: '#333',
-    textAlign: 'center',
+  lottie: {
+    width: 160,
+    height: 160,
     marginBottom: 20,
-    lineHeight: 40,
-    fontWeight: 'bold',
   },
   ul: {
     width: '100%',
@@ -147,12 +136,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     minHeight: 30,
   },
-  bullet: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#FF8C00',
+  arrowIcon: {
     marginRight: 12,
+    fontSize: 30,
   },
   liText: {
     color: '#333',
@@ -166,10 +152,7 @@ const styles = StyleSheet.create({
     marginTop: 25,
     marginBottom: 20,
     shadowColor: '#FF8C00',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 5,

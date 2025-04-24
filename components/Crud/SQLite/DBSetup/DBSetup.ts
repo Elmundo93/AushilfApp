@@ -66,16 +66,41 @@ CREATE TABLE IF NOT EXISTS danksagungen_fetched (
         created_at TEXT
       );
 
-      -- Messages
-      CREATE TABLE IF NOT EXISTS messages_fetched (
-        message_id TEXT PRIMARY KEY,
-        cid TEXT,
-        user_id TEXT,
-        text TEXT,
-        created_at TEXT,
-        updated_at TEXT,
-        FOREIGN KEY (cid) REFERENCES channels_fetched(cid)
-      );
+    DROP TABLE IF EXISTS messages_fetched;
+CREATE TABLE IF NOT EXISTS messages_fetched (
+  id TEXT PRIMARY KEY NOT NULL,
+  chat_id TEXT NOT NULL,
+  sender_id TEXT NOT NULL,
+  content TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  read INTEGER NOT NULL
+);
+
+DROP TABLE IF EXISTS chats_fetched;
+
+CREATE TABLE IF NOT EXISTS chats_fetched (
+  id TEXT PRIMARY KEY NOT NULL,
+  user1 TEXT NOT NULL,
+  user2 TEXT NOT NULL,
+  blocked_by TEXT,
+  created_at TEXT NOT NULL,
+
+  post_id TEXT,
+  post_text TEXT,
+  category TEXT,
+  option TEXT,
+
+  post_author_id TEXT,
+  post_author_vorname TEXT,
+  post_author_nachname TEXT,
+  post_author_profile_image TEXT,
+  post_author_bio TEXT,
+
+  initiator_vorname TEXT,
+  initiator_nachname TEXT,
+  initiator_profile_image TEXT,
+  initiator_bio TEXT
+);
 
       -- Alte User-Tabelle löschen (nur Dev)
       DROP TABLE IF EXISTS user_info_local;

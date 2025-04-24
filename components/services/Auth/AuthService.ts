@@ -99,6 +99,11 @@ export const authenticateUser = async (userData: User, session: Session) => {
     },
     streamToken
   );
+  await client.upsertUser({
+    id: userData.id,
+    name: `${userData.vorname} ${userData.nachname}`,
+    image: userData.profileImageUrl,
+  });
   console.log('User connected to StreamChat', client.user);
 
   // Update in-memory AuthStore

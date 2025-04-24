@@ -9,7 +9,7 @@ export interface User {
   vorname: string;
   nachname: string;
   created_at: string;
-  location: Location;
+  location: Location | null;
   bio?: string;
   profileImageUrl?: string;
   coverImageUrl?: string;

@@ -1,102 +1,134 @@
-import React, { useEffect, useState } from 'react';
-import { SafeAreaView, View, StyleSheet, Text, KeyboardAvoidingView, Platform, TouchableOpacity } from 'react-native';
-import { Channel, MessageInput, MessageList } from 'stream-chat-expo';
-import {  useLocalSearchParams } from 'expo-router';
-
- 
-import { useAuthStore } from '@/components/stores/AuthStore';
-import { ActivityIndicator } from 'react-native';
-
+import React, { useEffect, useContext } from 'react';
+import { View, StyleSheet, Platform, KeyboardAvoidingView } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
 import { FontSizeContext } from '@/components/provider/FontSizeContext';
-import { useContext } from 'react';
+import { useAuthStore } from '@/components/stores/AuthStore';
+import { Channel, MessageInput, MessageList } from 'stream-chat-expo';
+import { LinearGradient } from 'expo-linear-gradient';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import type { Channel as ChannelType } from 'stream-chat';
-
-
+import {
+  useStreamChatStore,
+} from '@/components/stores/useStreamChatStore';
+import { CustomInputField } from '@/components/Nachrichten/Costum/CustomInputField';
+import { CustomMessageBubble } from '@/components/Nachrichten/Costum/CustomMessageBubble';
+import CustomChatHeader from '@/components/Nachrichten/Costum/CustomHeader';
 
 export default function ChannelScreen() {
-    const { cid } = useLocalSearchParams<{ cid: string }>();
-    const [channel, setChannel] = useState<ChannelType | null>(null);
-    const [loading, setLoading] = useState(true);
-    const client = useAuthStore.getState().streamChatClient;
-    const { fontSize } = useContext(FontSizeContext);
+  const { cid: cidParam } = useLocalSearchParams<{ cid: string }>();
+  const { fontSize } = useContext(FontSizeContext);
 
-  
-    useEffect(() => {
-        const fetchChannel = async () => {
-          if (!client || !cid) return;
-    
-          try {
-            // cid aufteilen, um channelType und channelId zu erhalten
-            const [channelType, channelId] = cid.split(':');
-            const channel = client.channel(channelType, channelId);
-            await channel.watch();
-            setChannel(channel);
-          } catch (error) {
-            console.error('Fehler beim Abrufen des Kanals:', error);
-          } finally {
-            setLoading(false);
-          }
-        };
-    
-        fetchChannel();
-      }, [client, cid]);
-    
-      if (loading) {
-        return <ActivityIndicator size="large" color="#0000ff" />;
+  const {
+    channel,
+    setChannel,
+    setCid,
+    setLoading,
+    setCurrentUserId,
+  } = useStreamChatStore();
+
+  const client = useAuthStore.getState().streamChatClient;
+  const userId = useAuthStore.getState().user?.id ?? '';
+
+  const handleSendMessage = async (content: string) => {
+    if (!channel) return;
+
+    try {
+      const response = await channel.sendMessage({
+        text: content,
+        user_id: userId,
+      });
+
+      const newMessage = {
+        id: response.message.id,
+        chat_id: channel.id || '',
+        sender_id: response.message.user?.id ?? '',
+        content: response.message.text ?? '',
+        created_at: response.message.created_at ?? new Date().toISOString(),
+        read: true,
+      };
+
+      const currentMessages = useStreamChatStore.getState().messages[channel.id || ''] ?? [];
+      useStreamChatStore.getState().setMessages(channel.id || '', [...currentMessages, newMessage]);
+    } catch (error) {
+      console.error('❌ Nachricht konnte nicht gesendet werden:', error);
+    }
+  };
+
+  useEffect(() => {
+    const fetchChannel = async () => {
+      if (!client || !cidParam) return;
+
+      setLoading(true);
+      setCid(cidParam);
+      setCurrentUserId(userId);
+
+      try {
+        const [channelType, channelId] = cidParam.split(':');
+        const fetchedChannel = client.channel(channelType, channelId);
+        await fetchedChannel.watch();
+        setChannel(fetchedChannel);
+      } catch (error) {
+        console.error('Fehler beim Abrufen des Kanals:', error);
+        setChannel(null);
+      } finally {
+        setLoading(false);
       }
-    
-      if (!channel) {
-        return <Text style={[ { fontSize }]}>Kanal nicht gefunden</Text>;
-      }
-    
-      return (
-        <SafeAreaView style={styles.container}>
-             
-            <KeyboardAvoidingView
-                style={styles.flex}
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                keyboardVerticalOffset={Platform.select({ ios: 220, android: 500 })}
-            >
-                <Channel
-                    channel={channel}
-                    
-                    
-                >
+    };
 
-                        <MessageList  />
-                        <MessageInput />
+    fetchChannel();
+  }, [client, cidParam]);
 
-                </Channel>
-            </KeyboardAvoidingView>
-        </SafeAreaView>
-    )}
+  return (
+   <View style={styles.container}>
+      {channel && (
+        <Channel channel={channel}>
+          {/* Hintergrundverlauf */}
+       
 
-    const styles = StyleSheet.create({
-        container: {
-            flex: 1,
-        },
-        flex: {
-            flex: 1,
-        },
-        centered: {
-            flex: 1,
-            justifyContent: 'center',
-            alignItems: 'center',
-        },
-        header: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            padding: 10,
-            backgroundColor: '#f8f8f8',
-        },
-        backButton: {
-            color: '#007bff',
-            marginRight: 10,
-            alignSelf: 'flex-start',
-        },
-        headerText: {
+          {/* Chat-Header */}
+          {channel?.data && (
+            <CustomChatHeader
+              currentUserImage={channel.data.custom_user_profileImage as string}
+              otherUserImage={channel.data.custom_post_profileImage as string}
+              currentUserName={`${channel.data.custom_user_vorname ?? ''} ${channel.data.custom_user_nachname ?? ''}`}
+              otherUserName={`${channel.data.custom_post_vorname ?? ''} ${channel.data.custom_post_nachname ?? ''}`}
+            />
+          )}
 
-            fontWeight: 'bold',
-        },
-    });
+          {/* Chatinhalt */}
+          <KeyboardAvoidingView
+            style={styles.flex}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={Platform.select({ ios: 0, android: 100 })}
+          >
+            <MessageList
+              Message={(props) => (
+                <CustomMessageBubble
+                  {...props}
+                  currentUserId={userId}
+                  fontSize={fontSize}
+                />
+              )}
+          
+            />
+            <MessageInput
+              Input={() => <CustomInputField fontSize={fontSize} />}
+            />
+          </KeyboardAvoidingView>
+        </Channel>
+      )}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    position: 'relative',
+    backgroundColor: 'white',
+  },
+  flex: {
+    flex: 1,
+    paddingBottom: 0,
+  },
+});
