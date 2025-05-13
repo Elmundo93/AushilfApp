@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/bienenlogo.png",
-    "scheme": "myapp",
+    "scheme": "myapp",                     
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/images/bienenlogo.png",
@@ -14,13 +14,34 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.elmundo93.aushilfapp"
+      "bundleIdentifier": "com.elmundo93.aushilfapp",
+      "usesAppleSignIn": true,              
+      "infoPlist": {
+        "CFBundleURLTypes": [
+          {
+            "CFBundleURLSchemes": ["myapp"] 
+          }
+        ]
+      },
+      "associatedDomains": [                
+        "applinks:your.domain.com"
+      ]
     },
     "android": {
+      "package": "com.elmundo93.aushilfapp",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/bienenlogo.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "intentFilters": [                   
+        {
+          "action": "VIEW",
+          "data": [
+            { "scheme": "myapp", "host": "*" }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -48,7 +69,8 @@
       },
       "eas": {
         "projectId": "4c23d573-79b8-43e8-9992-d4c304f8638d"
-      }
+      },
+      "authCallback": "https://auth.expo.io/@<DEIN_USERNAME>/<DEIN_SLUG>" 
     }
   }
 }

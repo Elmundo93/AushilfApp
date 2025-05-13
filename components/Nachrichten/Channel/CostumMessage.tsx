@@ -1,3 +1,4 @@
+//customMessage.tsx
 import React, { useContext } from 'react';
 import { MessageSimple } from 'stream-chat-expo';
 import { FontSizeContext } from '@/components/provider/FontSizeContext';

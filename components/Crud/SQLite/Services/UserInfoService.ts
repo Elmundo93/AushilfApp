@@ -1,55 +1,48 @@
+// components/services/sqlite/userService.ts
 import { SQLiteDatabase } from 'expo-sqlite';
 import { User } from '@/components/types/auth';
 
-
 export async function saveUserInfo(db: SQLiteDatabase, user: User) {
-  // Alten Datensatz löschen
-  await db.execAsync(`DELETE FROM user_info_local;`);
-
-  // Alle Spalten befüllen – die Reihenfolge muss zur VALUES-Liste passen!
-  await db.runAsync(
-    `INSERT INTO user_info_local (
-       id,
-       created_at,
-       location,
-       vorname,
-       nachname,
-       email,
-       profileImageUrl,
-       bio,
-       straße,
-       hausnummer,
-       plz,
-       wohnort,
-       telefonnummer,
-       steuernummer
-     ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?);`,
-    [
-      user.id ?? '',
-      user.created_at ?? '',
-      user.location ? JSON.stringify(user.location) : '',
-      user.vorname ?? '',
-      user.nachname ?? '',
-      user.email ?? '',
-      user.profileImageUrl ?? '',
-      user.bio ?? '',
-      user.straße ?? '',
-      user.hausnummer ?? '',
-      user.plz ?? '',
-      user.wohnort ?? '',
-      user.telefonnummer ?? '',
-      user.steuernummer ?? '',
-    ]
-  );
+  try {
+    await db.withTransactionAsync(async () => {
+      // delete old
+      await db.runAsync('DELETE FROM user_info_local;');
+      // insert new
+      await db.runAsync(
+        `INSERT INTO user_info_local (
+           id, created_at, location, vorname, nachname,
+           email, profileImageUrl, bio, straße, hausnummer,
+           plz, wohnort, telefonnummer, steuernummer
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+        [
+          user.id ?? '',
+          user.created_at ?? '',
+          user.location ? JSON.stringify(user.location) : '',
+          user.vorname ?? '',
+          user.nachname ?? '',
+          user.email ?? '',
+          user.profileImageUrl ?? '',
+          user.bio ?? '',
+          user.straße ?? '',
+          user.hausnummer ?? '',
+          user.plz ?? '',
+          user.wohnort ?? '',
+          user.telefonnummer ?? '',
+          user.steuernummer ?? '',
+        ]
+      );
+    });
+  } catch (error) {
+    console.error('❌ Error saving user info:', error);
+    throw error;
+  }
 }
 
 export async function loadUserInfo(db: SQLiteDatabase): Promise<User | null> {
   const row = await db.getFirstAsync<any>(
-    `SELECT * FROM user_info_local LIMIT 1;`
+    'SELECT * FROM user_info_local LIMIT 1;'
   );
   if (!row) return null;
-
-  // Alle Spalten wieder in dein User-Objekt mappen
   return {
     id: row.id,
     created_at: row.created_at,
@@ -69,6 +62,6 @@ export async function loadUserInfo(db: SQLiteDatabase): Promise<User | null> {
 }
 
 export async function deleteUserInfo(db: SQLiteDatabase) {
-  await db.execAsync(`DELETE FROM user_info_local;`);
+  // single exec – no need for a full transaction
+  await db.runAsync('DELETE FROM user_info_local;');
 }
-

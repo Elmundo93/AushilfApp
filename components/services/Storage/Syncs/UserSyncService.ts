@@ -56,6 +56,7 @@ export async function pushUserToSupabase(user: User): Promise<boolean> {
       plz: user.plz,
       wohnort: user.wohnort,
       telefonnummer: user.telefonnummer,
+      steuernummer: user.steuernummer,
     })
     .eq('id', user.id);
 

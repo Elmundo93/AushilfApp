@@ -1,134 +1,160 @@
-import React, { useEffect, useContext } from 'react';
-import { View, StyleSheet, Platform, KeyboardAvoidingView } from 'react-native';
+// File: app/(authenticated)/(aushilfapp)/nachrichten/channel/[cid].tsx
+import React, { useEffect, useContext, useRef } from 'react';
+import {
+  View,
+  StyleSheet,
+  FlatList,
+  KeyboardAvoidingView,
+  Platform,
+  TouchableOpacity,
+  Text,
+  Animated,
+} from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { FontSizeContext } from '@/components/provider/FontSizeContext';
+import { useStreamChatStore } from '@/components/stores/useStreamChatStore';
+import { useActiveChatStore } from '@/components/stores/useActiveChatStore';
 import { useAuthStore } from '@/components/stores/AuthStore';
-import { Channel, MessageInput, MessageList } from 'stream-chat-expo';
-import { LinearGradient } from 'expo-linear-gradient';
-import { SafeAreaView } from 'react-native-safe-area-context';
-
-import {
-  useStreamChatStore,
-} from '@/components/stores/useStreamChatStore';
+import { ChatMessage } from '@/components/types/stream';
+import CustomChatHeader from '@/components/Nachrichten/Costum/CustomHeader';
 import { CustomInputField } from '@/components/Nachrichten/Costum/CustomInputField';
 import { CustomMessageBubble } from '@/components/Nachrichten/Costum/CustomMessageBubble';
-import CustomChatHeader from '@/components/Nachrichten/Costum/CustomHeader';
+import { useChatContext } from '@/components/provider/ChatProvider';
+import { ScrollToBottomOnMount } from '@/components/Nachrichten/Helpers/ScrollToBottomOnMount';
+import { useScrollToBottom } from '@/components/Nachrichten/Helpers/ScrollToBottom';
+import { MaterialIcons } from '@expo/vector-icons';
 
 export default function ChannelScreen() {
   const { cid: cidParam } = useLocalSearchParams<{ cid: string }>();
   const { fontSize } = useContext(FontSizeContext);
-
-  const {
-    channel,
-    setChannel,
-    setCid,
-    setLoading,
-    setCurrentUserId,
-  } = useStreamChatStore();
-
-  const client = useAuthStore.getState().streamChatClient;
   const userId = useAuthStore.getState().user?.id ?? '';
+  const channels = useStreamChatStore((s) => s.channels);
+  const activeMessages = useActiveChatStore((s) => s.messages);
+  const flatListRef = useRef<FlatList<ChatMessage>>(null);
+  const { syncMessagesForChannel, loadMoreMessages } = useChatContext();
+  const scaleAnim = useRef(new Animated.Value(1)).current;
 
-  const handleSendMessage = async (content: string) => {
-    if (!channel) return;
+  const channel = channels.find((c) => c.cid === cidParam);
+  if (!channel) return null;
 
-    try {
-      const response = await channel.sendMessage({
-        text: content,
-        user_id: userId,
-      });
+  const { onScroll, isNearBottom, scrollToBottom } = useScrollToBottom(
+    flatListRef,
+    activeMessages.length
+  );
 
-      const newMessage = {
-        id: response.message.id,
-        chat_id: channel.id || '',
-        sender_id: response.message.user?.id ?? '',
-        content: response.message.text ?? '',
-        created_at: response.message.created_at ?? new Date().toISOString(),
-        read: true,
-      };
-
-      const currentMessages = useStreamChatStore.getState().messages[channel.id || ''] ?? [];
-      useStreamChatStore.getState().setMessages(channel.id || '', [...currentMessages, newMessage]);
-    } catch (error) {
-      console.error('❌ Nachricht konnte nicht gesendet werden:', error);
+  // on open, load the last 30 messages from SQLite/Stream
+  useEffect(() => {
+    if (cidParam) {
+      syncMessagesForChannel(cidParam, 30);
     }
+  }, [cidParam]);
+
+  const currentUserId = userId;
+
+  const handlePressIn = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.9,
+      useNativeDriver: true,
+    }).start();
   };
 
-  useEffect(() => {
-    const fetchChannel = async () => {
-      if (!client || !cidParam) return;
-
-      setLoading(true);
-      setCid(cidParam);
-      setCurrentUserId(userId);
-
-      try {
-        const [channelType, channelId] = cidParam.split(':');
-        const fetchedChannel = client.channel(channelType, channelId);
-        await fetchedChannel.watch();
-        setChannel(fetchedChannel);
-      } catch (error) {
-        console.error('Fehler beim Abrufen des Kanals:', error);
-        setChannel(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchChannel();
-  }, [client, cidParam]);
+  const handlePressOut = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+    }).start();
+  };
 
   return (
-   <View style={styles.container}>
-      {channel && (
-        <Channel channel={channel}>
-          {/* Hintergrundverlauf */}
-       
+    <View style={styles.container}>
+      <CustomChatHeader
+        otherUserImage={channel.custom_user_profileImage}
+        otherUserName={channel.custom_user_vorname}
+      />
 
-          {/* Chat-Header */}
-          {channel?.data && (
-            <CustomChatHeader
-              currentUserImage={channel.data.custom_user_profileImage as string}
-              otherUserImage={channel.data.custom_post_profileImage as string}
-              currentUserName={`${channel.data.custom_user_vorname ?? ''} ${channel.data.custom_user_nachname ?? ''}`}
-              otherUserName={`${channel.data.custom_post_vorname ?? ''} ${channel.data.custom_post_nachname ?? ''}`}
-            />
-          )}
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.select({ ios: 80, android: 100 })}
+      >
+        <FlatList
+          ref={flatListRef}
+          inverted
+          onScroll={onScroll}
+          data={activeMessages}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => {
 
-          {/* Chatinhalt */}
-          <KeyboardAvoidingView
-            style={styles.flex}
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            keyboardVerticalOffset={Platform.select({ ios: 0, android: 100 })}
-          >
-            <MessageList
-              Message={(props) => (
-                <CustomMessageBubble
-                  {...props}
-                  currentUserId={userId}
-                  fontSize={fontSize}
-                />
-              )}
-          
-            />
-            <MessageInput
-              Input={() => <CustomInputField fontSize={fontSize} />}
-            />
-          </KeyboardAvoidingView>
-        </Channel>
-      )}
+            return (
+              <CustomMessageBubble
+                message={item}
+                currentUserId={currentUserId}
+                fontSize={fontSize}
+
+              />
+            );
+          }}
+          contentContainerStyle={{ padding: 10 }}
+        
+          initialNumToRender={30}
+          maxToRenderPerBatch={20}
+          windowSize={5}
+          onEndReached={() => {
+            loadMoreMessages(cidParam);
+          }}
+          onEndReachedThreshold={0.1}
+          maintainVisibleContentPosition={{
+            minIndexForVisible: 1,
+          }}
+        />
+        {!isNearBottom && (
+          <Animated.View style={[styles.scrollButtonContainer, { transform: [{ scale: scaleAnim }] }]}>
+            <TouchableOpacity
+              style={styles.scrollButton}
+              onPress={scrollToBottom}
+              onPressIn={handlePressIn}
+              onPressOut={handlePressOut}
+            >
+              <MaterialIcons name="arrow-downward" size={24} color="white" />
+            </TouchableOpacity>
+          </Animated.View>
+        )}
+        <ScrollToBottomOnMount flatListRef={flatListRef} />
+
+        <CustomInputField
+          fontSize={fontSize}
+          cid={cidParam}
+          currentUserId={currentUserId}
+          flatListRef={flatListRef}
+        />
+      </KeyboardAvoidingView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    position: 'relative',
-    backgroundColor: 'white',
+  container: { flex: 1, backgroundColor: 'white' },
+  flex: { flex: 1 },
+  scrollButtonContainer: {
+    position: 'absolute',
+    bottom: Platform.select({ ios: 90, android: 80 }),
+    left: 16,
+    zIndex: 100,
   },
-  flex: {
-    flex: 1,
-    paddingBottom: 0,
+  scrollButton: {
+    backgroundColor: 'orange',
+    borderRadius: 25,
+    width: 50,
+    height: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
 });

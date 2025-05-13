@@ -9,7 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
-  Image,
+
   View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -17,8 +17,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useLoading } from '@/components/provider/LoadingContext';
 import { useAuth } from '@/components/hooks/useAuth';
 import { OAuthFlowManager } from '@/components/services/Auth/OAuthFlowManager';
-import * as AppleAuthentication from 'expo-apple-authentication';
 import { Ionicons } from '@expo/vector-icons';
+
+
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -33,14 +34,15 @@ export default function LoginScreen() {
     const finalize = async () => {
       const isPending = await OAuthFlowManager.isPending();
       if (!isPending) return;
-
-      await OAuthFlowManager.clear();
+  
       setLoading(true);
       setIsLoading(true);
-
+  
       try {
         const user = await finalizeOAuth();
-        if (user) router.replace('/(authenticated)/(aushilfapp)/pinnwand');
+        if (user) {
+          router.replace('/(authenticated)/(aushilfapp)/pinnwand');
+        }
       } catch (e) {
         Alert.alert('Fehler', 'OAuth-Anmeldung fehlgeschlagen.');
       } finally {
@@ -48,20 +50,23 @@ export default function LoginScreen() {
         setIsLoading(false);
       }
     };
-
+  
     finalize();
   }, []);
-
+  
   const handleEmailLogin = async () => {
     if (!email || !password) {
       return Alert.alert('Fehler', 'Bitte E-Mail und Passwort eingeben.');
     }
-
+  
     setLoading(true);
     setIsLoading(true);
+  
     try {
       const user = await loginWithEmail(email, password);
-
+      if (user) {
+        router.replace('/(authenticated)/(aushilfapp)/pinnwand');
+      }
     } catch (e) {
       Alert.alert('Login fehlgeschlagen', 'Prüfen Sie Ihre Zugangsdaten.');
     } finally {
@@ -69,15 +74,17 @@ export default function LoginScreen() {
       setIsLoading(false);
     }
   };
-
+  
   const handleOAuth = async (provider: 'google' | 'apple') => {
     setLoading(true);
     setIsLoading(true);
+  
     try {
-      await OAuthFlowManager.markPending();
       await loginWithOAuth(provider);
+      // Supabase öffnet nun den OAuth-Browser automatisch – Rückkehr wird im useEffect verarbeitet
     } catch (e) {
-      await OAuthFlowManager.clear();
+    
+      await OAuthFlowManager.clear(); // Nur aus Vorsicht
       Alert.alert('Fehler', `Login mit ${provider} fehlgeschlagen.`);
     } finally {
       setLoading(false);
@@ -135,17 +142,23 @@ export default function LoginScreen() {
             onPress={() => handleOAuth('google')}
             disabled={loading}
           >
-            <Text style={[styles.buttonText, styles.oauthText]}>Mit Google anmelden</Text>
+            <View style={styles.oauthButtonContent}>
+              <Ionicons name="logo-google" size={24} color="#000" />
+              <Text style={[styles.buttonText, styles.oauthText]}>Mit Google anmelden</Text>
+            </View>
           </TouchableOpacity>
 
           {Platform.OS === 'ios' && (
-            <AppleAuthentication.AppleAuthenticationButton
-              buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
-              buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
-              cornerRadius={8}
-              style={styles.appleButton}
+            <TouchableOpacity
+              style={[styles.button, styles.oauth, styles.appleButton]}
               onPress={() => handleOAuth('apple')}
-            />
+              disabled={loading}
+            >
+              <View style={styles.oauthButtonContent}>
+                <Ionicons name="logo-apple" size={24} color="#000" />
+                <Text style={[styles.buttonText, styles.oauthText]}>Mit Apple anmelden</Text>
+              </View>
+            </TouchableOpacity>
           )}
         </View>
       </KeyboardAvoidingView>
@@ -219,6 +232,11 @@ const styles = StyleSheet.create({
   },
   buttonText: { color: '#fff', fontSize: 18 },
   oauth: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#000' },
-  oauthText: { color: '#000' },
-  appleButton: { width: '100%', height: 44, marginTop: 10 },
+  oauthText: { color: '#000', marginLeft: 10 },
+  oauthButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  appleButton: { marginTop: 10 },
 });

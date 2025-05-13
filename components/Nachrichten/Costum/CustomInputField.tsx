@@ -1,15 +1,40 @@
-import React from 'react';
-import { View, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
+// File: components/Nachrichten/Costum/CustomInputField.tsx
+import React, { useState } from 'react';
+import { View, TextInput, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useMessageInputContext } from 'stream-chat-expo';
+import { useChatContext } from '@/components/provider/ChatProvider';
+import { ChatMessage } from '@/components/types/stream';
 
-export const CustomInputField = ({ fontSize }: { fontSize: number }) => {
-  const {
-    text,
-    setText,
-    sendMessage,
-    isValidMessage,
-  } = useMessageInputContext();
+interface Props {
+  fontSize: number;
+  cid: string;
+  currentUserId: string;
+  onMessageSent?: () => void;
+  flatListRef: React.RefObject<FlatList<ChatMessage>>;
+}
+
+export const CustomInputField: React.FC<Props> = ({
+  fontSize,
+  cid,
+  onMessageSent,
+  flatListRef,
+}) => {
+  const [text, setText] = useState('');
+  const { sendMessage } = useChatContext();
+
+  const handleSend = async () => {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+
+    try {
+      await sendMessage(cid, trimmed);
+      setText('');
+      onMessageSent?.();
+    } catch (e) {
+      console.error('Fehler beim Senden der Nachricht:', e);
+    }
+
+  };
 
   return (
     <View style={styles.container}>
@@ -20,12 +45,7 @@ export const CustomInputField = ({ fontSize }: { fontSize: number }) => {
         style={[styles.input, { fontSize }]}
         multiline
       />
-      <TouchableOpacity
-        onPress={() => {
-          if (isValidMessage()) sendMessage();
-        }}
-        style={styles.sendButton}
-      >
+      <TouchableOpacity onPress={handleSend} style={styles.sendButton}>
         <Ionicons name="send" size={22} color="white" />
       </TouchableOpacity>
     </View>

@@ -1,33 +1,26 @@
-import React, { useCallback, useContext, useRef, useState } from 'react';
-import { View, Text, StyleSheet, LayoutAnimation, Animated, ScrollView } from 'react-native';
+import React, { useContext, useRef } from 'react';
+import { View, Text, StyleSheet, Animated, ScrollView } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { FontSizeContext } from '@/components/provider/FontSizeContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import AnmeldenAccordion from '@/components/Anmelden/AnmeldenAccordion';
-import { FortschrittAnzeige } from '@/components/Anmelden/FortschrittsAnzeige';
+import { useAuthStore } from '@/components/stores/AuthStore';
 import { FortschrittCircle } from '@/components/Anmelden/FortschrittsCircle';
+import AnmeldenAccordion from '@/components/Anmelden/AnmeldenAccordion'; // falls nicht schon importiert
 
 const AnmeldungPage = () => {
   const { fontSize } = useContext(FontSizeContext);
   const router = useRouter();
-
-  const defaultFontSize = 20;
+  const registrationProgress = useAuthStore(state => state.registrationProgress);
+  const anmeldungsToggle = useAuthStore(state => state.anmeldungsToggle);
+  const setAnmeldungsToggle = useAuthStore(state => state.setAnmeldungsToggle);
+  const defaultFontSize = 18;
   const componentBaseFontSize = 26;
   const adjustedFontSize = (fontSize / defaultFontSize) * componentBaseFontSize;
-  const maxFontSize = 40;
+  const maxFontSize = 30;
   const finalFontSize = Math.min(adjustedFontSize, maxFontSize);
 
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [filledFields, setFilledFields] = useState(0);
-  const totalFields = 9;
-
   const buttonScale = useRef(new Animated.Value(1)).current;
-
-  const toggleAccordion = useCallback(() => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setIsExpanded(prev => !prev);
-  }, []);
 
   const handlePressIn = () => {
     Animated.spring(buttonScale, {
@@ -46,34 +39,34 @@ const AnmeldungPage = () => {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.textContainer}>
-    
+      
         {/* Fortschrittsanzeige */}
-        <FortschrittCircle filled={filledFields} total={totalFields} />
+        <FortschrittCircle percent={registrationProgress} />
 
-        {/* Accordion mit Callback zur Fortschrittsanzeige */}
-        <AnmeldenAccordion
-          isExpanded={isExpanded}
-          onToggle={toggleAccordion}
-          accordionTitle="Anmeldedaten speichern"
-          onFieldChange={setFilledFields}
+        {/* Accordion */}
+        <AnmeldenAccordion 
+          isExpanded={anmeldungsToggle} 
+          onToggle={() => setAnmeldungsToggle(!anmeldungsToggle)} 
+          accordionTitle="Anmeldedaten speichern" 
         />
 
         {/* Vorteile */}
         <View style={styles.ul}>
           <View style={styles.li}>
-            <Text style={styles.arrowIcon}>⬆️</Text>
-            <Text style={[styles.liText, { fontSize: finalFontSize }]}>
-              Automatische Datenübertragung
+            <Text style={styles.arrowIcon}>✅</Text>
+            <Text style={[styles.liText, { fontSize: finalFontSize }]} adjustsFontSizeToFit={true} numberOfLines={2}>
+              Automatische{'\n'}Datenübertragung
             </Text>
           </View>
           <View style={styles.li}>
-            <Text style={styles.arrowIcon}>⬇️</Text>
-            <Text style={[styles.liText, { fontSize: finalFontSize }]}>
-              Mit einem Klick zur Anmeldung
+            <Text style={[styles.arrowIcon]}>⬇️</Text>
+            <Text style={[styles.liText, { fontSize: finalFontSize }]} adjustsFontSizeToFit={true} numberOfLines={3}>
+              Mit einem{'\n'}Klick zur Minijobzentrale!
             </Text>
           </View>
         </View>
 
+        {/* Button */}
         <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
           <TouchableOpacity
             style={styles.button}
@@ -143,7 +136,7 @@ const styles = StyleSheet.create({
   liText: {
     color: '#333',
     flex: 1,
-    lineHeight: 28,
+    lineHeight: 30,
     paddingTop: 2,
   },
   button: {

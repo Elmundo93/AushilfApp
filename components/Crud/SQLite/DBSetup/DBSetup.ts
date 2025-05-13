@@ -1,7 +1,7 @@
 import { SQLiteDatabase } from 'expo-sqlite';
 
 export async function migrateDbIfNeeded(db: SQLiteDatabase) {
-  const DATABASE_VERSION = 13;
+  const DATABASE_VERSION = 24;
 
   // Aktuelle DB-Version auslesen
   const { user_version: currentDbVersion = 0 } =
@@ -50,6 +50,7 @@ CREATE TABLE IF NOT EXISTS danksagungen_fetched (
 );
 
       -- Channels
+      DROP TABLE IF EXISTS channels_fetched;
       CREATE TABLE IF NOT EXISTS channels_fetched (
         cid TEXT PRIMARY KEY,
         channel_id TEXT,
@@ -63,17 +64,23 @@ CREATE TABLE IF NOT EXISTS danksagungen_fetched (
         custom_user_userBio TEXT,
         last_message_at TEXT,
         updated_at TEXT,
-        created_at TEXT
+        created_at TEXT,
+        last_message_text TEXT,
+        unread_count INTEGER,
+        partner_user_id INTEGER
       );
 
     DROP TABLE IF EXISTS messages_fetched;
 CREATE TABLE IF NOT EXISTS messages_fetched (
-  id TEXT PRIMARY KEY NOT NULL,
-  chat_id TEXT NOT NULL,
+  id TEXT PRIMARY KEY NOT NULL,        -- message.id
+  cid TEXT NOT NULL,                   -- zu welchem Channel
   sender_id TEXT NOT NULL,
+  sender_vorname TEXT,
+  sender_nachname TEXT,
+  sender_image TEXT,
   content TEXT NOT NULL,
   created_at TEXT NOT NULL,
-  read INTEGER NOT NULL
+  read INTEGER NOT NULL                -- 0 = ungelesen, 1 = gelesen
 );
 
 DROP TABLE IF EXISTS chats_fetched;

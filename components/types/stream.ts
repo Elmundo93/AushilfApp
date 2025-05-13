@@ -26,7 +26,44 @@ export type ChannelMetadata = {
     postProfilImage?: string;
   };
   
-  export type ChannelPreviewProps = {
-    channel: ChannelType;
-    onSelect: (channel: ChannelType) => void;
-  };
+
+
+  // types/stream.ts
+
+
+
+  export interface ChannelPreviewProps {
+    channel: StoredChannel;
+    onSelect: (channel: StoredChannel) => void;
+  }
+
+export interface StoredChannel {
+  cid: string;
+  channel_id: string;
+  channel_type: string;
+  custom_post_category: string | null;
+  custom_post_id: number | null;
+  custom_post_user_id: string | null;
+  custom_user_vorname: string;
+  custom_user_nachname: string;
+  custom_user_profileImage: string;
+  custom_user_userBio: string;
+  last_message_text: string;
+  last_message_at: string | null;
+  updated_at: string | null;
+  created_at: string | null;
+  unread_count: number;
+  partner_user_id: string | null;
+}
+export interface ChatMessage {
+  id: string;
+  cid: string;
+  sender_id: string;
+  sender_vorname: string;
+  sender_nachname: string;
+  sender_image: string;
+  content: string;
+  created_at: string;
+  read: number;
+}
+

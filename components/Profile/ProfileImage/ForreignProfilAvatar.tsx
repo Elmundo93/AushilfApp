@@ -56,7 +56,7 @@ const ForeignProfileAvatar: React.FC<ProfileAvatarProps> = ({ style }) => {
 const styles = StyleSheet.create({
   avatar: {
    
-    borderRadius: 40,
+    borderRadius: 100,
     marginBottom: 14,
 
   },

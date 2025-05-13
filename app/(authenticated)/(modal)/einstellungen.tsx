@@ -1,62 +1,54 @@
 import React, { useContext } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import Slider from '@react-native-community/slider';
+import { View, Text, StyleSheet, TouchableOpacity, Switch } from 'react-native';
 import Entypo from '@expo/vector-icons/Entypo';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { signOut } from '@/components/services/Auth/AuthService';
+import { useAuth } from '@/components/hooks/useAuth';
 import { FontSizeContext } from '@/components/provider/FontSizeContext';
 import { LinearGradient } from 'expo-linear-gradient';
-const EinstellungenPage: React.FC = () => {
 
+const EinstellungenPage: React.FC = () => {
   const { fontSize, setFontSize } = useContext(FontSizeContext);
-  const maxFontSize = 38; // Passen Sie diesen Wert nach Bedarf an
-  const defaultFontSize = 22; // Standard-Schriftgröße im Kontext
-  const componentBaseFontSize = 24; // Ausgangsschriftgröße für das Label
+  const defaultFontSize = 22;
+  const readingModeFontSize = 32;
+  const componentBaseFontSize = 24;
   const minIconSize = 35;
   const maxIconSize = 60;
   const iconSize = Math.min(Math.max(fontSize * 1.5, minIconSize), maxIconSize);
+  const { logout } = useAuth();
 
-  // Berechnung der angepassten Schriftgröße
+  const isReadingMode = fontSize > defaultFontSize;
   const adjustedFontSize = (fontSize / defaultFontSize) * componentBaseFontSize;
+  const finalFontSize = adjustedFontSize;
 
-  const finalFontSize = Math.min(adjustedFontSize, maxFontSize);
-  
-
-  const handleFontSizeChange = (value: number) => {
-    setFontSize(value);
+  const toggleReadingMode = () => {
+    setFontSize(isReadingMode ? defaultFontSize : readingModeFontSize);
   };
 
   const handleSignOut = async () => {
-    await signOut();
+    await logout();
   };
 
   return (
     <View style={styles.container}>
       <LinearGradient
-            colors={['orange', 'white']}
-            style={styles.gradient}
-          />
+        colors={['orange', 'white']}
+        style={styles.gradient}
+      />
       <View style={styles.card}>
         <View style={styles.cardHeader}>
           <Entypo name="open-book" size={iconSize} color="black" />
-          <Text style={[styles.cardText, { fontSize: finalFontSize }]}>Schriftgröße anpassen</Text>
+          <Text style={[styles.cardText, { fontSize: finalFontSize }]}>Lesehilfe-Modus</Text>
+          <Switch
+            value={isReadingMode}
+            onValueChange={toggleReadingMode}
+            trackColor={{ false: '#d3d3d3', true: 'orange' }}
+            thumbColor={isReadingMode ? '#1EB1FC' : '#f4f3f4'}
+          />
         </View>
-        <Slider
-          style={{ width: '100%', height: 40 }}
-          minimumValue={20}
-          maximumValue={34}
-          step={6}
-          value={fontSize}
-          onValueChange={handleFontSizeChange}
-          minimumTrackTintColor="orange"
-          maximumTrackTintColor="#d3d3d3"
-          thumbTintColor="#1EB1FC"
-
-
-          
-
-        />
+        <Text style={[styles.descriptionText, { fontSize: finalFontSize * 0.8 }]}>
+          Vergößert die Schrift
+        </Text>
       </View>
 
       <View style={styles.card}>
@@ -80,9 +72,9 @@ const EinstellungenPage: React.FC = () => {
         </TouchableOpacity>
       </View>
       <View style={styles.card}>
-        <TouchableOpacity style={styles.cardContent}>
+        <TouchableOpacity style={styles.cardContent}  onPress={handleSignOut}>
           <MaterialIcons name="logout" size={iconSize} color="black" />
-          <Text style={[styles.cardText, { fontSize: finalFontSize }]} onPress={handleSignOut}>Ausloggen</Text>
+          <Text style={[styles.cardText, { fontSize: finalFontSize }]}>Ausloggen</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -134,6 +126,11 @@ const styles = StyleSheet.create({
   slider: {
     width: '100%',
     marginVertical: 18,
+  },
+  descriptionText: {
+    marginTop: 10,
+    fontSize: 16,
+    alignSelf: 'center',
   },
 });
 

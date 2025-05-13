@@ -101,30 +101,34 @@ const CreateDanksagung: React.FC<CreateDanksagungProps> = ({ userId:recipientUse
 const styles = StyleSheet.create({
   container: {
     marginBottom: 16,
+    width: '100%',
   },
   input: {
-    minHeight: 100,
-    maxHeight: 150,
+    height: 100,
+    width: '100%',
     padding: 18,
     borderWidth: 1,
     borderColor: 'gray',
     borderRadius: 20,
     marginBottom: 8,
+    textAlignVertical: 'top',
   },
   button: {
     backgroundColor: 'orange',
     borderRadius: 5,
     padding: 12,
     alignItems: 'center',
+    width: '100%',
+    height: 50,
+    justifyContent: 'center',
   },
   buttonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
   },
-   disabledButton: {
+  disabledButton: {
     backgroundColor: 'lightgrey',
-
     opacity: 0.5,
   },
   disabledButtonText: {

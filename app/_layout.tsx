@@ -12,6 +12,7 @@ import { useColorScheme } from '@/components/hooks/useColorScheme';
 import { LoadingProvider } from '@/components/provider/LoadingContext';
 import { SQLiteProviderWrapper } from '@/components/provider/SQLiteProviderWrapper';
 import { DataProvider } from '@/components/provider/DataProvider';
+import { ChatProvider } from '@/components/provider/ChatProvider';
 
 
 export {
@@ -57,12 +58,14 @@ function RootLayoutNav() {
             <AuthProvider>
             <LoadingProvider>
               <DataProvider>
+                <ChatProvider>  
                 <Stack screenOptions={{ headerShown: false }}>
                   <Stack.Screen name="(public)" />
 
                 <Stack.Screen name="(authenticated)" />
 
                 </Stack>
+                </ChatProvider>
               </DataProvider>
               </LoadingProvider>
           </AuthProvider>

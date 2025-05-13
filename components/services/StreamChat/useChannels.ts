@@ -1,3 +1,4 @@
+// components/services/StreamChat/useChannels.ts
 import { useState, useEffect } from 'react';
 import { Channel as StreamChannel, ChannelFilters } from 'stream-chat';
 import { useAuthStore } from '@/components/stores/AuthStore';

@@ -10,7 +10,8 @@ import { useLocationStore }    from '@/components/stores/locationStore';
 import { usePostSync }         from '@/components/services/Storage/Syncs/PostSync';
 import { useDanksagungSync }   from '@/components/services/Storage/Syncs/DanksagungsSync';
 import { usePostCountStore }   from '@/components/stores/postCountStores';
-import { Location }            from '@/components/types/location';
+import { useChannelSync }      from '@/components/services/Storage/Syncs/ChannelSync';
+import { useActiveChatStore } from '../stores/useActiveChatStore';
 
 type DataContextType = {
   syncAll: () => Promise<void>;
@@ -30,6 +31,9 @@ export const DataProvider = ({ children }: PropsWithChildren) => {
   const { postCount } = usePostCountStore();
   const syncPosts        = usePostSync();
   const syncDanksagungen = useDanksagungSync();
+  const syncChannelsAndMessages = useChannelSync();
+
+  const { setCid, setMessages, messages } = useActiveChatStore();
 
   const [loading, setLoading]     = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
@@ -41,10 +45,9 @@ export const DataProvider = ({ children }: PropsWithChildren) => {
 
     try {
       // Posts und Danksagungen parallel synchronisieren
-      await Promise.all([
-        syncPosts(location),
-        syncDanksagungen(location),
-      ]);
+      await syncPosts(location);
+      await syncDanksagungen(location);
+      await syncChannelsAndMessages();
     } catch (e: any) {
       console.error('❌ Fehler beim gesamten Sync:', e);
       setSyncError(e.message || 'Unbekannter Fehler');

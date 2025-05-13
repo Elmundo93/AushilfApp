@@ -1,35 +1,42 @@
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableHighlight, Alert } from 'react-native';
+import React, { useEffect, useContext } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableHighlight,
+  Alert,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { ScrollView } from 'react-native-gesture-handler';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useContext } from 'react';
 
 import { useSelectedPostStore } from '@/components/stores/selectedPostStore';
 import { useAuthStore } from '@/components/stores/AuthStore';
+import { useStreamChatStore } from '@/components/stores/useStreamChatStore';
 
 import { FontSizeContext } from '@/components/provider/FontSizeContext';
 import { handleChatPress } from '@/components/services/StreamChat/StreamChatService';
 
-import { Post } from '@/components/types/post';
-
 import { PostHeader } from '@/components/PostDetails/PostHeader';
 import { PostContent } from '@/components/PostDetails/PostContent';
-
+import { useChatContext } from '@/components/provider/ChatProvider';
+import { useActiveChatStore } from '@/components/stores/useActiveChatStore';
 export default function PostDetail() {
   const { selectedPost } = useSelectedPostStore();
-  const router = useRouter();
   const { user } = useAuthStore();
+
+  const {
+    setCid,
+    setMessages: setActiveMessages,
+    messages: activeMessages,
+    cid: activeCid,
+    setLoading,
+  } = useActiveChatStore();
+  const router = useRouter();
   const { fontSize } = useContext(FontSizeContext);
 
-  const defaultFontSize = 22;
-  const componentBaseFontSize = 20;
-  const maxFontSize = 50;
-  const minIconSize = 30;
-  const maxIconSize = 50;
-  const adjustedFontSize = (fontSize / defaultFontSize) * componentBaseFontSize;
-  const finalFontSize = Math.min(adjustedFontSize, maxFontSize);
-  const iconSize = Math.min(Math.max(fontSize * 1.5, minIconSize), maxIconSize);
+  const finalFontSize = Math.min((fontSize / 22) * 20, 50);
+  const iconSize = Math.min(Math.max(fontSize * 1.5, 30), 50);
 
   useEffect(() => {
     if (!selectedPost) {
@@ -38,28 +45,37 @@ export default function PostDetail() {
   }, [selectedPost]);
 
   const handleChatPressButton = async () => {
-    if (!user) {
-      Alert.alert('Fehler', 'Bitte melden Sie sich an, um eine Nachricht zu senden.');
+    if (!user || !selectedPost) {
+      Alert.alert('Fehler', 'Bitte melden Sie sich an.');
       return;
     }
 
     try {
-      const channelId = await handleChatPress(user, selectedPost as Post);
-      if (channelId) {
-        router.back();
-        router.replace({
-          pathname: '/nachrichten/channel/[cid]',
-          params: { cid: channelId },
-        });
+      setLoading(true);
+
+      const channel = await handleChatPress(user, selectedPost);
+      if (channel) {
+        setCid(channel.cid);
+
+        // 1. Erst zur Nachrichtenübersicht wechseln
+        router.replace('/nachrichten');
+
+        // 2. Modal öffnen (kleiner Timeout, um Stack zu stabilisieren)
+        setTimeout(() => {
+          router.push({
+            pathname: '/nachrichten/channel/[cid]',
+            params: { cid: channel.cid },
+          });
+        }, 100);
       }
-    } catch (error) {
-      Alert.alert('Fehler', error instanceof Error ? error.message : 'Ein unbekannter Fehler ist aufgetreten.');
+    } catch (error: any) {
+      Alert.alert('Fehler', error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
-  if (!selectedPost) {
-    return null;
-  }
+  if (!selectedPost) return null;
 
   return (
     <View style={styles.container}>
@@ -91,10 +107,10 @@ export default function PostDetail() {
         />
 
         {user?.id !== selectedPost.userId && (
-          <TouchableHighlight 
-            style={styles.button} 
-            onPress={handleChatPressButton} 
-            underlayColor={'transparent'}
+          <TouchableHighlight
+            style={styles.button}
+            onPress={handleChatPressButton}
+            underlayColor="transparent"
           >
             <LinearGradient
               colors={['#FFA500', '#FF8C00', '#fcb63d']}
@@ -114,18 +130,11 @@ export default function PostDetail() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: 'white',
-  },
-  scrollViewContainer: {
-    flex: 1,
-  },
+  container: { flex: 1, backgroundColor: 'white' },
+  scrollViewContainer: { flex: 1 },
   gradient: {
     position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
+    left: 0, right: 0, top: 0,
     height: 200,
   },
   button: {
@@ -138,7 +147,6 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: '#fff',
-    fontSize: 16,
     fontWeight: 'bold',
   },
   modalButton: {

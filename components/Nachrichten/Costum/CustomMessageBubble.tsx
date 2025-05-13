@@ -1,98 +1,78 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+// File: components/Nachrichten/Costum/CustomMessageBubble.tsx
+import React, { useEffect, useRef } from 'react';
+import { Animated, View, Text, StyleSheet, Image } from 'react-native';
 import dayjs from 'dayjs';
+import { ChatMessage } from '@/components/types/stream';
+import { styles as bubbleStyles } from './customMStyles';
+import { MessageStatusTicks } from '../Helpers/MessageStatusTicks';
 
-export const CustomMessageBubble = ({
-  message,
-  currentUserId,
-  fontSize,
-}: {
-  message: any;
+interface Props {
+  message: ChatMessage;
   currentUserId: string;
   fontSize: number;
-}) => {
-  const isOwnMessage = message.user?.id === currentUserId;
+  animateOnMount?: boolean;
+}
 
-  return (
-    <View
-      style={[
-        styles.messageRow,
-        isOwnMessage ? styles.ownRow : styles.otherRow,
-      ]}
-    >
-      
-      {!isOwnMessage && message.user?.image && (
-        <Image source={{ uri: message.user.image }} style={styles.avatar} />
-      )}
+export const CustomMessageBubble: React.FC<Props> = React.memo(
+  ({ message, currentUserId, fontSize, animateOnMount = false }) => {
+    const isOwn = message.sender_id === currentUserId;
+    const anim = useRef(new Animated.Value(0)).current;
 
+    useEffect(() => {
+      if (animateOnMount) {
+        Animated.timing(anim, {
+          toValue: 1,
+          duration: 350,
+          useNativeDriver: true,
+        }).start();
+      } else {
+        anim.setValue(1);
+      }
+    }, [animateOnMount]);
+
+    const translateY = anim.interpolate({
+      inputRange: [0, 1],
+      outputRange: [20, 0],
+    });
+
+    return (
       <View
         style={[
-          styles.bubble,
-          isOwnMessage ? styles.ownBubble : styles.otherBubble,
+          bubbleStyles.messageRow,
+          isOwn ? bubbleStyles.ownRow : bubbleStyles.otherRow,
         ]}
       >
-        
-        {!isOwnMessage && (
-          <Text style={[styles.username, { fontSize: fontSize - 2 }]}>
-            {message.user?.name || 'Unbekannt'}
-          </Text>
+        {!isOwn && message.sender_image && (
+          <Image source={{ uri: message.sender_image }} style={bubbleStyles.avatar} />
         )}
-        <Text style={[styles.text, { fontSize }]}>{message.text}</Text>
-        <Text style={[styles.time, { fontSize: fontSize - 4 }]}>
-          {dayjs(message.created_at).format('HH:mm')}
-        </Text>
-      </View>
-    </View>
-  );
-};
 
-const styles = StyleSheet.create({
-  messageRow: {
-    flexDirection: 'row',
-    marginVertical: 6,
-    paddingHorizontal: 10,
-    alignItems: 'flex-end',
-  },
-  ownRow: {
-    justifyContent: 'flex-end',
-  },
-  otherRow: {
-    justifyContent: 'flex-start',
-  },
-  avatar: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    marginRight: 8,
-  },
-  bubble: {
-    maxWidth: '75%',
-    borderRadius: 16,
-    padding: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-  },
-  ownBubble: {
-    backgroundColor: '#FFE2B4',
-    borderTopRightRadius: 0,
-  },
-  otherBubble: {
-    backgroundColor: '#F0F0F0',
-    borderTopLeftRadius: 0,
-  },
-  username: {
-    fontWeight: '600',
-    marginBottom: 2,
-    color: '#555',
-  },
-  text: {
-    color: '#000',
-  },
-  time: {
-    textAlign: 'right',
-    marginTop: 4,
-    color: '#999',
-  },
-});
+        <Animated.View
+          style={[
+            bubbleStyles.bubble,
+            isOwn ? bubbleStyles.ownBubble : bubbleStyles.otherBubble,
+            { opacity: anim, transform: [{ translateY }] },
+          ]}
+        >
+          {!isOwn && (
+            <Text style={[bubbleStyles.username, { fontSize: fontSize - 2 }]}> 
+              {message.sender_vorname} {message.sender_nachname?.[0]}.
+            </Text>
+          )}
+
+          <Text style={[bubbleStyles.text, { fontSize }]}>
+            {message.content}
+          </Text>
+       
+          {isOwn && (
+  <View style={bubbleStyles.statusRow}>
+    <Text style={bubbleStyles.time}>
+      {dayjs(message.created_at).format('HH:mm')}
+    </Text>
+    <MessageStatusTicks status={message.read ? 'read' : 'sent'} />
+  </View>
+)}
+        </Animated.View>
+      </View>
+    );
+  }
+);

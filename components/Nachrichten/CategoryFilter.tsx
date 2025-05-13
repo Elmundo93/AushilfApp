@@ -1,3 +1,4 @@
+//CategoryFilter.tsx
 import React from 'react';
 import { View, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import { CATEGORIES, getBackgroundForCategory, getIconForCategory } from '@/components/Pinnwand/utils/CategoryAndOptionUtils';
