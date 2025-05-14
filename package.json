@@ -80,7 +80,7 @@
     "react-native-webview": "^13.12.5",
     "stream-chat-expo": "^5.37.0",
     "uuid": "^10.0.0",
-    "zustand": "4"
+    "zustand": "^5.0.4"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

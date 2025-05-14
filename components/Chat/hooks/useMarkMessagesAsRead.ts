@@ -1,20 +1,21 @@
 // 📁 hooks/useMarkMessagesAsRead.ts
 import { useEffect } from 'react';
-import { useChatStore } from '@/stores/useChatStore';
-import { supabase } from '@/lib/supabase';
+import { useActiveChatStore } from '@/components/stores/useActiveChatStore';
+import { supabase } from '@/components/config/supabase';
+import { ChatMessage } from '@/components/types/stream';
 
 export function useMarkMessagesAsRead(chatId: string, currentUserId: string) {
-  const messages = useChatStore((s) => s.messages[chatId] ?? []);
+  const messages = useActiveChatStore((s) => s.messages as ChatMessage[]);
 
   useEffect(() => {
     const unreadMessages = messages.filter(
-      (msg) => !msg.read && msg.sender_id !== currentUserId
+      (msg: ChatMessage) => !msg.read && msg.sender_id !== currentUserId
     );
 
     if (unreadMessages.length === 0) return;
 
     const markAsRead = async () => {
-      const messageIds = unreadMessages.map((msg) => msg.id);
+      const messageIds = unreadMessages.map((msg: ChatMessage) => msg.id);
 
       await supabase
         .from('messages')
@@ -22,11 +23,11 @@ export function useMarkMessagesAsRead(chatId: string, currentUserId: string) {
         .in('id', messageIds);
 
       // Zustand lokal aktualisieren
-      const updated = messages.map((msg) =>
-        messageIds.includes(msg.id) ? { ...msg, read: true } : msg
+      const updated = messages.map((msg: ChatMessage) =>
+        messageIds.includes(msg.id) ? { ...msg, read: 1 } : msg
       );
 
-      useChatStore.getState().setMessages(chatId, updated);
+      useActiveChatStore.getState().setMessages(updated);
     };
 
     markAsRead();
