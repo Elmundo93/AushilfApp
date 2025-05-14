@@ -86,6 +86,7 @@ export const AuthController = {
         redirectTo: getRedirectUri(),
       },
     });
+    console.log('Redirect URI:', getRedirectUri());
   },
 
   async finalizeOAuthLogin() {

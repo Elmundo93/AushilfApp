@@ -147,6 +147,12 @@ export default function LoginScreen() {
               <Text style={[styles.buttonText, styles.oauthText]}>Mit Google anmelden</Text>
             </View>
           </TouchableOpacity>
+          <TouchableOpacity onPress={() => {
+  console.log('TEST-OAUTH');
+  handleOAuth('google');
+}}>
+  <Text>Test OAuth</Text>
+</TouchableOpacity>
 
           {Platform.OS === 'ios' && (
             <TouchableOpacity
