@@ -10,7 +10,12 @@
     "preview": {
       "distribution": "internal"
     },
-    "production": {}
+    "production": {
+      "distribution": "internal",  
+      "env": {
+        "ENVIRONMENT": "production"
+      }
+    }
   },
   "submit": {
     "production": {}
