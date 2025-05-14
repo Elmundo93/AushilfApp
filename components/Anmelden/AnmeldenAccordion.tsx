@@ -7,7 +7,7 @@ import { useAuthStore } from '@/components/stores/AuthStore';
 import { AnmeldeAccordionProps } from '@/components/types/components';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useSQLiteContext } from 'expo-sqlite/next';
+import { useSQLiteContext } from 'expo-sqlite';
 import { saveUserInfo } from '@/components/Crud/SQLite/Services/UserInfoService';
 import { pushUserToSupabase } from '@/components/services/Storage/Syncs/UserSyncService';
 

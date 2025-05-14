@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useSQLiteContext } from 'expo-sqlite/next';
+import { useSQLiteContext } from 'expo-sqlite';
 import { useAuthStore } from '@/components/stores/AuthStore';
 import { syncFromSupabase, pushUserToSupabase } from '@/components/services/Storage/Syncs/UserSyncService';
 import { loadUserInfo } from '@/components/Crud/SQLite/Services/UserInfoService';

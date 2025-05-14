@@ -3,7 +3,7 @@ import React, { PropsWithChildren, useEffect, useMemo } from 'react';
 import { Chat, OverlayProvider } from 'stream-chat-expo';
 import { useAuthStore } from '@/components/stores/AuthStore';
 import { useSegments, usePathname, router } from 'expo-router';
-import { useSQLiteContext } from 'expo-sqlite/next';
+import { useSQLiteContext } from 'expo-sqlite';
 import { syncFromSupabase, loadUserFromLocal } from '@/components/services/Storage/Syncs/UserSyncService';
 import { useTokenManager } from '@/components/services/token/TokenManager';
 const AuthProvider = ({ children }: PropsWithChildren) => {
