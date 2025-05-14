@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/bienenlogo.png",
-    "scheme": "myapp",                     
+    "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/images/bienenlogo.png",
@@ -15,15 +15,17 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.elmundo93.aushilfapp",
-      "usesAppleSignIn": true,              
+      "usesAppleSignIn": true,
       "infoPlist": {
         "CFBundleURLTypes": [
           {
-            "CFBundleURLSchemes": ["myapp"] 
+            "CFBundleURLSchemes": [
+              "myapp"
+            ]
           }
         ]
       },
-      "associatedDomains": [                
+      "associatedDomains": [
         "applinks:your.domain.com"
       ]
     },
@@ -33,13 +35,19 @@
         "foregroundImage": "./assets/images/bienenlogo.png",
         "backgroundColor": "#ffffff"
       },
-      "intentFilters": [                   
+      "intentFilters": [
         {
           "action": "VIEW",
           "data": [
-            { "scheme": "myapp", "host": "*" }
+            {
+              "scheme": "myapp",
+              "host": "*"
+            }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ]
     },
@@ -58,7 +66,8 @@
           "locationAlwaysAndWhenInUsePermission": "Die App benötigt Zugriff auf deinen Standort, um relevante Posts in deiner Nähe zu zeigen. Bitte aktiviere die Standortberechtigung in den Einstellungen.",
           "isAndroidForegroundServiceEnabled": true
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
@@ -70,7 +79,7 @@
       "eas": {
         "projectId": "4c23d573-79b8-43e8-9992-d4c304f8638d"
       },
-      "authCallback": "https://auth.expo.io/@elmundo93/aushilfapp" 
+      "authCallback": "https://auth.expo.io/@elmundo93/aushilfapp"
     }
   }
 }
