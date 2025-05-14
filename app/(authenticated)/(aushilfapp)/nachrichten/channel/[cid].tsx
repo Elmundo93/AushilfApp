@@ -1,5 +1,5 @@
 // File: app/(authenticated)/(aushilfapp)/nachrichten/channel/[cid].tsx
-import React, { useEffect, useContext, useRef } from 'react';
+import React, { useEffect, useContext, useRef, useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -33,6 +33,8 @@ export default function ChannelScreen() {
   const flatListRef = useRef<FlatList<ChatMessage>>(null);
   const { syncMessagesForChannel, loadMoreMessages } = useChatContext();
   const scaleAnim = useRef(new Animated.Value(1)).current;
+  const opacityAnim = useRef(new Animated.Value(0)).current;
+  const [showButton, setShowButton] = useState(false);
 
   const channel = channels.find((c) => c.cid === cidParam);
   if (!channel) return null;
@@ -48,6 +50,26 @@ export default function ChannelScreen() {
       syncMessagesForChannel(cidParam, 30);
     }
   }, [cidParam]);
+
+  // Animation für das Erscheinen des Buttons
+  useEffect(() => {
+    if (!isNearBottom) {
+      setShowButton(true);
+      Animated.timing(opacityAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      Animated.timing(opacityAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start(() => {
+        setShowButton(false);
+      });
+    }
+  }, [isNearBottom]);
 
   const currentUserId = userId;
 
@@ -107,8 +129,16 @@ export default function ChannelScreen() {
             minIndexForVisible: 1,
           }}
         />
-        {!isNearBottom && (
-          <Animated.View style={[styles.scrollButtonContainer, { transform: [{ scale: scaleAnim }] }]}>
+        {showButton && (
+          <Animated.View 
+            style={[
+              styles.scrollButtonContainer, 
+              { 
+                transform: [{ scale: scaleAnim }],
+                opacity: opacityAnim
+              }
+            ]}
+          >
             <TouchableOpacity
               style={styles.scrollButton}
               onPress={scrollToBottom}

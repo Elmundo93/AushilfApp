@@ -70,7 +70,7 @@
       "eas": {
         "projectId": "4c23d573-79b8-43e8-9992-d4c304f8638d"
       },
-      "authCallback": "https://auth.expo.io/@<DEIN_USERNAME>/<DEIN_SLUG>" 
+      "authCallback": "https://auth.expo.io/@elmundo93/aushilfapp" 
     }
   }
 }
