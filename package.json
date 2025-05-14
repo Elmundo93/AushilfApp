@@ -70,7 +70,6 @@
     "react-native-full-responsive": "^2.3.1",
     "react-native-gesture-handler": "~2.24.0",
     "react-native-get-random-values": "^1.11.0",
-    "react-native-keyboard-aware-scroll-view": "^0.9.5",
     "react-native-pager-view": "6.7.1",
     "react-native-popup-menu": "^0.16.1",
     "react-native-reanimated": "~3.17.4",

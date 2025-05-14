@@ -1,31 +1,31 @@
 import React from 'react';
-import { Platform, View, StyleSheet } from 'react-native';
+import { View, ScrollView, StyleSheet, Platform, KeyboardAvoidingView } from 'react-native';
 import CreatePost from '@/components/Crud/Post/CreatePost';
 import { LinearGradient } from 'expo-linear-gradient';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 export default function Modal() {
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
+    >
       <LinearGradient
         colors={['orange', 'white']}
         start={{ x: 0, y: 0.2 }}
         end={{ x: 0, y: 1 }}
         style={styles.gradient}
       />
-      <KeyboardAwareScrollView
-        style={styles.scrollView}
+      <ScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
-        extraScrollHeight={Platform.OS === 'ios' ? 125 : 125}
-        enableOnAndroid={true}
       >
         <View style={styles.innerContainer}>
           <CreatePost />
         </View>
-      </KeyboardAwareScrollView>
-    </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -34,14 +34,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'white',
   },
-  scrollView: {
-    flex: 1,
-  },
   scrollContent: {
-   
+    flexGrow: 1,
   },
   innerContainer: {
-
+    flex: 1,
+    justifyContent: 'flex-start',
   },
   gradient: {
     position: 'absolute',
