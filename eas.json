@@ -1,7 +1,6 @@
 {
   "cli": {
-    "version": ">= 10.2.0",
-    "appVersionSource": "app.json"
+    "version": ">= 10.2.0"
   },
   "build": {
     "development": {
@@ -19,6 +18,9 @@
       },
       "ios": {
         "simulator": false
+      },
+      "env": {
+        "EXPO_NO_CAPABILITY_SYNC": "1"
       }
     }
   },
