@@ -13,7 +13,6 @@
     "preset": "jest-expo"
   },
   "dependencies": {
-    "@babel/preset-env": "^7.25.4",
     "@expo/vector-icons": "^14.0.3",
     "@react-native-async-storage/async-storage": "2.1.2",
     "@react-native-community/blur": "^4.4.1",
@@ -23,10 +22,8 @@
     "@react-navigation/native": "^7.1.6",
     "@stripe/stripe-react-native": "0.45.0",
     "@supabase/supabase-js": "^2.45.4",
-    "@types/react-native-vector-icons": "^6.4.18",
     "base64-arraybuffer": "^1.0.2",
     "date-fns": "^3.6.0",
-    "dotenv": "^16.4.5",
     "eas": "^0.1.0",
     "expo": "~53.0.0",
     "expo-apple-authentication": "~7.2.4",
@@ -79,7 +76,6 @@
     "react-native-svg": "15.11.2",
     "react-native-tab-view": "^3.5.2",
     "react-native-toast-message": "^2.2.0",
-    "react-native-vector-icons": "^10.2.0",
     "react-native-web": "^0.20.0",
     "react-native-webview": "^13.12.5",
     "stream-chat-expo": "^5.37.0",
