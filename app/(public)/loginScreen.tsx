@@ -9,17 +9,15 @@ import {
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
-
   View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLoading } from '@/components/provider/LoadingContext';
 import { useAuth } from '@/components/hooks/useAuth';
-import { OAuthFlowManager } from '@/components/services/Auth/OAuthFlowManager';
 import { Ionicons } from '@expo/vector-icons';
-
-
+import { OAuthFlowManager } from '@/components/services/Auth/OAuthFlowManager';
+import { supabase } from '@/components/config/supabase';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -28,40 +26,46 @@ export default function LoginScreen() {
 
   const router = useRouter();
   const { setIsLoading } = useLoading();
-  const { loginWithEmail, loginWithOAuth, finalizeOAuth } = useAuth();
+  const { loginWithEmail, loginWithOAuth, finalizeOAuthLogin } = useAuth();
 
   useEffect(() => {
-    const finalize = async () => {
+    const maybeFinalizeOAuth = async () => {
       const isPending = await OAuthFlowManager.isPending();
-      if (!isPending) return;
+      if (!isPending) {
+        console.log('ℹ️ Kein ausstehender OAuth-Login. Breche ab.');
+        return;
+      }
   
       setLoading(true);
-      setIsLoading(true);
-  
       try {
-        const user = await finalizeOAuth();
-        if (user) {
-          router.replace('/(authenticated)/(aushilfapp)/pinnwand');
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          const user = await finalizeOAuthLogin();
+          if (user) {
+            console.log('✅ OAuth erfolgreich abgeschlossen');
+            router.replace('/(authenticated)/(aushilfapp)/pinnwand');
+          }
+        } else {
+          console.warn('⚠️ Session nach OAuth-Redirect ist leer');
         }
       } catch (e) {
-        Alert.alert('Fehler', 'OAuth-Anmeldung fehlgeschlagen.');
+        console.error('❌ Fehler beim Finalisieren des OAuth-Flows:', e);
       } finally {
         setLoading(false);
-        setIsLoading(false);
       }
     };
   
-    finalize();
+    maybeFinalizeOAuth();
   }, []);
-  
+
   const handleEmailLogin = async () => {
     if (!email || !password) {
       return Alert.alert('Fehler', 'Bitte E-Mail und Passwort eingeben.');
     }
-  
+
     setLoading(true);
     setIsLoading(true);
-  
+
     try {
       const user = await loginWithEmail(email, password);
       if (user) {
@@ -74,17 +78,18 @@ export default function LoginScreen() {
       setIsLoading(false);
     }
   };
-  
+
   const handleOAuth = async (provider: 'google' | 'apple') => {
     setLoading(true);
     setIsLoading(true);
-  
+
     try {
       await loginWithOAuth(provider);
-      // Supabase öffnet nun den OAuth-Browser automatisch – Rückkehr wird im useEffect verarbeitet
+      // Supabase + WebBrowser-Redirect wird nun erwartet.
+      // Finalisierung passiert im useEffect oben.
     } catch (e) {
-    
-      await OAuthFlowManager.clear(); // Nur aus Vorsicht
+      console.error(`❌ Fehler bei OAuth (${provider})`, e);
+      await OAuthFlowManager.clear(); // Immer aufräumen
       Alert.alert('Fehler', `Login mit ${provider} fehlgeschlagen.`);
     } finally {
       setLoading(false);
@@ -100,7 +105,7 @@ export default function LoginScreen() {
         end={{ x: 1, y: 1 }}
         style={styles.gradient}
       />
-     
+
       <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
         <Ionicons name="arrow-back" size={28} color="black" />
       </TouchableOpacity>
@@ -144,15 +149,11 @@ export default function LoginScreen() {
           >
             <View style={styles.oauthButtonContent}>
               <Ionicons name="logo-google" size={24} color="#000" />
-              <Text style={[styles.buttonText, styles.oauthText]}>Mit Google anmelden</Text>
+              <Text style={[styles.buttonText, styles.oauthText]}>
+                Mit Google anmelden
+              </Text>
             </View>
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => {
-  console.log('TEST-OAUTH');
-  handleOAuth('google');
-}}>
-  <Text>Test OAuth</Text>
-</TouchableOpacity>
 
           {Platform.OS === 'ios' && (
             <TouchableOpacity
@@ -162,7 +163,9 @@ export default function LoginScreen() {
             >
               <View style={styles.oauthButtonContent}>
                 <Ionicons name="logo-apple" size={24} color="#000" />
-                <Text style={[styles.buttonText, styles.oauthText]}>Mit Apple anmelden</Text>
+                <Text style={[styles.buttonText, styles.oauthText]}>
+                  Mit Apple anmelden
+                </Text>
               </View>
             </TouchableOpacity>
           )}
@@ -180,14 +183,6 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-  },
-  imageBackground: {
-    width: '100%',
-    height: '100%',
-    position: 'absolute',
-    top: 150,
-    opacity: 0.8,
-    zIndex: 1,
   },
   backButton: {
     position: 'absolute',

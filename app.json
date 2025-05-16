@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "aushilfapp",
+    "name": "AushilfApp",
     "slug": "aushilfapp",
     "version": "1.0.0",
     "orientation": "portrait",
+    "scheme": "aushilfapp", 
     "icon": "./assets/images/bienenlogo.png",
-    "scheme": "myapp",                     
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/images/bienenlogo.png",
@@ -15,15 +15,15 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.elmundo93.aushilfapp",
-      "usesAppleSignIn": true,              
+      "usesAppleSignIn": true,
       "infoPlist": {
         "CFBundleURLTypes": [
           {
-            "CFBundleURLSchemes": ["myapp"] 
+            "CFBundleURLSchemes": ["aushilfapp"]
           }
         ]
       },
-      "associatedDomains": [                
+      "associatedDomains": [
         "applinks:your.domain.com"
       ]
     },
@@ -33,36 +33,32 @@
         "foregroundImage": "./assets/images/bienenlogo.png",
         "backgroundColor": "#ffffff"
       },
-      "intentFilters": [                   
+      "intentFilters": [
         {
           "action": "VIEW",
           "data": [
-            { "scheme": "myapp", "host": "*" }
+            {
+              "scheme": "aushilfapp",
+              "host": "*"
+            }
           ],
           "category": ["BROWSABLE", "DEFAULT"]
         }
       ]
     },
-    "web": {
-      "bundler": "metro",
-      "output": "static",
-      "favicon": "./assets/images/bienenlogo.png"
-    },
     "plugins": [
       "expo-router",
       "expo-font",
       "expo-secure-store",
+      "expo-dev-client",
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Die App benötigt Zugriff auf deinen Standort, um relevante Posts in deiner Nähe zu zeigen. Bitte aktiviere die Standortberechtigung in den Einstellungen.",
+          "locationAlwaysAndWhenInUsePermission": "Die App benötigt deinen Standort, um Hilfe in deiner Nähe zu zeigen.",
           "isAndroidForegroundServiceEnabled": true
         }
       ]
     ],
-    "experiments": {
-      "typedRoutes": true
-    },
     "extra": {
       "router": {
         "origin": false
@@ -70,7 +66,11 @@
       "eas": {
         "projectId": "4c23d573-79b8-43e8-9992-d4c304f8638d"
       },
-      "authCallback": "https://auth.expo.io/@elmundo93/aushilfapp" 
+      "supabaseRedirect": "aushilfapp://auth/callback",
+      "stripePublishableKey": "pk_test_xxx" 
+    },
+    "experiments": {
+      "typedRoutes": true
     }
   }
 }

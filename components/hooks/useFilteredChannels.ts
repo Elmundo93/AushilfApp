@@ -8,6 +8,6 @@ export const useFilteredChannelsStreamChatStore = (selectedCategory: string | nu
   if (!selectedCategory) return channels;
 
   return channels.filter(
-    (channel) => channel.custom_post_category === selectedCategory
+    (channel: StoredChannel) => channel.custom_post_category === selectedCategory
   );
 };

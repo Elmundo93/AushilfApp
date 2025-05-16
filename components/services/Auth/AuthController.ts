@@ -1,5 +1,6 @@
 // AuthController.ts
 import { supabase } from '@/components/config/supabase';
+
 import * as AuthService from './AuthService';
 import { OAuthFlowManager } from './OAuthFlowManager';
 import { useAuthStore } from '@/components/stores/AuthStore';
@@ -78,33 +79,42 @@ export const AuthController = {
   },
 
   async loginWithOAuth(provider: 'google' | 'apple') {
-    console.log('OAuth wird ausgelöst mit', provider);
     await OAuthFlowManager.markPending();
-    await supabase.auth.signInWithOAuth({
+  
+    const redirectTo = getRedirectUri();
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider,
-      options: {
-        redirectTo: getRedirectUri(),
-      },
+      options: { redirectTo },
     });
-    console.log('Redirect URI:', getRedirectUri());
+  
+    if (error) {
+      await OAuthFlowManager.clear();
+      throw new Error('OAuth konnte nicht gestartet werden: ' + error.message);
+    }
   },
 
   async finalizeOAuthLogin() {
     const isPending = await OAuthFlowManager.isPending();
     if (!isPending) return null;
-
+  
     const { data: { session } } = await supabase.auth.getSession();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!session || !user) throw new Error('OAuth-Fehler');
-
+  
+    if (!session || !user) {
+      await OAuthFlowManager.clear();
+      throw new Error('OAuth-Fehler: Keine Session oder kein User');
+    }
+  
     await OAuthFlowManager.clear();
+  
+    // Eigene User-Erstellung bzw. AuthService-Aufrufe
     const finalUser = await createUserIfNotExists(user);
-
-    const { userData: authUserData, streamClient, streamToken } =
+    const { userData: authUserData, streamToken } =
       await AuthService.authenticateUser(finalUser, session);
-
+  
     await AuthService.saveSecureSessionData(session, streamToken);
     await AuthService.saveUserData(authUserData);
+  
     useAuthStore.getState().setAuthenticated(true);
     return authUserData;
   },
@@ -114,7 +124,8 @@ export const AuthController = {
     if (client) await client.disconnectUser();
     await supabase.auth.signOut();
     await AuthService.clearStorage();
-    useAuthStore.getState().reset();
+    useAuthStore.getState().setAuthenticated(false);
+    useAuthStore.getState().setUser(null);
     router.replace('/(public)/index' as any);
   },
 };

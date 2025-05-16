@@ -1,21 +1,36 @@
 {
-  "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
+    "baseUrl": ".",
     "paths": {
       "@/*": [
         "./*"
       ],
-      "@/components/*": ["./components/*"],
-      "@/assets/*": ["./assets/*"]
+      "@/components/*": [
+        "components/*"
+      ],
+      "@/assets/*": [
+        "assets/*"
+      ]
     },
-    "typeRoots": ["./node_modules/@types", "./custom.d.ts"]
+    "typeRoots": [
+      "./node_modules/@types",
+      "./custom.d.ts"
+    ],
+    "jsx": "react-native",
+    "moduleResolution": "node",
+    "target": "esnext",
+    "allowJs": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true
   },
   "include": [
     "**/*.ts",
     "**/*.tsx",
+    "custom.d.ts",
     ".expo/types/**/*.ts",
-    "expo-env.d.ts",
-    "custom.d.ts"
-  ]
+    "expo-env.d.ts"
+  ],
+  "extends": "expo/tsconfig.base"
 }

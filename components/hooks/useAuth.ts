@@ -13,7 +13,7 @@ export const useAuth = () => {
     loginWithEmail: AuthController.loginWithEmail,
     register: AuthController.register,
     loginWithOAuth: AuthController.loginWithOAuth,
-    finalizeOAuth: AuthController.finalizeOAuthLogin,
+    finalizeOAuthLogin: AuthController.finalizeOAuthLogin,
     logout: AuthController.logout,
   };
 };

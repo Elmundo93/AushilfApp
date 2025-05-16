@@ -15,6 +15,7 @@ export default function PublicLayout() {
     <Stack.Screen name="aufklaerung" options={{ headerShown: false}} />
     <Stack.Screen name="manuellRegistration" options={{ headerShown: false}} />
     <Stack.Screen name="loginScreen" options={{ headerShown: false}} />
+   
 
 
 
