@@ -1,5 +1,4 @@
-// components/Nachrichten/NachrichtenMenu.tsx
-import React, { useContext, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import {
   Modal,
   View,
@@ -7,9 +6,17 @@ import {
   TouchableOpacity,
   StyleSheet,
   Pressable,
+  Alert,
 } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { FontSizeContext } from '@/components/provider/FontSizeContext';
+import { router } from 'expo-router';
+import { useSelectedUserStore } from '@/components/stores/selectedUserStore';
+import { useStreamChatStore } from '@/components/stores/useStreamChatStore';
+import { useActiveChatStore } from '@/components/stores/useActiveChatStore';
+import { chatService } from '@/components/services/StreamChat/chatService';
+import { useAuthStore } from '@/components/stores/AuthStore';
+import { extractPartnerData } from '@/components/services/StreamChat/lib/extractPartnerData';
 
 const NachrichtenMenu: React.FC<{ iconSize?: number; iconColor?: string }> = ({
   iconSize = 24,
@@ -17,22 +24,85 @@ const NachrichtenMenu: React.FC<{ iconSize?: number; iconColor?: string }> = ({
 }) => {
   const { fontSize } = useContext(FontSizeContext);
   const [visible, setVisible] = useState(false);
+  const { setSelectedUser } = useSelectedUserStore();
+  const { channels } = useStreamChatStore();
+  const { cid } = useActiveChatStore();
+  const user = useAuthStore((s) => s.user);
+  const [isMuted, setIsMuted] = useState(false);
+  const channel = channels.find((ch) => ch.cid === cid);
+  console.log('Channel structure:', JSON.stringify(channel, null, 2));
+  const partnerData = channel ? extractPartnerData(channel, user?.id ?? '') : null;
 
-  const maxFontSize = 28;
-  const defaultFontSize = 24;
-  const componentBaseFontSize = 22;
+  const adjustedFontSize = Math.min((fontSize / 24) * 22, 28);
 
-  const adjustedFontSize = (fontSize / defaultFontSize) * componentBaseFontSize;
-  const finalFontSize = Math.min(adjustedFontSize, maxFontSize);
+  console.log('partnerData', partnerData);
+  console.log('user', user);
 
-  const handleWriteMessage = () => {
+  
+
+  useEffect(() => {
+    const checkIfMuted = async () => {
+      if (!partnerData) return;
+      const client = useAuthStore.getState().streamChatClient;
+      const mutedIds = client?.mutedUsers?.map((m) => m.target.id);
+      setIsMuted(mutedIds?.includes(partnerData.userId) ?? false);
+    };
+  
+    checkIfMuted();
+  }, [partnerData]);
+
+  const handleViewProfile = () => {
+    if (!partnerData) return;
+    setSelectedUser(partnerData);
     setVisible(false);
-    alert('Nachricht schreiben');
+    setTimeout(() => {
+      router.push('/(modal)/forreignProfile');
+    }, 100);
   };
 
-  const handleBlockUser = () => {
+  const handleBlockUser = async () => {
+    if (!partnerData) return;
     setVisible(false);
-    alert('Benutzer blockieren');
+    try {
+      await chatService.blockUser(partnerData.userId);
+      Alert.alert('Erfolg', `${partnerData.vorname} wurde blockiert.`);
+    } catch (e: any) {
+      Alert.alert('Fehler beim Blockieren', e.message);
+    }
+  };
+  
+  const handleToggleMute = async () => {
+    if (!partnerData) return;
+    setVisible(false);
+    const client = useAuthStore.getState().streamChatClient;
+
+    try {
+      if (isMuted) {
+        await chatService.unmuteUser(partnerData.userId);
+        Alert.alert('Erfolg', `${partnerData.vorname} wurde wieder hörbar.`);
+      } else {
+        await chatService.muteUser(partnerData.userId);
+        Alert.alert('Erfolg', `${partnerData.vorname} wurde stummgeschaltet.`);
+      }
+    
+      const mutedIds = client?.mutedUsers?.map((m) => m.target.id);
+      setIsMuted(mutedIds?.includes(partnerData.userId) ?? false);
+    } catch (e: any) {
+      Alert.alert('Fehler', e.message);
+    }
+  };
+
+  const handleDeleteChat = async () => {
+    if (!cid) return;
+    setVisible(false);
+    try {
+      const [type, id] = cid.split(':');
+      await chatService.deleteChannel(type, id);
+      Alert.alert('Erfolg', 'Chat wurde gelöscht.');
+      // optional: Zustand aktualisieren oder Navigation zurück
+    } catch (e: any) {
+      Alert.alert('Fehler beim Löschen', e.message);
+    }
   };
 
   return (
@@ -53,26 +123,42 @@ const NachrichtenMenu: React.FC<{ iconSize?: number; iconColor?: string }> = ({
       >
         <Pressable style={styles.overlay} onPress={() => setVisible(false)}>
           <View style={styles.menuBox}>
-            <TouchableOpacity style={styles.menuItem} onPress={handleWriteMessage}>
-              <Text style={[styles.menuText, { fontSize: finalFontSize }]}>Nachricht schreiben</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.menuItem} onPress={handleBlockUser}>
-              <Text style={[styles.menuText, { fontSize: finalFontSize }]}>Benutzer blockieren</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.menuItem, styles.blockDanger]}
-              onPress={handleBlockUser}
-            >
-              <Text style={styles.blockDangerText}>Benutzer blockieren (streng)</Text>
-            </TouchableOpacity>
+            <MenuItem onPress={handleViewProfile} text="Profil betrachten" fontSize={adjustedFontSize} />
+            <MenuItem onPress={handleDeleteChat} text="Chat löschen" fontSize={adjustedFontSize} />
+            <MenuItem
+  onPress={handleToggleMute}
+  text={isMuted ? 'Stummschaltung aufheben' : 'Benutzer stummschalten'}
+  fontSize={adjustedFontSize}
+/>
+           
+           
           </View>
         </Pressable>
       </Modal>
     </>
   );
 };
+
+const MenuItem = ({
+  onPress,
+  text,
+  fontSize,
+  danger = false,
+}: {
+  onPress: () => void;
+  text: string;
+  fontSize: number;
+  danger?: boolean;
+}) => (
+  <TouchableOpacity
+    style={[styles.menuItem, danger && styles.blockDanger]}
+    onPress={onPress}
+  >
+    <Text style={[styles.menuText, danger && styles.blockDangerText, { fontSize }]}>
+      {text}
+    </Text>
+  </TouchableOpacity>
+);
 
 const styles = StyleSheet.create({
   overlay: {

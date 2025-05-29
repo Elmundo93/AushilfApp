@@ -7,19 +7,25 @@
       "developmentClient": true,
       "distribution": "internal",
       "env": {
-        "ENVIRONMENT": "development"
+        "ENVIRONMENT": "development",
+        "SUPABASE_FUNCTIONS_URL": "https://rorjehxddmuelbakcyqo.functions.supabase.co",
+        "STRIPE_PUBLISHABLE_KEY": "pk_test_..."
       }
     },
     "preview": {
       "distribution": "internal",
       "env": {
-        "ENVIRONMENT": "preview"
+        "ENVIRONMENT": "preview",
+        "SUPABASE_FUNCTIONS_URL": "https://rorjehxddmuelbakcyqo.functions.supabase.co",
+        "STRIPE_PUBLISHABLE_KEY": "pk_test_..."
       }
     },
     "production": {
       "distribution": "store",
       "env": {
-        "ENVIRONMENT": "production"
+        "ENVIRONMENT": "production",
+        "SUPABASE_FUNCTIONS_URL": "https://rorjehxddmuelbakcyqo.functions.supabase.co",
+        "STRIPE_PUBLISHABLE_KEY": "pk_live_..."
       }
     }
   },

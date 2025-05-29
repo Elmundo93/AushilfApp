@@ -6,6 +6,7 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useAuth } from '@/components/hooks/useAuth';
 import { FontSizeContext } from '@/components/provider/FontSizeContext';
 import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
 
 const EinstellungenPage: React.FC = () => {
   const { fontSize, setFontSize } = useContext(FontSizeContext);
@@ -66,7 +67,7 @@ const EinstellungenPage: React.FC = () => {
       </View>
 
       <View style={styles.card}>
-        <TouchableOpacity style={styles.cardContent}>
+        <TouchableOpacity style={styles.cardContent} onPress={() => router.push('(modal)/blockedUser' as any)}>
           <MaterialIcons name="connect-without-contact" size={iconSize} color="black" />
           <Text style={[styles.cardText, { fontSize: finalFontSize }]}>Geblockte Kontakte verwalten</Text>
         </TouchableOpacity>

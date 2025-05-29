@@ -85,9 +85,9 @@ const UserProfile = () => {
       <Animated.View
         style={[styles.gradientHeader, { transform: [{ translateY: gradientTranslateY }] }]}
       >
-        <LinearGradient colors={['#FFA500', '#FFFFFF']} style={styles.gradient} />
+        <LinearGradient   colors={['#ff9a00', '#ffc300', '#ffffff']}style={styles.gradient} />
       </Animated.View>
-
+     
       <Animated.FlatList
         onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
           useNativeDriver: true,

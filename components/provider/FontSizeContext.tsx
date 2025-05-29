@@ -1,7 +1,7 @@
 // FontSizeContext.tsx
 import React, { createContext, useState } from 'react';
 
-const DEFAULT_FONT_SIZE = 22;
+const DEFAULT_FONT_SIZE = 24;
 
 interface FontSizeContextProps {
   fontSize: number;

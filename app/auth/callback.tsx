@@ -11,26 +11,38 @@ export default function OAuthCallback() {
 
   useEffect(() => {
     const finalize = async () => {
+      console.log('📥 OAuth Callback erreicht – beginne Finalisierung');
+      
       const isPending = await OAuthFlowManager.isPending();
+      console.log('🔄 OAuth Pending Status:', isPending);
+      
       if (!isPending) {
+        console.warn('⚠️ Kein OAuth-Prozess aktiv – leite zurück zur Login-Seite');
         router.replace('/(public)/loginScreen');
         return;
       }
-
+  
       const { data: { session } } = await supabase.auth.getSession();
       const { data: { user } } = await supabase.auth.getUser();
-
+  
+      console.log('🧾 Session:', session);
+      console.log('👤 User:', user);
+  
       if (!session || !user) {
+        console.error('❌ Keine gültige Session oder User gefunden');
         await OAuthFlowManager.clear();
         router.replace('/(public)/loginScreen');
         return;
       }
-
+  
+      console.log('✅ Session & User vorhanden – Finalisiere Login');
       await OAuthFlowManager.clear();
       await AuthController.finalizeOAuthLogin();
+  
+      console.log('🎉 OAuth-Login vollständig abgeschlossen');
       router.replace('/(authenticated)/(aushilfapp)/pinnwand');
     };
-
+  
     finalize();
   }, []);
 

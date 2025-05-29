@@ -1,3 +1,4 @@
+// components/Pinnwand/Checkboxes/CustomCheckbox.tsx
 import React from 'react';
 import { Text } from 'react-native';
 import {Image} from 'react-native';

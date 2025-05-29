@@ -1,72 +1,52 @@
+// hooks/useDeletePost.ts
+import { Alert } from 'react-native';
 import { useState } from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
-import { Post } from '@/components/types/post';
-
 import { supabase } from '@/components/config/supabase';
+import { Post } from '@/components/types/post';
+import { usePostSync } from '@/components/services/Storage/Syncs/PostSync';
+import { useLocationStore } from '@/components/stores/locationStore';
 
-interface DeletePostProps {
-  post: Post;
-}
+export function useDeletePost() {
+  const [isDeleting, setIsDeleting] = useState(false);
+  const { location } = useLocationStore();
+  const syncPosts = usePostSync();
 
-export function DeletePost({ post }: DeletePostProps) {
-  const [isLoading, setIsLoading] = useState(false);
-  
-
-
-  const handleDelete = async () => {
-    try {
-      setIsLoading(true);
-      const { error } = await supabase
-        .from('Posts')
-        .delete()
-        .eq('id', post.id);
-
-      if (error) throw error;
-
-      // Hier können Sie eine Aktualisierung der UI implementieren
-      // z.B. durch einen Callback oder Context
-    } catch (error) {
-      console.error('Fehler beim Löschen des Posts:', error);
-      Alert.alert('Fehler', 'Der Post konnte nicht gelöscht werden.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const showDeleteConfirmation = () => {
+  const handleDeletePost = async (post: Post, onDeleted?: () => void) => {
     Alert.alert(
       'Post löschen',
-      'Sind Sie sicher, dass Sie diesen Post löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.',
+      'Bist du sicher, dass du diesen Post löschen möchtest?',
       [
-        {
-          text: 'Abbrechen',
-          style: 'cancel',
-        },
+        { text: 'Abbrechen', style: 'cancel' },
         {
           text: 'Löschen',
           style: 'destructive',
-          onPress: handleDelete,
+          onPress: async () => {
+            try {
+              setIsDeleting(true);
+
+              const { error } = await supabase
+                .from('Posts')
+                .delete()
+                .eq('id', post.id);
+
+              if (error) throw error;
+
+              if (location) {
+                await syncPosts(location);
+              }
+
+              if (onDeleted) onDeleted();
+            } catch (err) {
+              console.error('Fehler beim Löschen des Posts:', err);
+              Alert.alert('Fehler', 'Der Post konnte nicht gelöscht werden.');
+            } finally {
+              setIsDeleting(false);
+            }
+          },
         },
       ]
     );
   };
 
-  return (
-    <TouchableOpacity
-      onPress={showDeleteConfirmation}
-      disabled={isLoading}
-      style={{
-        backgroundColor: '#ef4444',
-        padding: 10,
-        borderRadius: 5,
-        opacity: isLoading ? 0.7 : 1,
-      }}
-    >
-      {isLoading ? (
-        <ActivityIndicator color="white" />
-      ) : (
-        <Text style={{ color: 'white', textAlign: 'center' }}>Löschen</Text>
-      )}
-    </TouchableOpacity>
-  );
+  return { handleDeletePost, isDeleting };
 }

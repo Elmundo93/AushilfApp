@@ -21,20 +21,9 @@ const FilterSection: React.FC<FilterSectionProps> = ({
         onOptionChange={onOptionChange}
         onCategoryChange={onCategoryChange}
         onLocationChange={onLocationChange}
-
         isExpanded={false} 
         onToggle={() => {}} 
         renderCheckbox={() => null} 
-        suchenChecked={false} 
-        bietenChecked={false} 
-        gartenChecked={false} 
-        haushaltChecked={false} 
-        sozialesChecked={false} 
-        gastroChecked={false} 
-        handwerkChecked={false} 
-        bildungChecked={false} 
-        handleSuchenBietenChange={() => {}} 
-        handleCategoryChange={() => {}} 
       />
     </View>
   );

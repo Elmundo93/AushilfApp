@@ -247,6 +247,42 @@ export default function AuthenticatedLayout() {
             ),
             }}
       />
+   <Stack.Screen
+        name="(modal)/blockedUser"
+        options={{ 
+            headerTitle: 'Geblockte Kontakte',
+            presentation: 'modal',
+            headerTitleStyle: { fontSize: finalFontSize  } ,
+            headerShown: true, 
+            header: () => (
+              <View style={{
+                backgroundColor: 'orange',
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                paddingHorizontal: 20,
+                height: headerHeight
+              }}>
+                <View style={{ width: iconSize }} />
+                <Text style={{
+                  fontSize: finalFontSize,
+                  fontWeight: 'bold',
+                  color: 'white',
+                  flex: 1,
+                  textAlign: 'center'
+                }}>
+                  Geblockte Kontakte
+                </Text>
+                <Link href=".." asChild>
+                  <TouchableOpacity>
+                    <Ionicons name="close" size={iconSize} color="black" />
+                  </TouchableOpacity>
+                </Link>
+              </View>
+            ),
+            }}
+      />
+
       <Stack.Screen
         name="(modal)/postMelden"
         options={{ 

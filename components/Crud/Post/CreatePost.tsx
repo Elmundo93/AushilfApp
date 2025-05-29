@@ -4,7 +4,6 @@ import PostFilters from '@/components/Pinnwand/Checkboxes/CheckboxGroups/PostFil
 import { router } from 'expo-router';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { supabase } from '@/components/config/supabase';
-import { usePostStore } from '@/components/stores/postStore';
 import { useAuthStore } from '@/components/stores/AuthStore';
 import { useLocationStore } from '@/components/stores/locationStore';
 import { FontSizeContext } from '@/components/provider/FontSizeContext';

@@ -84,7 +84,7 @@ export const FortschrittCircle = ({ percent }: { percent: number }) => {
         
       )}
       </View>
-      {registrationSuccessConfirmed && registrationProgress === 100 && (
+      {registrationProgress === 100 && (
         <View style={styles.successTextContainer}>
           <Text style={styles.successText}>Anmeldedaten vollständig!</Text>
           <Text style={styles.successText}>Jetzt kannst du loslegen!</Text>
@@ -124,6 +124,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: 'green',
     fontWeight: 'bold',
+    marginTop: 10,
   },
 });
 

@@ -41,19 +41,24 @@ export interface StoredChannel {
   cid: string;
   channel_id: string;
   channel_type: string;
-  custom_post_category: string | null;
-  custom_post_id: number | null;
-  custom_post_user_id: string | null;
+  custom_post_option: string;
+  custom_post_category: string;
+  custom_post_id: number;
+  custom_post_user_id: string;
+  custom_post_vorname: string;
+  custom_post_nachname: string;
+  custom_post_profileImage: string;
+  custom_post_userBio: string;
   custom_user_vorname: string;
   custom_user_nachname: string;
   custom_user_profileImage: string;
   custom_user_userBio: string;
+  custom_user_id: string;
   last_message_text: string;
   last_message_at: string | null;
   updated_at: string | null;
   created_at: string | null;
   unread_count: number;
-  partner_user_id: string | null;
 }
 export interface ChatMessage {
   id: string;

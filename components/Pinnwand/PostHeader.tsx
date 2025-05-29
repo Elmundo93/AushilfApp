@@ -124,8 +124,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 8,
-    paddingVertical: 4,
+
     alignSelf: 'flex-end',
+    minHeight: 30,
   },
 
   ShimmerIcon: {

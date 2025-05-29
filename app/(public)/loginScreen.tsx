@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   SafeAreaView,
   Text,
@@ -13,11 +13,11 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import LottieView from 'lottie-react-native';
 import { useLoading } from '@/components/provider/LoadingContext';
 import { useAuth } from '@/components/hooks/useAuth';
 import { Ionicons } from '@expo/vector-icons';
 import { OAuthFlowManager } from '@/components/services/Auth/OAuthFlowManager';
-import { supabase } from '@/components/config/supabase';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -26,37 +26,9 @@ export default function LoginScreen() {
 
   const router = useRouter();
   const { setIsLoading } = useLoading();
-  const { loginWithEmail, loginWithOAuth, finalizeOAuthLogin } = useAuth();
+  const { loginWithEmail } = useAuth();
 
-  useEffect(() => {
-    const maybeFinalizeOAuth = async () => {
-      const isPending = await OAuthFlowManager.isPending();
-      if (!isPending) {
-        console.log('ℹ️ Kein ausstehender OAuth-Login. Breche ab.');
-        return;
-      }
-  
-      setLoading(true);
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-          const user = await finalizeOAuthLogin();
-          if (user) {
-            console.log('✅ OAuth erfolgreich abgeschlossen');
-            router.replace('/(authenticated)/(aushilfapp)/pinnwand');
-          }
-        } else {
-          console.warn('⚠️ Session nach OAuth-Redirect ist leer');
-        }
-      } catch (e) {
-        console.error('❌ Fehler beim Finalisieren des OAuth-Flows:', e);
-      } finally {
-        setLoading(false);
-      }
-    };
-  
-    maybeFinalizeOAuth();
-  }, []);
+  const beeAnimation = require('@/assets/animations/Bee.json');
 
   const handleEmailLogin = async () => {
     if (!email || !password) {
@@ -79,47 +51,39 @@ export default function LoginScreen() {
     }
   };
 
-  const handleOAuth = async (provider: 'google' | 'apple') => {
-    setLoading(true);
-    setIsLoading(true);
-
-    try {
-      await loginWithOAuth(provider);
-      // Supabase + WebBrowser-Redirect wird nun erwartet.
-      // Finalisierung passiert im useEffect oben.
-    } catch (e) {
-      console.error(`❌ Fehler bei OAuth (${provider})`, e);
-      await OAuthFlowManager.clear(); // Immer aufräumen
-      Alert.alert('Fehler', `Login mit ${provider} fehlgeschlagen.`);
-    } finally {
-      setLoading(false);
-      setIsLoading(false);
-    }
-  };
-
   return (
     <SafeAreaView style={styles.container}>
       <LinearGradient
-        colors={['orange', 'white']}
+        colors={['#ff9a00', '#ffc300', '#ffffff']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={styles.gradient}
+        style={StyleSheet.absoluteFill}
       />
 
-      <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+      <TouchableOpacity style={styles.backButton} onPress={() => router.replace('/(public)/')}>
         <Ionicons name="arrow-back" size={28} color="black" />
       </TouchableOpacity>
 
       <KeyboardAvoidingView behavior="padding" style={styles.content}>
-        <Text style={styles.title}>Anmelden</Text>
+        <LottieView
+          source={beeAnimation}
+          autoPlay
+          loop
+          style={styles.lottie}
+        />
+
+        <Text style={styles.welcome}>Willkommen!</Text>
+        <Text style={styles.subtitle}>Bitte logge dich mit deiner E-Mail ein.</Text>
 
         <View style={styles.box}>
           <TextInput
             style={styles.input}
             placeholder="E-Mail"
             autoCapitalize="none"
+            keyboardType="email-address"
             onChangeText={setEmail}
             value={email}
+            maxFontSizeMultiplier={1.2}
           />
           <TextInput
             style={styles.input}
@@ -128,6 +92,7 @@ export default function LoginScreen() {
             autoCapitalize="none"
             onChangeText={setPassword}
             value={password}
+            maxFontSizeMultiplier={1.2}
           />
 
           <TouchableOpacity
@@ -138,37 +103,26 @@ export default function LoginScreen() {
             {loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.buttonText}>Weiter</Text>
+              <Text style={styles.buttonText}>Einloggen</Text>
             )}
           </TouchableOpacity>
-
+          <View style={styles.orContainer}>
+            <View style={styles.orLine} />
+            <Text style={styles.orText}>Neu hier?</Text>
+            <View style={styles.orLine} />
+          </View>
           <TouchableOpacity
-            style={[styles.button, styles.oauth]}
-            onPress={() => handleOAuth('google')}
-            disabled={loading}
+            style={[styles.button, styles.secondaryButton]}
+            onPress={() => router.push('/(public)/(onboarding)/intro' as any)}
           >
-            <View style={styles.oauthButtonContent}>
-              <Ionicons name="logo-google" size={24} color="#000" />
-              <Text style={[styles.buttonText, styles.oauthText]}>
-                Mit Google anmelden
-              </Text>
-            </View>
+            <Text style={[styles.buttonText, styles.secondaryText]}>Jetzt registrieren!</Text>
           </TouchableOpacity>
 
-          {Platform.OS === 'ios' && (
-            <TouchableOpacity
-              style={[styles.button, styles.oauth, styles.appleButton]}
-              onPress={() => handleOAuth('apple')}
-              disabled={loading}
-            >
-              <View style={styles.oauthButtonContent}>
-                <Ionicons name="logo-apple" size={24} color="#000" />
-                <Text style={[styles.buttonText, styles.oauthText]}>
-                  Mit Apple anmelden
-                </Text>
-              </View>
-            </TouchableOpacity>
-          )}
+          <TouchableOpacity onPress={() => Alert.alert('Info', 'Passwort-Funktion folgt.')}
+            style={styles.forgotContainer}
+          >
+            <Text style={styles.forgot}>Passwort vergessen?</Text>
+          </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -176,14 +130,7 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  gradient: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    left: 0,
-    right: 0,
-  },
+  container: { flex: 1 },
   backButton: {
     position: 'absolute',
     top: 50,
@@ -199,20 +146,41 @@ const styles = StyleSheet.create({
     paddingHorizontal: 25,
     zIndex: 2,
   },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
+  lottie: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: 120,
+    height: 120,
+    alignSelf: 'center',
+    marginBottom: 10,
+  },
+  welcome: {
+    fontSize: 26,
+    fontWeight: '700',
     textAlign: 'center',
-    color: 'black',
-    marginBottom: 20,
+    color: '#222',
+    marginBottom: 6,
+  },
+  subtitle: {
+    fontSize: 20,
+    textAlign: 'center',
+    color: '#555',
+    marginBottom: 16,
   },
   box: {
-    backgroundColor: 'rgba(255,255,255,0.85)',
+    backgroundColor: 'rgba(255,255,255,0.95)',
     padding: 20,
     borderRadius: 25,
     borderWidth: 1,
     borderColor: '#e0e0e0',
-    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 5,
   },
   input: {
     height: 50,
@@ -229,15 +197,43 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 15,
+    marginBottom: 12,
   },
-  buttonText: { color: '#fff', fontSize: 18 },
-  oauth: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#000' },
-  oauthText: { color: '#000', marginLeft: 10 },
-  oauthButtonContent: {
+  secondaryButton: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: 'orange',
+  },
+  buttonText: {
+    fontSize: 18,
+    color: '#fff',
+  },
+  secondaryText: {
+    color: 'orange',
+  },
+  forgotContainer: {
+    marginTop: 10,
+    alignItems: 'center',
+  },
+  forgot: {
+    fontSize: 14,
+    color: '#333',
+    textDecorationLine: 'underline',
+  },
+  orContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    marginVertical: 15,
   },
-  appleButton: { marginTop: 10 },
+  orLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#ccc',
+  },
+  orText: {
+    marginHorizontal: 10,
+    color: '#555',
+    fontSize: 16,
+  },
 });

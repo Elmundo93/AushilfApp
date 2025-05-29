@@ -29,6 +29,8 @@ interface ChatContextType {
   syncChannels: () => Promise<void>;
   getMessages: (cid: string) => Promise<StoredMessage[]>;
   syncMessagesForChannel: (cid: string, initialLimit?: number) => Promise<void>;
+  deleteChannel: (cid: string) => Promise<void>;
+  blockUser: (userId: string, reason?: string) => Promise<void>;
 }
 
 const ChatContext = createContext<ChatContextType>({
@@ -40,6 +42,8 @@ const ChatContext = createContext<ChatContextType>({
   syncChannels: async () => {},
   getMessages: async () => [],
   syncMessagesForChannel: async () => {},
+  deleteChannel: async () => {},
+  blockUser: async () => {},
 });
 
 export const useChatContext = () => useContext(ChatContext);
@@ -286,6 +290,42 @@ export const ChatProvider = ({ children }: PropsWithChildren<{}>) => {
   };
   const getMessages = (cid: string) => getMessagesForChannel(cid);
 
+  const deleteChannel = async (cid: string) => {
+    if (!streamChatClient) return;
+    const [type, id] = cid.split(':');
+    const channel = streamChatClient.channel(type, id);
+  
+    try {
+      // Serverseitig löschen (optional: nur hide statt delete, falls du "Archiv" willst)
+      await channel.delete();
+  
+      // Lokal in SQLite löschen
+      await db.runAsync('DELETE FROM channels_fetched WHERE cid = ?', [cid]);
+      await db.runAsync('DELETE FROM messages_fetched WHERE cid = ?', [cid]);
+  
+      // Zustand updaten
+      const localChs = await getChannelsFromDb(db);
+      setZustandChannels(localChs);
+  
+      // Aktiven Chat ggf. schließen
+      if (activeCid === cid) {
+        setCid(null);
+        setActiveMessages([]);
+      }
+    } catch (err) {
+      console.error('❌ Fehler beim Löschen des Channels:', err);
+    }
+  };
+
+  const blockUser = async (userId: string, reason = 'Verstoß gegen Regeln') => {
+    if (!streamChatClient) return;
+    try {
+      await streamChatClient.banUser(userId, { reason, timeout: 0 }); // 0 = permanent
+    } catch (err) {
+      console.error('❌ Fehler beim Blockieren des Nutzers:', err);
+    }
+  };
+
   return (
     <ChatContext.Provider
       value={{
@@ -297,6 +337,8 @@ export const ChatProvider = ({ children }: PropsWithChildren<{}>) => {
         syncChannels,
         getMessages,
         syncMessagesForChannel,
+        deleteChannel,
+        blockUser,
       }}
     >
       {children}

@@ -50,6 +50,8 @@ const PostItem: React.FC<PostItemProps> = ({ item }) => {
 
   return (
     <View>
+        
+
       <View style={styles.stringscontainer}>
         <Image source={require('@/assets/images/PinnwandHeader.png')} style={styles.strings} />
         <PostMenu 
@@ -110,11 +112,23 @@ const PostItem: React.FC<PostItemProps> = ({ item }) => {
 
         </View>
       </View>
+      <View style={styles.trenner}></View>
+
     </View>
   );
 };
 
 const styles = createRStyle({
+  trenner: {
+    height: 5,
+    backgroundColor: '#FFA500',
+    opacity: 0.2,
+    marginVertical: 30,
+
+    width: '90%',
+    alignSelf: 'center',
+    borderRadius: 50,
+  },
   stringscontainer: {
     position: 'relative',
     flexDirection: 'row',

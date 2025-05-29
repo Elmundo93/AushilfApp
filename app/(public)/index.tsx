@@ -31,16 +31,18 @@ const Page = () => {
             return (
 <SafeAreaView style={styles.container}>
 <LinearGradient
-       colors={['orange', 'white']}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={styles.gradient}
-    />
+        colors={['#ff9a00', '#ffc300', '#ffffff']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
+      <View style={[styles.backgroundImage, { zIndex: 2 }]} >
     <Image 
       source={require('@/assets/images/peopleWhiteBackground.png')} 
-      resizeMode="center" 
+      resizeMode="contain" 
       style={styles.imageBackground}
     />
+    </View>
     <View style={styles.contentContainer} >
                     <View style={styles.welcomeView}>
                       <Text style={styles.welcomeText}>Herzlich Willkommen!</Text>
@@ -107,20 +109,33 @@ const Page = () => {
                 alignItems: 'center',
                 height:'100%'
             },
+            backgroundImage: {
+                width: '100%',
+                height: '100%',
+                position: 'absolute',
+                justifyContent: 'center',
+                alignItems: 'center',
+                zIndex: 2,
+            },
             gradient: {
               position: 'absolute',
               top: 0,
               left: 0,
               right: 0,
               bottom: 0,
+              zIndex: 1,
             },
             imageBackground: {
               width: '100%',
               height: '100%',
               position: 'absolute',
-              top: 150,
-              opacity: 0.8,
-              zIndex: 1, // Fügen Sie diese Zeile hinzu
+              top: 120,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              opacity: 0.9,
+              zIndex: 2,
+              resizeMode: 'contain',
             },
             contentContainer: {
               flex: 1,

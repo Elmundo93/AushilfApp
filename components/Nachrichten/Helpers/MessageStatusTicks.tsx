@@ -19,7 +19,10 @@ export const MessageStatusTicks = ({ status }: { status: TickStatus }) => {
   return (
     <Animated.View style={[styles.container, { transform: [{ scale: scaleAnim }] }]}>
       {status === 'sent' && (
-        <Ionicons name="checkmark" size={14} color="gray" />
+        <View style={styles.double}>
+          <Ionicons name="checkmark" size={14} color="gray" />
+          <Ionicons name="checkmark" size={14} color="gray" />
+        </View>
       )}
       {status === 'read' && (
         <View style={styles.double}>
@@ -33,7 +36,7 @@ export const MessageStatusTicks = ({ status }: { status: TickStatus }) => {
 
 const styles = StyleSheet.create({
   container: {
-    marginLeft: 6,
+    marginLeft: 4,
     flexDirection: 'row',
     alignItems: 'center',
   },

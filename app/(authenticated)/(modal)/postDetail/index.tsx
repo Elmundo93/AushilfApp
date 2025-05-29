@@ -81,7 +81,7 @@ export default function PostDetail() {
     <View style={styles.container}>
       <ScrollView style={styles.scrollViewContainer}>
         <LinearGradient
-          colors={['orange', 'white']}
+         colors={['orange', '#ffc300', '#ffffff']}
           start={{ x: 0, y: 0 }}
           end={{ x: 0, y: 1 }}
           style={styles.gradient}

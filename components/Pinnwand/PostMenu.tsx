@@ -1,5 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Menu, MenuOption, MenuOptions, MenuTrigger } from 'react-native-popup-menu';
+import { Alert } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useRouter } from 'expo-router';
 import { useSelectedUserStore } from '@/components/stores/selectedUserStore';
@@ -10,7 +11,10 @@ import { StyleSheet } from 'react-native';
 import { useAuthStore } from '@/components/stores/AuthStore';
 import ShimmerPlaceholder from 'react-native-shimmer-placeholder';
 import { LinearGradient } from 'expo-linear-gradient';
-import { DeletePost } from '../Crud/Post/DeletePost';
+import { useDeletePost } from '../Crud/Post/DeletePost';
+import { supabase } from '@/components/config/supabase';
+import { usePostSync } from '@/components/services/Storage/Syncs/PostSync';
+import { useLocationStore } from '@/components/stores/locationStore';
 
 interface PostMenuProps {
   item: Post;
@@ -22,11 +26,14 @@ const PostMenu: React.FC<PostMenuProps> = ({ item, allLoaded, updateLoadingState
   const router = useRouter();
   const { setSelectedUser } = useSelectedUserStore();
   const { fontSize } = useContext(FontSizeContext);
-  const maxFontSize = 28;
-  const defaultFontSize = 24;
-  const componentBaseFontSize = 22;
+  const maxFontSize = 40;
+  const defaultFontSize = 36;
+  const componentBaseFontSize = 32;
   const { user } = useAuthStore();
-
+  const [isDeleting, setIsDeleting] = useState(false);
+  const syncPosts = usePostSync();
+  const { location } = useLocationStore();
+  const { handleDeletePost } = useDeletePost();
   const adjustedFontSize = (fontSize / defaultFontSize) * componentBaseFontSize;
   const finalFontSize = Math.min(adjustedFontSize, maxFontSize);
 
@@ -39,8 +46,13 @@ const PostMenu: React.FC<PostMenuProps> = ({ item, allLoaded, updateLoadingState
     alert('Nachricht schreiben');
   };
 
+  const onDeletePost = () => {
+    handleDeletePost(item, () => {
+      updateLoadingState(true); // Optional: UI-Refresh triggern
+    });
+  };
+
   const handleViewProfile = () => {
-    // Hier erstellen wir das UserProfile-Objekt aus den Post-Daten
     const userProfile = {
       userId: item.userId,
       vorname: item.vorname,
@@ -56,9 +68,7 @@ const PostMenu: React.FC<PostMenuProps> = ({ item, allLoaded, updateLoadingState
     router.push({ pathname: '/(modal)/postMelden' });
   };
 
-  const handleDeletePost = () => {
-    return <DeletePost post={item} />;
-  };
+  
 
   const dynamicStyles = {
     optionText: {
@@ -85,25 +95,38 @@ const PostMenu: React.FC<PostMenuProps> = ({ item, allLoaded, updateLoadingState
           optionsWrapper: styles.optionsWrapper,
           optionsContainer: styles.optionsContainer,
           optionWrapper: styles.optionWrapper,
-          optionText: dynamicStyles.optionText,
+          optionText: {
+            ...styles.optionText,
+            fontSize: finalFontSize,
+          },
         }}
       >
-        <ShimmerPlaceholder LinearGradient={LinearGradient} visible={allLoaded} shimmerColors={['#FFE5B4', '#FFA500', '#FFE5B4']} shimmerStyle={{ locations: [0, 0.5, 1] }}>
-          <MenuOption
-            onSelect={handleWriteMessage}
-            customStyles={{
-              optionWrapper: styles.menuOptionWrapper,
-              optionText: styles.menuOptionText,
-            }}
-            text="Nachricht schreiben"
-          />
-        </ShimmerPlaceholder>
+         {user?.id !== item.userId && (
+          <ShimmerPlaceholder LinearGradient={LinearGradient} visible={allLoaded} shimmerColors={['#FFE5B4', '#FFA500', '#FFE5B4']} shimmerStyle={{ locations: [0, 0.5, 1] }}>
+            <MenuOption
+              onSelect={handleWriteMessage}
+              customStyles={{
+                optionWrapper: styles.menuOptionWrapper,
+                optionText: {
+                  ...styles.menuOptionText,
+                  fontSize: finalFontSize,
+                },
+              }}
+              text="Nachricht schreiben"
+            />
+          </ShimmerPlaceholder>
+         )}
+
+
         <ShimmerPlaceholder LinearGradient={LinearGradient} visible={allLoaded} shimmerColors={['#FFE5B4', '#FFA500', '#FFE5B4']} shimmerStyle={{ locations: [0, 0.5, 1] }}>
           <MenuOption
             onSelect={handleViewProfile}
             customStyles={{
               optionWrapper: styles.menuOptionWrapper,
-              optionText: styles.menuOptionText,
+              optionText: {
+                ...styles.menuOptionText,
+                fontSize: finalFontSize,
+              },
             }}
             text="Profil anzeigen"
           />
@@ -111,13 +134,18 @@ const PostMenu: React.FC<PostMenuProps> = ({ item, allLoaded, updateLoadingState
         {user?.id === item.userId ? (
           <ShimmerPlaceholder LinearGradient={LinearGradient} visible={allLoaded} shimmerColors={['#FFE5B4', '#FFA500', '#FFE5B4']} shimmerStyle={{ locations: [0, 0.5, 1] }}>
             <MenuOption
-              onSelect={handleDeletePost}
+              onSelect={onDeletePost}
+              text="Post löschen"
               customStyles={{
                 optionWrapper: styles.deleteOptionWrapper,
-                optionText: styles.deleteOptionText,
+                optionText: {
+                  ...styles.deleteOptionText,
+                  fontSize: finalFontSize,
+                },
               }}
-              text="Post löschen"
-            />
+            >
+            
+            </MenuOption>
           </ShimmerPlaceholder>
         ) : (
           <ShimmerPlaceholder LinearGradient={LinearGradient} visible={allLoaded} shimmerColors={['#FFE5B4', '#FFA500', '#FFE5B4']} shimmerStyle={{ locations: [0, 0.5, 1] }}>
@@ -125,7 +153,10 @@ const PostMenu: React.FC<PostMenuProps> = ({ item, allLoaded, updateLoadingState
               onSelect={handleReportPost}
               customStyles={{
                 optionWrapper: styles.deleteOptionWrapper,
-                optionText: styles.deleteOptionText,
+                optionText: {
+                  ...styles.deleteOptionText,
+                  fontSize: finalFontSize,
+                },
               }}
               text="Post melden"
             />
@@ -172,6 +203,8 @@ const styles = StyleSheet.create({
   },
   deleteOptionText: {
     color: 'white',
+
+  
     fontWeight: '600',
   },
 });

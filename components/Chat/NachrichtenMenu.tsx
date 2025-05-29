@@ -1,51 +1,63 @@
-// 📁 components/Chat/NachrichtenMenu.tsx
 import React, { useContext } from 'react';
 import { Alert, Text } from 'react-native';
-import { Menu, MenuOption, MenuOptions, MenuTrigger } from 'react-native-popup-menu';
+import {
+  Menu,
+  MenuOption,
+  MenuOptions,
+  MenuTrigger,
+} from 'react-native-popup-menu';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '@/components/stores/AuthStore';
-import { useChatStore } from '@/stores/useChatStore';
-import { blockUserInChat } from '@/services/blockUserInChat';
-import { unblockUserInChat } from '@/services/unblockUserInChat';
+import { useActiveChatStore } from '@/components/stores/useActiveChatStore';
+import { chatService } from '@/components/services/StreamChat/chatService';
 import { FontSizeContext } from '@/components/provider/FontSizeContext';
 
 type Props = {
-  chatId: string;
+  chatPartnerId: string;
 };
 
-const NachrichtenMenu: React.FC<Props> = ({ chatId }) => {
+const NachrichtenMenu: React.FC<Props> = ({ chatPartnerId }) => {
   const { fontSize } = useContext(FontSizeContext);
   const currentUserId = useAuthStore((s) => s.user?.id ?? '');
   const router = useRouter();
-  const chat = useChatStore((s) => s.chats[chatId]);
+  const chat = useActiveChatStore((s) => s.messages);
 
-  const handleToggleBlock = () => {
-    if (!chat) return;
+  const isMuted = chat?.muted_by_ids?.includes(currentUserId);
+  const isBlocked = chat?.blocked_by === currentUserId;
 
-    const isBlocked = chat.blocked_by === currentUserId;
+  const handleToggleMute = async () => {
+    try {
+      if (isMuted) {
+        await chatService.unmuteUser(chatPartnerId);
+        Alert.alert('Erfolg', 'Nutzer wurde entstummschaltet.');
+      } else {
+        await chatService.muteUser(chatPartnerId);
+        Alert.alert('Erfolg', 'Nutzer wurde stummgeschaltet.');
+      }
+    } catch (e) {
+      console.error('❌ Fehler beim (Ent-)Muten:', e);
+      Alert.alert('Fehler', 'Stummschalten fehlgeschlagen.');
+    }
+  };
 
+  const handleBlock = () => {
     Alert.alert(
-      isBlocked ? 'Blockierung aufheben?' : 'Benutzer blockieren?',
-      isBlocked
-        ? 'Möchtest du die Blockierung dieses Nutzers wirklich aufheben?'
-        : 'Du wirst keine Nachrichten mehr von diesem Nutzer erhalten. Fortfahren?',
+      'Benutzer blockieren?',
+      'Du wirst keine Nachrichten mehr von diesem Nutzer erhalten. Der Chat wird gelöscht.',
       [
         { text: 'Abbrechen', style: 'cancel' },
         {
-          text: isBlocked ? 'Aufheben' : 'Blockieren',
+          text: 'Blockieren',
           style: 'destructive',
           onPress: async () => {
             try {
-              if (isBlocked) {
-                await unblockUserInChat(chatId);
-                Alert.alert('Erfolg', 'Blockierung wurde aufgehoben.');
-              } else {
-                await blockUserInChat(chatId, currentUserId);
-                Alert.alert('Erfolg', 'Benutzer wurde blockiert.');
-                router.back();
-              }
+              await chatService.blockUser(chatPartnerId); // Zielnutzer blockieren
+              await chatService.deleteChannel('messaging', chatPartnerId); // Chat löschen
+              Alert.alert('Erfolg', 'Benutzer wurde blockiert und Chat gelöscht.');
+              router.back(); // Zurück zur Übersicht
             } catch (e) {
+              console.error('❌ Fehler beim Blockieren:', e);
               Alert.alert('Fehler', 'Die Aktion konnte nicht abgeschlossen werden.');
             }
           },
@@ -68,7 +80,7 @@ const NachrichtenMenu: React.FC<Props> = ({ chatId }) => {
       <MenuOptions
         customStyles={{
           optionsWrapper: { elevation: 5 },
-          optionsContainer: { width: 200 },
+          optionsContainer: { width: 220 },
           optionWrapper: {
             padding: 12,
             borderBottomWidth: 1,
@@ -80,13 +92,18 @@ const NachrichtenMenu: React.FC<Props> = ({ chatId }) => {
           },
         }}
       >
-        <MenuOption onSelect={handleToggleBlock}>
+        <MenuOption onSelect={handleToggleMute}>
           <Text style={{ fontSize: menuFontSize }}>
-            {chat?.blocked_by === currentUserId
-              ? 'Blockierung aufheben'
-              : 'Benutzer blockieren'}
+            {isMuted ? 'Stummschaltung aufheben' : 'Benutzer stummschalten'}
           </Text>
         </MenuOption>
+        {!isBlocked && (
+          <MenuOption onSelect={handleBlock}>
+            <Text style={{ fontSize: menuFontSize, color: 'red' }}>
+              Benutzer blockieren
+            </Text>
+          </MenuOption>
+        )}
       </MenuOptions>
     </Menu>
   );

@@ -5,7 +5,7 @@ import * as AuthService from './AuthService';
 import { OAuthFlowManager } from './OAuthFlowManager';
 import { useAuthStore } from '@/components/stores/AuthStore';
 import { User } from '@/components/types/auth';
-import { getRedirectUri } from '@/components/utils/redirect';
+import { getRedirectUri } from '@/components/utils/getRedirectUrl';
 import { router } from 'expo-router';
 
 const createUserIfNotExists = async (supabaseUser: any): Promise<User> => {
@@ -38,6 +38,8 @@ const createUserIfNotExists = async (supabaseUser: any): Promise<User> => {
 };
 
 export const AuthController = {
+
+  
   async loginWithEmail(email: string, password: string) {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error || !data.user || !data.session) throw error || new Error('Login fehlgeschlagen');
@@ -79,38 +81,50 @@ export const AuthController = {
   },
 
   async loginWithOAuth(provider: 'google' | 'apple') {
+    console.log(`🔐 Starte OAuth-Login mit ${provider}`);
     await OAuthFlowManager.markPending();
   
     const redirectTo = getRedirectUri();
+    console.log('🔁 Weiterleitungs-URL für Supabase:', redirectTo);
+  
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider,
       options: { redirectTo },
     });
   
     if (error) {
+      console.error('❌ Fehler beim Starten des OAuth-Logins:', error.message);
       await OAuthFlowManager.clear();
       throw new Error('OAuth konnte nicht gestartet werden: ' + error.message);
     }
+  
+    console.log('✅ OAuth Redirect wurde eingeleitet (erwarte Redirect durch Browser)');
   },
 
   async finalizeOAuthLogin() {
+    console.log('🧩 Starte finalizeOAuthLogin');
     const isPending = await OAuthFlowManager.isPending();
-    if (!isPending) return null;
+    console.log('📦 OAuth Pending:', isPending);
   
     const { data: { session } } = await supabase.auth.getSession();
     const { data: { user } } = await supabase.auth.getUser();
+  
+    console.log('🔐 Supabase Session:', session);
+    console.log('👤 Supabase User:', user);
   
     if (!session || !user) {
       await OAuthFlowManager.clear();
       throw new Error('OAuth-Fehler: Keine Session oder kein User');
     }
   
-    await OAuthFlowManager.clear();
-  
-    // Eigene User-Erstellung bzw. AuthService-Aufrufe
     const finalUser = await createUserIfNotExists(user);
+    console.log('👤 Finaler User nach createUserIfNotExists:', finalUser);
+  
     const { userData: authUserData, streamToken } =
       await AuthService.authenticateUser(finalUser, session);
+  
+    console.log('📨 Stream Token:', streamToken);
+    console.log('📌 AuthUserData:', authUserData);
   
     await AuthService.saveSecureSessionData(session, streamToken);
     await AuthService.saveUserData(authUserData);

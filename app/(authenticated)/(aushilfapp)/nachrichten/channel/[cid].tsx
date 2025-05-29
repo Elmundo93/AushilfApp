@@ -7,7 +7,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   TouchableOpacity,
-  Text,
   Animated,
 } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
@@ -23,6 +22,9 @@ import { useChatContext } from '@/components/provider/ChatProvider';
 import { ScrollToBottomOnMount } from '@/components/Nachrichten/Helpers/ScrollToBottomOnMount';
 import { useScrollToBottom } from '@/components/Nachrichten/Helpers/ScrollToBottom';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useMuteStore } from '@/components/stores/useMuteStore';
+import { MutedNotice } from '@/components/Nachrichten/MutedNotice';
+import { extractPartnerData } from '@/components/services/StreamChat/lib/extractPartnerData';
 
 export default function ChannelScreen() {
   const { cid: cidParam } = useLocalSearchParams<{ cid: string }>();
@@ -33,9 +35,18 @@ export default function ChannelScreen() {
   const flatListRef = useRef<FlatList<ChatMessage>>(null);
   const { syncMessagesForChannel, loadMoreMessages } = useChatContext();
   const scaleAnim = useRef(new Animated.Value(1)).current;
-
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const user = useAuthStore.getState().user;
   const channel = channels.find((c) => c.cid === cidParam);
-  if (!channel) return null;
+  const partnerData = channel ? extractPartnerData(channel, user?.id ?? '') : null;
+  const isMuted = useMuteStore((s) => s.isMuted(partnerData?.userId ?? ''));
+
+
+ 
+  if (!channel) {
+    
+    return null;
+  }
 
   const { onScroll, isNearBottom, scrollToBottom } = useScrollToBottom(
     flatListRef,
@@ -48,6 +59,22 @@ export default function ChannelScreen() {
       syncMessagesForChannel(cidParam, 30);
     }
   }, [cidParam]);
+
+  useEffect(() => {
+    if (!isNearBottom) {
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [isNearBottom]);
 
   const currentUserId = userId;
 
@@ -67,6 +94,7 @@ export default function ChannelScreen() {
 
   return (
     <View style={styles.container}>
+
       <CustomChatHeader
         otherUserImage={channel.custom_user_profileImage}
         otherUserName={channel.custom_user_vorname}
@@ -77,6 +105,7 @@ export default function ChannelScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.select({ ios: 80, android: 100 })}
       >
+        {isMuted && <MutedNotice />}
         <FlatList
           ref={flatListRef}
           inverted
@@ -107,18 +136,20 @@ export default function ChannelScreen() {
             minIndexForVisible: 1,
           }}
         />
-        {!isNearBottom && (
-          <Animated.View style={[styles.scrollButtonContainer, { transform: [{ scale: scaleAnim }] }]}>
-            <TouchableOpacity
-              style={styles.scrollButton}
-              onPress={scrollToBottom}
-              onPressIn={handlePressIn}
-              onPressOut={handlePressOut}
-            >
-              <MaterialIcons name="arrow-downward" size={24} color="white" />
-            </TouchableOpacity>
-          </Animated.View>
-        )}
+        <Animated.View style={[styles.scrollButtonContainer, { 
+          opacity: fadeAnim,
+          transform: [{ scale: scaleAnim }],
+          display: isNearBottom ? 'none' : 'flex'
+        }]}>
+          <TouchableOpacity
+            style={styles.scrollButton}
+            onPress={scrollToBottom}
+            onPressIn={handlePressIn}
+            onPressOut={handlePressOut}
+          >
+            <MaterialIcons name="arrow-downward" size={24} color="white" />
+          </TouchableOpacity>
+        </Animated.View>
         <ScrollToBottomOnMount flatListRef={flatListRef} />
 
         <CustomInputField

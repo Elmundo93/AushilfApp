@@ -6,6 +6,9 @@ import { useSegments, usePathname, router } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { syncFromSupabase, loadUserFromLocal } from '@/components/services/Storage/Syncs/UserSyncService';
 import { useTokenManager } from '@/components/services/token/TokenManager';
+import { useMuteStore } from '@/components/stores/useMuteStore';
+
+
 const AuthProvider = ({ children }: PropsWithChildren) => {
 
   const { setUserSynced } = useAuthStore();
@@ -25,7 +28,14 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
   const isFullyAuthenticated = useMemo(() => {
     return !!(user && token && streamChatClient);
   }, [user, token, streamChatClient]);
+  
+  const loadMutedUsers = async () => {
+    const client = useAuthStore.getState().streamChatClient;
+    const mutedIds = client?.mutedUsers?.map((m) => m.target.id) ?? [];
+    useMuteStore.getState().setMutedUserIds(mutedIds);
+  };
 
+  
   // 🔐 Routing-Schutz
   useEffect(() => {
     const enforceSecurity = () => {
@@ -53,6 +63,8 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
         console.log('🔄 Benutzer-Sync...');
         await syncFromSupabase(db, user.id);
         await loadUserFromLocal(db);
+        await loadMutedUsers();
+     
       } catch (error) {
         console.error('❌ Fehler beim Laden von Benutzerdaten:', error);
       }
