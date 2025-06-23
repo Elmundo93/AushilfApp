@@ -17,7 +17,6 @@ import LottieView from 'lottie-react-native';
 import { useLoading } from '@/components/provider/LoadingContext';
 import { useAuth } from '@/components/hooks/useAuth';
 import { Ionicons } from '@expo/vector-icons';
-import { OAuthFlowManager } from '@/components/services/Auth/OAuthFlowManager';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -40,9 +39,7 @@ export default function LoginScreen() {
 
     try {
       const user = await loginWithEmail(email, password);
-      if (user) {
-        router.replace('/(authenticated)/(aushilfapp)/pinnwand');
-      }
+      // Navigation übernimmt der AuthProvider!
     } catch (e) {
       Alert.alert('Login fehlgeschlagen', 'Prüfen Sie Ihre Zugangsdaten.');
     } finally {
@@ -176,10 +173,6 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     borderWidth: 1,
     borderColor: '#e0e0e0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
     elevation: 5,
   },
   input: {

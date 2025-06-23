@@ -175,11 +175,6 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 10,
     minWidth: 200,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 6,
   },
   menuItem: {
     paddingVertical: 12,

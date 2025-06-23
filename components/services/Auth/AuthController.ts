@@ -6,7 +6,8 @@ import { OAuthFlowManager } from './OAuthFlowManager';
 import { useAuthStore } from '@/components/stores/AuthStore';
 import { User } from '@/components/types/auth';
 import { getRedirectUri } from '@/components/utils/getRedirectUrl';
-import { router } from 'expo-router';
+
+import { fullLogout } from '@/components/utils/fullLogout';
 
 const createUserIfNotExists = async (supabaseUser: any): Promise<User> => {
   const { data: userData, error } = await supabase
@@ -28,8 +29,17 @@ const createUserIfNotExists = async (supabaseUser: any): Promise<User> => {
       email: supabaseUser.email,
       vorname,
       nachname,
+      wohnort: '',
+      straße: '',
+      hausnummer: '',
+      plz: '',
+      telefonnummer: '',
+      steuernummer: '',
       profileImageUrl: supabaseUser.user_metadata?.avatar_url || '',
       created_at: new Date().toISOString(),
+      onboarding_completed: false,
+      kategorien: [],
+      bio: '',
     })
     .select()
     .single();
@@ -60,24 +70,75 @@ export const AuthController = {
   },
 
   async register(email: string, password: string, userInfo: User) {
-    const { data: authData, error } = await supabase.auth.signUp({ email, password });
-    if (error || !authData.user || !authData.session) throw error || new Error('Registrierung fehlgeschlagen');
-
-    await supabase.auth.setSession(authData.session);
-
-    const { data: insertedUser } = await supabase
-      .from('Users')
-      .insert({ ...userInfo, id: authData.user.id, created_at: new Date().toISOString() })
-      .select()
-      .single();
-
-    const { userData: authUserData, streamClient, streamToken } =
-      await AuthService.authenticateUser(insertedUser, authData.session);
-
-    await AuthService.saveSecureSessionData(authData.session, streamToken);
-    await AuthService.saveUserData(authUserData);
-    useAuthStore.getState().setAuthenticated(true);
-    return authUserData;
+    try {
+      // 1. Versuch: Registrierung
+      const { data: authData, error } = await supabase.auth.signUp({ email, password });
+  
+      // 2. Fehlerfall behandeln
+      if (error) {
+        // 2a. Benutzer existiert bereits → versuche Login
+        if (error.message.includes('User already registered')) {
+          console.warn('⚠️ Benutzer existiert bereits – versuche Login statt Registrierung');
+  
+          const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
+  
+          if (loginError || !loginData.user || !loginData.session) {
+            throw new Error('E-Mail ist registriert, aber Login mit Passwort fehlgeschlagen.');
+          }
+  
+          // ✅ Stelle sicher, dass der Benutzer auch in der "users"-Tabelle existiert
+          const userData = await createUserIfNotExists(loginData.user);
+  
+          const { userData: authUserData, streamToken } =
+            await AuthService.authenticateUser(userData, loginData.session);
+  
+          await AuthService.saveSecureSessionData(loginData.session, streamToken);
+          await AuthService.saveUserData(authUserData);
+          useAuthStore.getState().setAuthenticated(true);
+          return authUserData;
+        }
+  
+        // 2b. Alle anderen Fehler weiterwerfen
+        throw error;
+      }
+  
+      if (!authData.user || !authData.session) {
+        throw new Error('Registrierung fehlgeschlagen');
+      }
+  
+      await supabase.auth.setSession(authData.session);
+  
+      // 3. User-Datensatz in Supabase-Tabelle erstellen
+      const { data: insertedUser, error: insertError } = await supabase
+        .from('Users')
+        .insert({
+          ...userInfo,
+          id: authData.user.id,
+          created_at: new Date().toISOString(),
+          wohnort: userInfo.wohnort || '',  // Stelle sicher, dass wohnort gesetzt ist
+        })
+        .select()
+        .single();
+  
+      if (insertError || !insertedUser) {
+        console.error('Fehler beim Einfügen des Users:', insertError);
+        throw new Error('Fehler beim Speichern der Benutzerdaten');
+      }
+  
+      const { userData: authUserData, streamToken } =
+        await AuthService.authenticateUser(insertedUser, authData.session);
+  
+      await AuthService.saveSecureSessionData(authData.session, streamToken);
+      await AuthService.saveUserData(authUserData);
+      useAuthStore.getState().setAuthenticated(true);
+      return authUserData;
+    } catch (err) {
+      console.error('❌ Fehler in register():', err);
+      throw err;
+    }
   },
 
   async loginWithOAuth(provider: 'google' | 'apple') {
@@ -133,13 +194,7 @@ export const AuthController = {
     return authUserData;
   },
 
-  async logout() {
-    const client = useAuthStore.getState().streamChatClient;
-    if (client) await client.disconnectUser();
-    await supabase.auth.signOut();
-    await AuthService.clearStorage();
-    useAuthStore.getState().setAuthenticated(false);
-    useAuthStore.getState().setUser(null);
-    router.replace('/(public)/index' as any);
+  async logout(db?: any) {
+    await fullLogout(db);
   },
 };

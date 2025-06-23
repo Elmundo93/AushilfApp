@@ -27,20 +27,21 @@ export default function IntentScreen() {
 
   const beeAnimation = require('@/assets/animations/Bee.json');
   const router = useRouter();
-  const {  setField, categories, bio } = useOnboardingStore();
+  const { setField, categories, bio } = useOnboardingStore();
 
   const [selectedCategories, setSelectedCategories] = useState<string[]>(categories || []);
 
-
+  React.useEffect(() => {
+    setSelectedCategories(categories || []);
+  }, [categories]);
 
   const toggleCategory = (label: string) => {
-    setSelectedCategories(prev => {
-      const newCategories = prev.includes(label)
-        ? prev.filter(cat => cat !== label)
-        : [...prev, label];
-      setField('categories', newCategories as any);
-      return newCategories;
-    });
+    const newCategories = selectedCategories.includes(label)
+      ? selectedCategories.filter(cat => cat !== label)
+      : [...selectedCategories, label];
+    
+    setSelectedCategories(newCategories);
+    setField('categories', newCategories as any);
   };
 
   const handleNext = () => {
@@ -49,8 +50,8 @@ export default function IntentScreen() {
 
   const pathname = usePathname();
 
-  const steps = ['intro', 'userinfo', 'intent','about', 'profileImage', 'password'];
-  const currentStep = steps.findIndex((step) => pathname.includes(step));
+  const steps = ['intro', 'userinfo', 'intent', 'about', 'profileImage', 'password','conclusion','savety'];
+    const currentStep = steps.findIndex((step) => pathname.includes(step));
 
 
   return (
@@ -116,11 +117,6 @@ export default function IntentScreen() {
                       margin: 5,
                       alignItems: 'center',
                       justifyContent: 'center',
-                      shadowColor: '#000',
-                      shadowOffset: { width: 0, height: 2 },
-                      shadowOpacity: 0.1,
-                      shadowRadius: 4,
-                      elevation: 3,
                       minWidth: 100,
                       minHeight: 100,
                     }]}
@@ -177,7 +173,6 @@ const styles = StyleSheet.create({
   titleCard: {
     padding: 25,
     borderRadius: 25,
-    shadowColor: '#000',
   },
   titleContainer: {
     flexDirection: 'row',
@@ -208,12 +203,6 @@ const styles = StyleSheet.create({
     padding: 25,
     borderRadius: 25,
     marginTop: 50,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 5,
-
   },
   subtitle: {
     fontSize: 18,

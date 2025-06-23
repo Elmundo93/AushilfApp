@@ -10,12 +10,21 @@ import { useStreamChatStore } from '@/components/stores/useStreamChatStore';
 import { StoredChannel } from '@/components/types/stream';
 import { useChatContext } from '@/components/provider/ChatProvider';
 import LottieView from 'lottie-react-native';
+import { useChatListeners } from '@/components/services/Storage/Hooks/useChatListener';
+import { useChatLifecycle } from '@/components/services/Storage/Hooks/useChatLifecycle';
+import { useSQLiteContext } from 'expo-sqlite';
+import { useAuthStore } from '@/components/stores/AuthStore';
+import { useActiveChatStore } from '@/components/stores/useActiveChatStore';
 
 function ChannelList() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const { fontSize } = useContext(FontSizeContext);
+  const db = useSQLiteContext();
+  const { streamChatClient, user } = useAuthStore();
+  const { setMessages: setActiveMessages, messages: activeMessages } = useActiveChatStore();
+  const setZustandChannels = useStreamChatStore((s) => s.setChannels);
 
-  const chatContext = useChatContext(); // ⬅️ wichtig: nicht destrukturieren mit conditional returns
+  const chatContext = useChatContext();
   const syncChannels = chatContext.syncChannels;
 
   const channels = useFilteredChannelsStreamChatStore(selectedCategory);
@@ -35,10 +44,12 @@ function ChannelList() {
       params: { cid: channel.cid },
     });
   };
-
   useEffect(() => {
     syncChannels();
   }, []);
+
+  useChatListeners(streamChatClient, null, setActiveMessages, setZustandChannels, db, user, activeMessages);
+  useChatLifecycle(user?.id, db);
 
   return (
     <View style={styles.container}>

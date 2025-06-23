@@ -12,10 +12,6 @@ export const styles = StyleSheet.create({
     elevation: 4,
     borderBottomColor: '#eee',
     borderBottomWidth: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
   },
   backButton: {
     padding: 6,

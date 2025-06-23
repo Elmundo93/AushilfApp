@@ -27,7 +27,7 @@ const aufklärung = () => {
                       <Text style={styles.welcomeText}>Sicherheit</Text>
                     </View>
       <View style={styles.content}>
-        <Image source={require('@/assets/images/safe-and-stable-svgrepo-com.svg')}  resizeMode='contain' style={styles.imageBackground} />
+        <Image source={require('@/assets/images/safety.svg')}  resizeMode='contain' style={styles.imageBackground} />
         <View style={styles.greenView}>
         <Text style={styles.greenText}>
         Sicherheit geht bei uns vor! 

@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { User } from '@/components/types/auth';
 import { StreamChat } from 'stream-chat';
+import { useStreamChatStore } from './useStreamChatStore';
+import { useActiveChatStore } from './useActiveChatStore';
 
 interface AuthState {
   user: User | null;
@@ -16,7 +18,7 @@ interface AuthState {
   registrationSuccessConfirmed: boolean;
   anmeldungsToggle: boolean;
   usersynced: boolean;
-
+  clearChatState: () => void;
   setUser: (user: Partial<User> | null) => void;
   setToken: (token: string | null) => void;
   setStreamChatClient: (client: StreamChat | null) => void;
@@ -29,7 +31,8 @@ interface AuthState {
   setRegistrationSuccessConfirmed: (confirmed: boolean) => void;
   setAnmeldungsToggle: (anmeldungsToggle: boolean) => void;
   setUserSynced: (usersynced: boolean) => void;
-}
+
+  }
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
@@ -103,4 +106,10 @@ export const useAuthStore = create<AuthState>((set) => ({
     registrationSuccessConfirmed: false,
 
   }),
+  clearChatState: () => {
+    useStreamChatStore.getState().setChannels([]);
+    useStreamChatStore.getState().setChannelsReady(false);
+    useActiveChatStore.getState().setCid(null);
+    useActiveChatStore.getState().setMessages([]);
+  },
 }));

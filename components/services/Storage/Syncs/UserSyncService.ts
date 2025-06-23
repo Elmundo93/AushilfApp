@@ -1,3 +1,4 @@
+// components/services/Storage/Syncs/UserSyncService.ts
 import { SQLiteDatabase } from 'expo-sqlite';
 import { supabase } from '@/components/config/supabase';
 import { loadUserInfo, saveUserInfo, deleteUserInfo } from '@/components/Crud/SQLite/Services/UserInfoService';
@@ -31,6 +32,8 @@ export async function syncFromSupabase(db: SQLiteDatabase, userId: string): Prom
     wohnort: data.wohnort,
     telefonnummer: data.telefonnummer,
     steuernummer: data.steuernummer ?? '',
+    kategorien: data.kategorien ?? [],
+    onboarding_completed: data.onboarding_completed ?? false,
   };
 
   await saveUserInfo(db, user);
@@ -57,6 +60,8 @@ export async function pushUserToSupabase(user: User): Promise<boolean> {
       wohnort: user.wohnort,
       telefonnummer: user.telefonnummer,
       steuernummer: user.steuernummer,
+      kategorien: user.kategorien ?? [],
+      onboarding_completed: user.onboarding_completed ?? false,
     })
     .eq('id', user.id);
 
@@ -83,5 +88,5 @@ export async function loadUserFromLocal(db: SQLiteDatabase): Promise<User | null
 
 export async function clearUserData(db: SQLiteDatabase) {
   await deleteUserInfo(db);
-  useAuthStore.getState().reset();
+  useAuthStore.getState().setUser(null);
 }

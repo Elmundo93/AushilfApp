@@ -1,6 +1,7 @@
 // components/services/sqlite/messageService.ts
 import { SQLiteDatabase } from 'expo-sqlite';
 import { Channel, FormatMessageResponse } from 'stream-chat';
+import { dbMutex } from './dbMutex';
 
 export interface StoredMessage {
   id: string;
@@ -25,38 +26,79 @@ export function useMessagesService(db: SQLiteDatabase) {
     message: FormatMessageResponse,
     channel: Channel
   ): Promise<StoredMessage> => {
-    const sender = message.user as any;
-    const read = (message.read_by as Array<{ id: string }>)?.some(
-      (u) => u.id === channel.getClient().userID
-    )
-      ? 1
-      : 0;
+    if (!message || !channel) {
+      console.warn('[WARN] mapMessageToDbValues: message oder channel ist undefined/null');
+      return {
+        id: '',
+        cid: '',
+        sender_id: '',
+        sender_vorname: '',
+        sender_nachname: '',
+        sender_image: '',
+        content: '',
+        created_at: '',
+        read: 0,
+      };
+    }
+    try {
+      const sender = (message.user as any) || {};
+      const read = (message.read_by as Array<{ id: string }>)?.some(
+        (u) => u.id === channel.getClient().userID
+      )
+        ? 1
+        : 0;
 
-    return {
-      id: message.id || '',
-      cid: channel.cid,
-      sender_id: sender?.id || '',
-      sender_vorname: sender?.vorname || '',
-      sender_nachname: sender?.nachname || '',
-      sender_image: sender?.image || '',
-      content: message.text || '',
-      created_at: formatMaybeDate(message.created_at) || '',
-      read,
-    };
+      return {
+        id: message.id || '',
+        cid: channel.cid || '',
+        sender_id: sender?.id || '',
+        sender_vorname: sender?.vorname || '',
+        sender_nachname: sender?.nachname || '',
+        sender_image: sender?.image || '',
+        content: message.text || '',
+        created_at: formatMaybeDate(message.created_at) || '',
+        read,
+      };
+    } catch (e) {
+      console.error('[ERROR] mapMessageToDbValues failed:', e);
+      return {
+        id: '',
+        cid: '',
+        sender_id: '',
+        sender_vorname: '',
+        sender_nachname: '',
+        sender_image: '',
+        content: '',
+        created_at: '',
+        read: 0,
+      };
+    }
   };
 
   const saveMessagesToDb = async (messages: StoredMessage[]): Promise<void> => {
     try {
-      await db.withTransactionAsync(async () => {
-        for (const msg of messages) {
-          await db.runAsync(
-            `INSERT OR REPLACE INTO messages_fetched (
-               id, cid, sender_id, sender_vorname, sender_nachname, sender_image,
-               content, created_at, read
-             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            Object.values(msg)
-          );
-        }
+      await dbMutex.runExclusive(async () => {
+        await db.withTransactionAsync(async () => {
+          for (const msg of messages) {
+            const exists = await db.getFirstAsync(
+              `SELECT 1 FROM messages_fetched WHERE id = ? LIMIT 1;`,
+              [msg.id]
+            );
+            if (exists) {
+              if (process.env.NODE_ENV === 'development') {
+                console.debug('[DEBUG] Duplicate message skipped:', msg.id);
+              }
+              continue;
+            }
+            await db.runAsync(
+              `INSERT INTO messages_fetched (
+                 id, cid, sender_id, sender_vorname, sender_nachname, sender_image,
+                 content, created_at, read
+               ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              Object.values(msg)
+            );
+          }
+        });
       });
     } catch (error) {
       console.error('❌ Fehler beim Speichern von Nachrichten:', error);

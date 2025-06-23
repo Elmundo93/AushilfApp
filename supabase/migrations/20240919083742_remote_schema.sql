@@ -98,11 +98,13 @@ CREATE TABLE IF NOT EXISTS "public"."Posts" (
     "postId" "text",
     "postText" "text",
     "profileImage" "text",
-    "userId" "uuid",
+    "userId" "uuid" NOT NULL,
     "vorname" "text",
     "category" "text",
     "longitude" numeric,
-    "latitude" numeric
+    "latitude" numeric,
+    CONSTRAINT "Posts_pkey" PRIMARY KEY ("id"),
+    CONSTRAINT "Posts_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."users"("id") ON DELETE CASCADE
 );
 
 
@@ -141,7 +143,9 @@ CREATE TABLE IF NOT EXISTS "public"."users" (
     "email" "text",
     "profileImage" "text",
     "longitude" numeric,
-    "latitude" numeric
+    "latitude" numeric,
+    "kategorien" text[] DEFAULT '{}',
+    CONSTRAINT "users_pkey" PRIMARY KEY ("id")
 );
 
 
@@ -558,3 +562,20 @@ ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TAB
 
 
 RESET ALL;
+
+-- Function to get next post ID
+CREATE OR REPLACE FUNCTION public.get_next_post_id()
+RETURNS bigint
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    next_id bigint;
+BEGIN
+    SELECT nextval('public.Posts_id_seq') INTO next_id;
+    RETURN next_id;
+END;
+$$;
+
+-- Grant execute permission to authenticated users
+GRANT EXECUTE ON FUNCTION public.get_next_post_id() TO authenticated;

@@ -19,17 +19,19 @@ export interface User {
   wohnort?: string;
   telefonnummer?: string;
   steuernummer?: string;
+  kategorien?: string[];
+  onboarding_completed?: boolean;
 
   // Weitere Benutzerfelder hier
 }
 // types/userProfile.ts
 export type UserProfile = {
-  
   userId: string;
   vorname: string;
   nachname: string;
   profileImageUrl: string;
   bio: string;
+  kategorien?: string[];
 };
 
 export type SignupData = Pick<User, 'email' | 'vorname' | 'nachname'  >;

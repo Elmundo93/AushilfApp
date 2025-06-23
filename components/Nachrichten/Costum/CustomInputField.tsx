@@ -1,81 +1,78 @@
-// File: components/Nachrichten/Costum/CustomInputField.tsx
 import React, { useState } from 'react';
-import { View, TextInput, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
+import { View, TextInput, StyleSheet, TouchableOpacity, Keyboard } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useChatContext } from '@/components/provider/ChatProvider';
+import { FlatList } from 'react-native';
 import { ChatMessage } from '@/components/types/stream';
 
-interface Props {
+interface CustomInputFieldProps {
   fontSize: number;
   cid: string;
   currentUserId: string;
-  onMessageSent?: () => void;
   flatListRef: React.RefObject<FlatList<ChatMessage>>;
+  onSendMessage: (text: string) => Promise<void>;
 }
 
-export const CustomInputField: React.FC<Props> = ({
+export const CustomInputField: React.FC<CustomInputFieldProps> = ({
   fontSize,
   cid,
-  onMessageSent,
+  currentUserId,
   flatListRef,
+  onSendMessage,
 }) => {
   const [text, setText] = useState('');
-  const { sendMessage } = useChatContext();
 
   const handleSend = async () => {
     const trimmed = text.trim();
     if (!trimmed) return;
 
-    try {
-      await sendMessage(cid, trimmed);
-      setText('');
-      onMessageSent?.();
-    } catch (e) {
-      console.error('Fehler beim Senden der Nachricht:', e);
-    }
+    await onSendMessage(trimmed);
+    setText('');
 
+    // Optional: automatisch ans Ende scrollen
+    flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+    Keyboard.dismiss();
   };
 
   return (
-    <View style={styles.container}>
+    <View style={styles.inputContainer}>
       <TextInput
+        style={[styles.input, { fontSize }]}
         value={text}
         onChangeText={setText}
         placeholder="Nachricht schreiben..."
-        style={[styles.input, { fontSize }]}
         multiline
       />
       <TouchableOpacity onPress={handleSend} style={styles.sendButton}>
-        <Ionicons name="send" size={22} color="white" />
+        <Ionicons name="send" size={24} color="white" />
       </TouchableOpacity>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  inputContainer: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
     padding: 10,
+    alignItems: 'flex-end',
     borderTopWidth: 1,
-    borderTopColor: '#ddd',
-    backgroundColor: '#fff',
+    borderColor: '#ccc',
+    backgroundColor: 'white',
   },
   input: {
     flex: 1,
     minHeight: 40,
     maxHeight: 120,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    backgroundColor: '#f1f1f1',
+    borderWidth: 1,
+    borderColor: '#ddd',
     borderRadius: 20,
-    marginRight: 10,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    backgroundColor: '#f9f9f9',
   },
   sendButton: {
     backgroundColor: 'orange',
     borderRadius: 20,
     padding: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
+    marginLeft: 8,
   },
 });

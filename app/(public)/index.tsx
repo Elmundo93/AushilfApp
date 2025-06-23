@@ -4,6 +4,9 @@ import {  router } from 'expo-router';
 import Svg, { Path } from 'react-native-svg';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Linking } from 'react-native';
+
+
 
 const Page = () => {
 
@@ -27,6 +30,10 @@ const Page = () => {
     const login = () => {
       router.push('/(public)/loginScreen' as any);
     };
+
+const handleOpenApp =() => {
+  Linking.openURL('aushilfapp://payment-success');
+}
 
             return (
 <SafeAreaView style={styles.container}>

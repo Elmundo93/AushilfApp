@@ -6,6 +6,7 @@ import {
   Image,
   StyleSheet,
   TouchableOpacity,
+  Platform,
 } from 'react-native';
 import { Octicons } from '@expo/vector-icons';
 
@@ -93,15 +94,12 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingVertical: 12,
     paddingHorizontal: 20,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 3,
     alignItems: 'center',
     justifyContent: 'center',
     alignSelf: 'flex-start',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderWidth: Platform.OS === 'ios' ? 1 : 0,
+    borderColor: Platform.OS === 'ios' ? '#eee' : 'transparent',
+    elevation: Platform.OS === 'android' ? 4 : 0,
   },
   countNumber: {
     fontSize: 22,

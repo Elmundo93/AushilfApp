@@ -1,20 +1,19 @@
-export type Post = {
+export interface Post {
     id: string;
-    category: string;
     created_at: string;
     location: string;
     nachname: string;
     option: string;
     postText: string;
-    vorname: string;
-    profileImageUrl: string;
     userId: string;
+    profileImageUrl: string;
     long: number;
     lat: number;
+    vorname: string;
     userBio: string;
-    email: string;
-
-  };
+    category: string;
+    kategorien: string[];
+}
 
  
  

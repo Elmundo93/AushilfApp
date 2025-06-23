@@ -28,14 +28,11 @@ const Pinnwand: React.FC = () => {
   const location = useLocationStore((state) => state.location);
   const { locationPermission } = useLocationStore();
   const { filteredPosts, loading } = usePostStore();
-  const reversedPosts = [...filteredPosts].reverse();
-
-
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const [isAccordionExpanded, setIsAccordionExpanded] = React.useState(false);
 
-
+  
 
   
 
@@ -109,7 +106,7 @@ const Pinnwand: React.FC = () => {
               />
             </>
           }
-          data={reversedPosts}
+          data={filteredPosts}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
           ListEmptyComponent={<EmptyListComponent />}

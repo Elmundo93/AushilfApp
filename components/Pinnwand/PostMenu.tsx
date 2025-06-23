@@ -59,6 +59,7 @@ const PostMenu: React.FC<PostMenuProps> = ({ item, allLoaded, updateLoadingState
       nachname: item.nachname,
       profileImageUrl: item.profileImageUrl,
       bio: item.userBio,
+      kategorien: item.kategorien || [],
     };
     setSelectedUser(userProfile);
     router.push({ pathname: '/(modal)/forreignProfile' });

@@ -1,0 +1,128 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+Setup of rules:
+
+{
+  "rules": [
+    {
+      "pattern": "components/**",
+      "purpose": "UI-Komponenten, häufig wiederverwendet. Fokus auf Barrierefreiheit, Lesbarkeit und Zustandstrennung (keine Business-Logik hier)."
+    },
+    {
+        
+      "pattern": "components/hooks/**",
+      "purpose": "Wiederverwendbare Logik, z. B. Location, Keyboard oder Lifecycle-Effekte. Hooks kapseln lokale Zustände, Side Effects und listenartige Nutzungsmuster."
+    },
+    {
+      "pattern": "components/stores/**",
+      "purpose": "Zustandsverwaltung mit Zustand – wichtig für Offline-Funktionalität. Jeder Store sollte nur eine zentrale Verantwortung haben (z. B. `useAuthStore`, `useChatStore`)."
+    },
+    {
+      "pattern": "components/services/**",
+      "purpose": "Businesslogik – Aufrufe zu Supabase, SQLite oder Netzwerk. Alle Datenflüsse (z. B. `messageService`, `chatService`, `userService`) laufen hier zentral zusammen."
+    },
+    {
+      "pattern": "components/provider/**",
+      "purpose": "React Context Provider für globale Zustände und Services (z. B. AuthProvider, ChatProvider, SQLiteProviderWrapper)."
+    },
+    {
+      "pattern": "components/types/**",
+      "purpose": "Globale Typdefinitionen für Komponenten, Stores, Services usw."
+    },
+    {
+      "pattern": "components/utils/**",
+      "purpose": "Hilfsfunktionen und Utilities, die in mehreren Komponenten verwendet werden."
+    },
+    {
+      "pattern": "components/lib/**",
+      "purpose": "Pure Hilfsfunktionen (z. B. `distanceCalc`, `dateFormatter`, `filterUtils`). Keine Seiteneffekte oder API-Aufrufe."
+    },
+    {
+      "pattern": "components/config/**",
+      "purpose": "Konfigurationsdateien und -module, z. B. für Supabase."
+    },
+    {
+      "pattern": "components/Auth/**",
+      "purpose": "UI und Logik für Authentifizierung (z. B. Google/Apple Auth, AuthProgressLoader)."
+    },
+    {
+      "pattern": "components/Chat/**",
+      "purpose": "UI, Logik und Services für Chat-Funktionalität."
+    },
+    {
+      "pattern": "components/Pinnwand/**",
+      "purpose": "UI und Logik für die Pinnwand (z. B. Post-Listen, Filter, Checkboxes)."
+    },
+    {
+      "pattern": "components/Profile/**",
+      "purpose": "UI und Logik für Benutzerprofile (z. B. ProfileImage, UserProfileHeader)."
+    },
+    {
+      "pattern": "components/PostDetails/**",
+      "purpose": "UI für Detailansichten von Posts."
+    },
+    {
+      "pattern": "components/Animation/**",
+      "purpose": "Animations-Komponenten."
+    },
+    {
+      "pattern": "components/Header/**",
+      "purpose": "Header-Komponenten für verschiedene Ansichten."
+    },
+    {
+      "pattern": "components/Location/**",
+      "purpose": "Standort-bezogene Komponenten und Logik."
+    },
+    {
+      "pattern": "components/Nachrichten/**",
+      "purpose": "UI und Logik für Nachrichten und Channels."
+    },
+    {
+      "pattern": "components/Crud/**",
+      "purpose": "CRUD-Komponenten und Logik für verschiedene Entitäten (z. B. Post, Profile, Danksagungen)."
+    },
+    {
+      "pattern": "components/Crud/SQLite/**",
+      "purpose": "Lokale Datenbankstruktur – enthält Migrations, Tabellen-Setups, Indexe. Optimiert für Offlinefähigkeit und effizienten Sync mit Supabase."
+    },
+    {
+      "pattern": "app/(authenticated)/**",
+      "purpose": "Expo Router Routen – geschützt durch Auth-Provider. Komponenten hier bauen auf geladenen Stores und synchronisierten Daten auf."
+    },
+    {
+      "pattern": "app/(public)/**",
+      "purpose": "Öffentliche Expo Router Routen – z. B. Onboarding, Intro. Kein Authentifizierungszwang."
+    },
+    {
+      "pattern": "app/auth/**",
+      "purpose": "Spezielle Authentifizierungsrouten und -logik."
+    },
+    {
+      "pattern": "supabase/functions/**",
+      "purpose": "Supabase Edge Functions – sicherheitsrelevante Serverlogik (z. B. Token-Generierung, Chat-Blockierung). Enthält auch RLS-konforme Datenzugriffe."
+    },
+    {
+      "pattern": "assets/images/**",
+      "purpose": "Statische Bilddateien für die App."
+    },
+    {
+      "pattern": "assets/fonts/**",
+      "purpose": "Statische Schriftarten für die App."
+    },
+    {
+      "pattern": "assets/animations/**",
+      "purpose": "Statische Animationsdateien für die App."
+    },
+    {
+      "pattern": "constants/**",
+      "purpose": "Globale Konstanten und Einstellungen (z. B. Farben, App-Konstanten)."
+    },
+    {
+      "pattern": "docs/**",
+      "purpose": "Architektur, Checkpoints, Feature-Pläne. KI kann diese Dokumente als Referenz für Code-Entscheidungen und Architekturhinweise nutzen."
+    }
+  ]
+}

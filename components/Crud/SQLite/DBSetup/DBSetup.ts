@@ -1,7 +1,8 @@
+// components/Crud/SQLite/DBSetup/DBSetup.ts
 import { SQLiteDatabase } from 'expo-sqlite';
 
 export async function migrateDbIfNeeded(db: SQLiteDatabase) {
-  const DATABASE_VERSION = 24;
+  const DATABASE_VERSION = 44;
 
   // Aktuelle DB-Version auslesen
   const { user_version: currentDbVersion = 0 } =
@@ -17,20 +18,22 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
       BEGIN TRANSACTION;
 
       -- Posts
+      DROP TABLE IF EXISTS posts_fetched;
       CREATE TABLE IF NOT EXISTS posts_fetched (
-        id INTEGER PRIMARY KEY NOT NULL,
-        created_at TEXT NOT NULL,
-        location TEXT NOT NULL,
-        nachname TEXT NOT NULL,
-        option TEXT NOT NULL,
-        postText TEXT NOT NULL,
-        userId TEXT NOT NULL,
-        profileImageUrl TEXT NOT NULL,
-        long REAL NOT NULL,
-        lat REAL NOT NULL,
-        vorname TEXT NOT NULL,
+        id TEXT PRIMARY KEY,
+        created_at TEXT,
+        location TEXT,
+        nachname TEXT,
+        option TEXT,
+        postText TEXT,
+        userId TEXT,
+        profileImageUrl TEXT,
+        long REAL,
+        lat REAL,
+        vorname TEXT,
         userBio TEXT,
-        category TEXT NOT NULL
+        category TEXT,
+        kategorien TEXT
       );
 
       -- Danksagungen
@@ -53,21 +56,28 @@ CREATE TABLE IF NOT EXISTS danksagungen_fetched (
       DROP TABLE IF EXISTS channels_fetched;
       CREATE TABLE IF NOT EXISTS channels_fetched (
         cid TEXT PRIMARY KEY,
+        meId TEXT,
         channel_id TEXT,
         channel_type TEXT,
+        custom_post_option TEXT,
         custom_post_category TEXT,
         custom_post_id INTEGER,
         custom_post_user_id TEXT,
+        custom_post_vorname TEXT,
+        custom_post_nachname TEXT,
+        custom_post_profileImage TEXT,
+        custom_post_userBio TEXT,
         custom_user_vorname TEXT,
         custom_user_nachname TEXT,
         custom_user_profileImage TEXT,
         custom_user_userBio TEXT,
+        custom_user_id TEXT,
+        last_message_text TEXT,
         last_message_at TEXT,
         updated_at TEXT,
         created_at TEXT,
-        last_message_text TEXT,
         unread_count INTEGER,
-        partner_user_id INTEGER
+        partner_user_id TEXT
       );
 
     DROP TABLE IF EXISTS messages_fetched;
@@ -113,22 +123,24 @@ CREATE TABLE IF NOT EXISTS chats_fetched (
       DROP TABLE IF EXISTS user_info_local;
 
       -- Neue Tabelle für lokal gespeicherte User-Daten
-      CREATE TABLE IF NOT EXISTS user_info_local (
-        id TEXT PRIMARY KEY,
-        created_at TEXT,
-        location TEXT,
-        vorname TEXT,
-        nachname TEXT,
-        email TEXT,
-        profileImageUrl TEXT,
-        bio TEXT,
-        straße TEXT,
-        hausnummer TEXT,
-        plz TEXT,
-        wohnort TEXT,
-        telefonnummer TEXT,
-        steuernummer TEXT
-      );
+     CREATE TABLE IF NOT EXISTS user_info_local (
+  id TEXT PRIMARY KEY,
+  created_at TEXT,
+  location TEXT,
+  vorname TEXT,
+  nachname TEXT,
+  email TEXT,
+  profileImageUrl TEXT,
+  bio TEXT,
+  straße TEXT,
+  hausnummer TEXT,
+  plz TEXT,
+  wohnort TEXT,
+  telefonnummer TEXT,
+  steuernummer TEXT,
+  kategorien TEXT,
+  onboarding_completed BOOLEAN DEFAULT FALSE
+);
 
       COMMIT;
 

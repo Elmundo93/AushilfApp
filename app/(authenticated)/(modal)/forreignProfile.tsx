@@ -6,12 +6,19 @@ import {
   FlatList,
   ActivityIndicator,
   StyleSheet,
+  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSelectedUserStore } from '@/components/stores/selectedUserStore';
 import { useDanksagungStore } from '@/components/stores/danksagungStores';
 import { FontSizeContext } from '@/components/provider/FontSizeContext';
 import ForeignProfileHeader from '@/components/Header/ForreignProfileHeader';
+import { CategoryType } from '@/components/types/stream';
+
+const normalizeCategories = (categories: string[] | undefined): string[] => {
+  if (!categories) return [];
+  return categories.map(cat => cat.toLowerCase());
+};
 
 const ForreignProfile = () => {
   const { selectedUser } = useSelectedUserStore();
@@ -69,6 +76,8 @@ const ForreignProfile = () => {
     );
   }
 
+  const normalizedCategories = normalizeCategories(selectedUser.kategorien);
+
   return (
     <View style={styles.container}>
       <Animated.View style={[styles.gradientHeader, { transform: [{ translateY: gradientTranslateY }] }]}>
@@ -88,6 +97,7 @@ const ForreignProfile = () => {
             userId={selectedUser.userId}
             fontSize={finalFontSize}
             danksagungCount={danksagungen.length}
+            kategorien={normalizedCategories}
           />
         }
         data={danksagungen}
@@ -143,10 +153,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 1,
+    borderWidth: Platform.OS === 'ios' ? 1 : 0,
+    borderColor: Platform.OS === 'ios' ? '#eee' : 'transparent',
+    elevation: Platform.OS === 'android' ? 4 : 0,
   },
   danksagungText: {
     fontSize: 16,

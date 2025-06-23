@@ -11,6 +11,7 @@ export const useChannels = (selectedCategory: string | null) => {
 
   // Fetch initial channels
   const fetchChannels = async () => {
+    let isActive = true;
     if (!streamChatClient) return;
 
     try {
@@ -20,10 +21,9 @@ export const useChannels = (selectedCategory: string | null) => {
       };
 
       const response = await streamChatClient.queryChannels(filters);
+      if (!isActive || !streamChatClient) return;
 
-      
       setAllChannels(response);
-      
       if (selectedCategory) {
         setChannels(response.filter(
           (channel) => channel.data?.custom_post_category === selectedCategory
@@ -36,11 +36,14 @@ export const useChannels = (selectedCategory: string | null) => {
     } finally {
       setLoading(false);
     }
+    return () => { isActive = false; };
   };
 
   // Initial fetch effect
   useEffect(() => {
+    let isActive = true;
     fetchChannels();
+    return () => { isActive = false; };
   }, [streamChatClient]);
 
   // Filter channels when category changes
@@ -58,9 +61,11 @@ export const useChannels = (selectedCategory: string | null) => {
 
   // Listen to channel events
   useEffect(() => {
+    let isActive = true;
     if (!streamChatClient) return;
 
     const handleChannelEvent = (event: any) => {
+      if (!isActive || !streamChatClient) return;
       const eventChannel = event.channel as StreamChannel;
 
       if (!eventChannel || !eventChannel.cid) {
@@ -130,6 +135,7 @@ export const useChannels = (selectedCategory: string | null) => {
 
     // Cleanup subscriptions
     return () => {
+      isActive = false;
       subscriptions.forEach((subscription) => subscription.unsubscribe());
     };
   }, [streamChatClient, selectedCategory]);

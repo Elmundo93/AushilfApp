@@ -1,346 +1,218 @@
-// app/(public)/onboarding/userInfo.tsx
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
 
-import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform, SafeAreaView, Modal, ScrollView } from 'react-native';
+  Modal,
+  ScrollView,
+  Alert,
+} from 'react-native';
 import { usePathname, useRouter } from 'expo-router';
 import { useOnboardingStore } from '@/components/stores/OnboardingContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import LottieView from 'lottie-react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { getLottieStyle, onboardingStyles } from './styles';
 
 export default function UserInfoScreen() {
   const router = useRouter();
-  const { fullName, phone, city, taxId, email, street, setField } = useOnboardingStore();
-  const [showInfoModal, setShowInfoModal] = useState(false);
+  const pathname = usePathname();
+  const steps = ['intro', 'userinfo', 'intent', 'about', 'profileImage', 'password','conclusion','savety'];
+    const currentStep = steps.findIndex((step) => pathname.includes(step));
 
-  const handleNext = () => {
+  const {
+    userInfo,
+    setUserInfo,
+    validate,
+    persist,
+    restore,
+  } = useOnboardingStore();
+
+  const [showInfoModal, setShowInfoModal] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
+
+  const beeAnimation = require('@/assets/animations/Bee.json');
+
+  useEffect(() => {
+    restore(); // Zustand bei Start wiederherstellen
+  }, []);
+
+  const validateEmail = (email: string) => {
+    // Supabase's email validation rules
+    if (!email) return false;
+    
+    // RFC 5322 compliant email regex
+    const emailRegex = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    
+    // Additional Supabase-specific rules
+    if (!emailRegex.test(email)) return false;
+    
+    // Check length (Supabase has a max length of 255 characters)
+    if (email.length > 255) return false;
+    
+    // Check for consecutive dots in domain
+    if (email.includes('..')) return false;
+    
+    // Check for valid TLD length (2-63 characters)
+    const tld = email.split('.').pop();
+    if (!tld || tld.length < 2 || tld.length > 63) return false;
+    
+    // Check for valid domain length (max 255 characters)
+    const domain = email.split('@')[1];
+    if (!domain || domain.length > 255) return false;
+    
+    return true;
+  };
+
+  const handleNext = async () => {
+    // Validate email first
+    if (!userInfo.email || !validateEmail(userInfo.email)) {
+      setEmailError('Bitte gib eine gültige E-Mail-Adresse ein (z.B. name@domain.de)');
+      return;
+    }
+    setEmailError(null);
+
+    const isValid = validate();
+    if (!isValid) {
+      Alert.alert('Fehlende Angaben', 'Bitte fülle alle Pflichtfelder aus.');
+      return;
+    }
+    await persist();
     router.push('intent' as any);
   };
 
-  const beeAnimation = require('@/assets/animations/Bee.json');
-  const pathname = usePathname();
-
-  const steps = ['intro', 'userinfo', 'intent','about', 'profileImage', 'password'];
-  const currentStep = steps.findIndex((step) => pathname.includes(step));
+  const fields = [
+    { label: 'Vorname', key: 'vorname', placeholder: 'Vorname', textContentType: 'givenName', autoComplete: 'name-given' },
+    { label: 'Nachname', key: 'nachname', placeholder: 'Nachname', textContentType: 'familyName', autoComplete: 'name-family' },
+    { label: 'Telefonnummer', key: 'telefonnummer', placeholder: 'Telefonnummer', keyboardType: 'phone-pad', textContentType: 'telephoneNumber', autoComplete: 'tel' },
+    { label: 'E-Mail', key: 'email', placeholder: 'E-Mail', keyboardType: 'email-address', textContentType: 'emailAddress', autoComplete: 'email' },
+    { label: 'PLZ', key: 'plz', placeholder: 'PLZ', keyboardType: 'numeric', textContentType: 'postalCode', autoComplete: 'postal-code' },
+    { label: 'Stadt', key: 'wohnort', placeholder: 'Stadt', textContentType: 'addressCity', autoComplete: 'address-level2' },
+    { label: 'Straße', key: 'straße', placeholder: 'Straße', textContentType: 'streetAddressLine1', autoComplete: 'street-address' },
+    { label: 'Hausnummer', key: 'hausnummer', placeholder: 'Hausnummer', textContentType: 'streetAddressLine2', autoComplete: 'street-address' },
+    { label: 'Steuernummer (optional)', key: 'steuernummer', placeholder: 'Steuernummer' },
+  ];
 
   return (
-    <SafeAreaView style={styles.container}>
-    
+    <View style={onboardingStyles.safeAreaContainer}>
       <LinearGradient
         colors={['#ff9a00', '#ffc300', '#ffffff']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFill}
       />
-      <TouchableOpacity style={styles.backButton} onPress={() => router.replace('/(public)/(onboarding)/intro')}>
+
+      <TouchableOpacity
+        style={onboardingStyles.backButton}
+        onPress={() => router.replace('/(public)/(onboarding)/intro')}
+      >
         <Ionicons name="arrow-back" size={28} color="black" />
       </TouchableOpacity>
 
-      <KeyboardAvoidingView 
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
       >
-        <ScrollView 
+        <ScrollView
           contentContainerStyle={{ flexGrow: 1 }}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.topContainer}>
-            <LottieView
-              source={beeAnimation}
-              autoPlay
-              loop
-              style={styles.lottie}
-            />
-            <View style={styles.progressContainer}>
+          <View style={onboardingStyles.topContainer}>
+            <LottieView source={beeAnimation} autoPlay loop style={getLottieStyle(currentStep)} />
+            <View style={onboardingStyles.progressContainer}>
               {steps.map((_, index) => (
                 <View
                   key={index}
-                  style={[styles.dot, index <= currentStep && styles.activeDot]}
+                  style={[onboardingStyles.dot, index <= currentStep && onboardingStyles.activeDot]}
                 />
               ))}
             </View>
-            <View style={styles.titleCard}>
-              <View style={styles.titleContainer}>
-                <Text style={styles.title}>Deine Angaben</Text>
+            <View style={onboardingStyles.titleCard}>
+              <View style={onboardingStyles.titleContainer}>
+                <Text style={onboardingStyles.title}>Deine Angaben</Text>
               </View>
             </View>
           </View>
 
-          <View style={styles.contentContainer}>
-            <View style={styles.card}>
-              <TouchableOpacity 
-                style={styles.infoButton} 
+          <View style={onboardingStyles.contentContainer}>
+            <View style={onboardingStyles.card}>
+              <TouchableOpacity
+                style={onboardingStyles.infoButton}
                 onPress={() => setShowInfoModal(true)}
               >
-                <Text style={styles.infoButtonText}>Datenschutzinfo</Text>
+                <Text style={onboardingStyles.infoButtonText}>Datenschutzinfo</Text>
                 <Ionicons name="information-circle-outline" size={24} color="black" />
               </TouchableOpacity>
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Vorname</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Vollständiger Name"
-                  value={fullName}
-                  onChangeText={(text) => setField('vorname', text)}
-                />
-              </View>
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Nachname</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Nachname"
-                  keyboardType="default"
-                  value={phone}
-                  onChangeText={(text) => setField('nachname', text)}
-                />
-              </View>
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Telefonnummer</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Telefonnummer"
-                  keyboardType="phone-pad"
-                  value={phone}
-                  onChangeText={(text) => setField('phone', text)}
-                />
-              </View>
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>E-Mail</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="E-Mail"
-                  keyboardType="email-address"
-                  value={email}
-                  onChangeText={(text) => setField('email', text)}
-                />
-              </View>
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Wohnort & PLZ</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Wohnort & PLZ"
-                  keyboardType="default"
-                  value={city}
-                  onChangeText={(text) => setField('city', text)}
-                />
-              </View>
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Straße & Hausnummer</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Straße & Hausnummer"
-                  keyboardType="default"
-                  value={street}
-                  onChangeText={(text) => setField('street', text)}
-                />
-              </View>
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Steuernummer (optional)</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Steuernummer (optional)"
-                  keyboardType="default"
-                  value={taxId}
-                  onChangeText={(text) => setField('taxId', text)}
-                />
-              </View>
-              <TouchableOpacity style={styles.button} onPress={handleNext}>
-                <Text style={styles.buttonText}>Weiter</Text>
+
+              {fields.map(
+                ({ label, key, placeholder, keyboardType = 'default', textContentType, autoComplete }) => (
+                  <View key={key} style={onboardingStyles.inputContainer}>
+                    <Text style={onboardingStyles.inputLabel}>{label}</Text>
+                    <TextInput
+                      style={[
+                        onboardingStyles.input,
+                        key === 'email' && emailError ? { borderColor: 'red' } : null
+                      ]}
+                      placeholder={placeholder}
+                      keyboardType={keyboardType as any}
+                      value={(userInfo as any)[key] || ''}
+                      onChangeText={(text) => {
+                        setUserInfo(key as any, text);
+                        if (key === 'email') {
+                          setEmailError(null);
+                        }
+                      }}
+                      textContentType={textContentType as any}
+                      autoComplete={autoComplete as any}
+                      importantForAutofill="yes"
+                      autoCapitalize="none"
+                      returnKeyType="next"
+                    />
+                    {key === 'email' && emailError && (
+                      <Text style={{ color: 'red', fontSize: 12, marginTop: 4 }}>{emailError}</Text>
+                    )}
+                  </View>
+                )
+              )}
+
+              <TouchableOpacity style={onboardingStyles.button} onPress={handleNext}>
+                <Text style={onboardingStyles.buttonText}>Weiter</Text>
               </TouchableOpacity>
             </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    
+
       <Modal
         visible={showInfoModal}
         transparent={true}
         animationType="fade"
         onRequestClose={() => setShowInfoModal(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Datenschutzinformationen</Text>
-            <Text style={styles.modalText}>
-             Bis auf deinen Namen, sind alle Daten die du hier angibst nur für dich ersichtlich und werden sicher in der AushilfApp gespeichert.
-             Falls du über die AushilfApp einen Anmeldevorgang startest, werden die angegebenen Daten automatisch und unkompliziert in den Anmeldeprozess der Minijobzentrale übernommen. 
-
-          
+        <View style={onboardingStyles.modalOverlay}>
+          <View style={onboardingStyles.modalContent}>
+            <Text style={onboardingStyles.modalTitle}>Datenschutzinformationen</Text>
+            <Text style={onboardingStyles.modalText}>
+              Bis auf deinen Namen, sind alle Daten die du hier angibst nur für dich ersichtlich
+              und werden sicher in der AushilfApp gespeichert. Falls du über die AushilfApp einen
+              Anmeldevorgang startest, werden die angegebenen Daten automatisch und unkompliziert
+              in den Anmeldeprozess der Minijobzentrale übernommen.
             </Text>
-            <TouchableOpacity 
-              style={styles.modalButton} 
+            <TouchableOpacity
+              style={onboardingStyles.modalButton}
               onPress={() => setShowInfoModal(false)}
             >
-              <Text style={styles.modalButtonText}>Verstanden</Text>
+              <Text style={onboardingStyles.modalButtonText}>Verstanden</Text>
             </TouchableOpacity>
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 25,
-  },
-  card: {
-    backgroundColor: 'rgba(255,255,255,0.95)',
-    padding: 25,
-    borderRadius: 25,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 5,
- 
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: '600',
-    color: '#222',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  input: {
-    height: 50,
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 25,
-    paddingHorizontal: 15,
-    marginBottom: 15,
-    backgroundColor: '#fff',
-  },
-  button: {
-    backgroundColor: 'orange',
-    paddingVertical: 14,
-    borderRadius: 25,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '500',
-  },
-  dot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#ccc',
-  },
-  activeDot: {
-    backgroundColor: 'white',
-    transform: [{ scale: 1.2 }],
-  },
-  lottie: {
-    position: 'absolute',
-    top: -50,
-    left: 130,
-    right: 0,
-    bottom: 0,
-    width: 120,
-    height: 120,
-    alignSelf: 'center',
-  },
-  backButton: {
-    position: 'absolute',
-    top: 50,
-    left: 20,
-    zIndex: 10,
-    backgroundColor: 'rgba(255,255,255,0.7)',
-    padding: 10,
-    borderRadius: 20,
-  },
-  progressContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    paddingTop: 20,
-    gap: 10,
-  },
-  topContainer: {
-    paddingTop: 20,
-    marginTop: 30,
-  },
-  titleCard: {
-    padding: 25,
-    borderRadius: 25,
-    shadowColor: '#000',
-  },
-  contentContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 25,
-    marginTop: -40,
-  },
-  inputContainer: {
-    marginVertical: 5,
-  },
-  inputLabel: {
-    position: 'absolute',
-    top: -15,
-    left: 10,
-    fontSize: 16,
-    fontWeight: '500',
-    marginBottom: 5,
-    zIndex: 10,
-    backgroundColor: 'white',
-  },
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 20,
-  },
-  infoButton: {
-    marginLeft: 10,
-    padding: 5,
-    alignSelf: 'flex-end',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-  },
-  infoButtonText: {
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContent: {
-    backgroundColor: 'white',
-    borderRadius: 20,
-    padding: 20,
-    width: '80%',
-    maxWidth: 400,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    marginBottom: 15,
-    textAlign: 'center',
-  },
-  modalText: {
-    fontSize: 18,
-    lineHeight: 24,
-    color: '#333',
-    marginBottom: 20,
-  },
-  modalButton: {
-    backgroundColor: 'orange',
-    paddingVertical: 12,
-    borderRadius: 25,
-    alignItems: 'center',
-  },
-  modalButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '500',
-  },
-});

@@ -4,16 +4,15 @@ import { User } from '@/components/types/auth';
 
 export async function saveUserInfo(db: SQLiteDatabase, user: User) {
   try {
-    await db.withTransactionAsync(async () => {
+    await db.withExclusiveTransactionAsync(async () => {
       // delete old
       await db.runAsync('DELETE FROM user_info_local;');
       // insert new
       await db.runAsync(
-        `INSERT INTO user_info_local (
-           id, created_at, location, vorname, nachname,
-           email, profileImageUrl, bio, straße, hausnummer,
-           plz, wohnort, telefonnummer, steuernummer
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+        `INSERT OR REPLACE INTO user_info_local (
+      id, created_at, location, vorname, nachname, email, profileImageUrl, bio,
+      straße, hausnummer, plz, wohnort, telefonnummer, steuernummer, kategorien, onboarding_completed
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           user.id ?? '',
           user.created_at ?? '',
@@ -29,6 +28,8 @@ export async function saveUserInfo(db: SQLiteDatabase, user: User) {
           user.wohnort ?? '',
           user.telefonnummer ?? '',
           user.steuernummer ?? '',
+          JSON.stringify(user.kategorien ?? []),
+          user.onboarding_completed ? 1 : 0,
         ]
       );
     });
@@ -58,6 +59,8 @@ export async function loadUserInfo(db: SQLiteDatabase): Promise<User | null> {
     wohnort: row.wohnort,
     telefonnummer: row.telefonnummer,
     steuernummer: row.steuernummer,
+    kategorien: row.kategorien ? JSON.parse(row.kategorien) : [],
+    onboarding_completed: row.onboarding_completed === 1,
   };
 }
 

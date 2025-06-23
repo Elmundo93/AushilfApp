@@ -41,6 +41,7 @@ const ChannelPreview: React.FC<ChannelPreviewProps> = ({ channel, onSelect }) =>
     nachname: channel.custom_user_nachname || '',
     profileImageUrl: channel.custom_user_profileImage || '',
     bio: channel.custom_user_userBio || '',
+    kategorien: channel.custom_post_category ? [channel.custom_post_category] : [],
   };
 
   const rawDate = new Date(channel.last_message_at ?? '');

@@ -1,49 +1,6 @@
 import { StyleSheet } from 'react-native';
 
 export const styles = StyleSheet.create({
-
-headerContainer: {
-    paddingTop: 20,
-    paddingHorizontal: 20,
-    marginBottom: 10,
-  },
-  profileTopRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  countCard: {
-    marginLeft: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 3,
-    alignItems: 'center',
-    justifyContent: 'center',
-    alignSelf: 'flex-start',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-  },
-  countNumber: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#000',
-  },
-  countLabel: {
-    fontSize: 12,
-    color: '#333',
-    fontWeight: '500',
-  },
-  profileInfo: {
-    marginTop: 20,
-  },
-  bioWrapper: {
-    marginTop: 10,
-  },
   bioInput: {
     fontSize: 14,
     color: '#333',
@@ -57,36 +14,120 @@ headerContainer: {
     fontSize: 14,
     color: '#444',
   },
+  bioWrapper: {
+    marginTop: 10,
+  },
+  categoryGrid: {
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 10,
+    width: '100%',
+    paddingHorizontal: 10,
+    gap: 10,
+  },
+  categoryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    gap: 10,
+  },
+  countCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 3,
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  countLabel: {
+    fontSize: 12,
+    color: '#333',
+    fontWeight: '500',
+  },
+  countNumber: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#000',
+  },
+  danksagungenHeader: {
+    marginTop: 20,
+    marginBottom: 8,
+  },
+  danksagungenTitle: {
+    fontWeight: 'bold',
+    alignSelf: 'center',
+  },
   danksagungsCount: {
     fontSize: 22,
     fontWeight: 'bold',
     color: '#000',
   },
-  
-  userName: {
-    fontSize: 22,
+  editBioButton: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    borderColor: 'orange',
+    borderWidth: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: 'orange',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+    alignSelf: 'center',
+  },
+  editBioButtonContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 20,
+  },
+  editBioText: {
+    color: 'orange',
     fontWeight: '600',
-    color: '#000',
+    marginLeft: 6,
   },
-
-  
-  
-  userBioTitle: {
-    position: 'absolute',
-    top: -18,
-    left: 10,
-    backgroundColor: 'transparent',
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: 'grey',
-    marginBottom: 6,
+  headerContainer: {
+    paddingTop: 10,
+    paddingHorizontal: 20,
+    marginBottom: 10,
+    borderRadius: 16,
+    overflow: 'hidden',
   },
-  
+  profileImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+  },
+  profileInfo: {
+    marginTop: 20,
+  },
+  profileTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  thanksAndCategories: {
+    flex: 1,
+    marginLeft: 10,
+  },
   trenner: {
     height: 1,
     backgroundColor: '#ccc',
     marginVertical: 20,
     opacity: 0.5,
+  },
+  userBio: {
+    fontSize: 16,
   },
   userBioContainer: {
     position: 'relative',
@@ -97,43 +138,42 @@ headerContainer: {
     marginVertical: 16,
     marginTop: 25,
   },
- 
-  userBio: {
-    fontSize: 16,
-  },
   userBioInput: {
     fontSize: 16,
     minHeight: 60,
     textAlignVertical: 'top',
   },
-  editBioButtonContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 20,
-  },
-  editBioButton: {
-    backgroundColor: '#f0f0f0',
-    borderWidth: 1,
-    borderColor: 'gray',
-    borderRadius: 20,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-  },
-  editBioText: {
-    fontSize: 14,
-    color: 'gray',
+  userBioTitle: {
+    position: 'absolute',
+    top: -18,
+    left: 10,
+    backgroundColor: 'transparent',
+    fontSize: 16,
     fontWeight: 'bold',
+    color: 'grey',
+    marginBottom: 6,
+  },
+  userBioWrapper: {
+    borderBottomWidth: 1,
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderColor: 'lightgrey',
+    borderRadius: 16,
+    padding: 16,
+    marginTop: 30,
+    shadowColor: 'orange',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 5,
   },
   userEmail: {
     fontSize: 14,
     color: 'gray',
   },
-  danksagungenHeader: {
-    marginTop: 20,
-    marginBottom: 8,
-  },
-  danksagungenTitle: {
-    fontWeight: 'bold',
-    alignSelf: 'center',
+  userName: {
+    fontSize: 22,
+    fontWeight: '600',
+    color: '#000',
   },
 });

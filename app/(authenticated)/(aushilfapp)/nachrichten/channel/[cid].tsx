@@ -1,4 +1,5 @@
 // File: app/(authenticated)/(aushilfapp)/nachrichten/channel/[cid].tsx
+
 import React, { useEffect, useContext, useRef } from 'react';
 import {
   View,
@@ -7,94 +8,156 @@ import {
   KeyboardAvoidingView,
   Platform,
   TouchableOpacity,
-  Animated,
+  Text,
 } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
+import { MaterialIcons } from '@expo/vector-icons';
+import LottieView from 'lottie-react-native';
+import { Animated as RNAnimated } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, runOnJS } from 'react-native-reanimated';
+
 import { FontSizeContext } from '@/components/provider/FontSizeContext';
 import { useStreamChatStore } from '@/components/stores/useStreamChatStore';
 import { useActiveChatStore } from '@/components/stores/useActiveChatStore';
 import { useAuthStore } from '@/components/stores/AuthStore';
+import { useMuteStore } from '@/components/stores/useMuteStore';
+
 import { ChatMessage } from '@/components/types/stream';
 import CustomChatHeader from '@/components/Nachrichten/Costum/CustomHeader';
 import { CustomInputField } from '@/components/Nachrichten/Costum/CustomInputField';
 import { CustomMessageBubble } from '@/components/Nachrichten/Costum/CustomMessageBubble';
-import { useChatContext } from '@/components/provider/ChatProvider';
 import { ScrollToBottomOnMount } from '@/components/Nachrichten/Helpers/ScrollToBottomOnMount';
-import { useScrollToBottom } from '@/components/Nachrichten/Helpers/ScrollToBottom';
-import { MaterialIcons } from '@expo/vector-icons';
-import { useMuteStore } from '@/components/stores/useMuteStore';
 import { MutedNotice } from '@/components/Nachrichten/MutedNotice';
+import { useScrollToBottom } from '@/components/Nachrichten/Helpers/ScrollToBottom';
 import { extractPartnerData } from '@/components/services/StreamChat/lib/extractPartnerData';
 
+import { useInitChannel } from '@/components/services/Storage/Hooks/useInitChannel';
+import { useChatContext } from '@/components/provider/ChatProvider';
+import { useSendMessage } from '@/components/services/Storage/Hooks/useSendMessage';
+import { useSyncIncomingMessages } from '@/components/services/Storage/Hooks/useSyncInomingMessages';
+
+
+
+
 export default function ChannelScreen() {
-  const { cid: cidParam } = useLocalSearchParams<{ cid: string }>();
+  const { cid } = useLocalSearchParams<{ cid: string }>();
+  const flatListRef = useRef<FlatList<ChatMessage>>(null);
+
   const { fontSize } = useContext(FontSizeContext);
-  const userId = useAuthStore.getState().user?.id ?? '';
+  const user = useAuthStore.getState().user;
   const channels = useStreamChatStore((s) => s.channels);
   const activeMessages = useActiveChatStore((s) => s.messages);
-  const flatListRef = useRef<FlatList<ChatMessage>>(null);
-  const { syncMessagesForChannel, loadMoreMessages } = useChatContext();
-  const scaleAnim = useRef(new Animated.Value(1)).current;
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const user = useAuthStore.getState().user;
-  const channel = channels.find((c) => c.cid === cidParam);
-  const partnerData = channel ? extractPartnerData(channel, user?.id ?? '') : null;
-  const isMuted = useMuteStore((s) => s.isMuted(partnerData?.userId ?? ''));
+  const setMessages = useActiveChatStore((s) => s.setMessages);
+  const loading = useActiveChatStore((s) => s.loading);
 
+  const channel = channels.find((c) => c.cid === cid);
+  const currentUserId = user?.id ?? '';
+  const partnerData = extractPartnerData(channel, currentUserId);
+  const isMuted = useMuteStore((s) => partnerData?.userId ? s.isMuted(partnerData.userId) : false);
 
- 
-  if (!channel) {
-    
-    return null;
-  }
+  const { onScroll, isNearBottom, scrollToBottom } = useScrollToBottom(flatListRef, activeMessages.length);
 
-  const { onScroll, isNearBottom, scrollToBottom } = useScrollToBottom(
-    flatListRef,
-    activeMessages.length
-  );
+  const scaleAnim = useRef(new RNAnimated.Value(1)).current;
+  const fadeAnim = useRef(new RNAnimated.Value(0)).current;
 
-  // on open, load the last 30 messages from SQLite/Stream
-  useEffect(() => {
-    if (cidParam) {
-      syncMessagesForChannel(cidParam, 30);
-    }
-  }, [cidParam]);
+  // Lokale SQLite-Nachrichten + Listener
+  useInitChannel(cid);
+  // Temporär deaktiviert bis SQLite-Problem gelöst ist
+  // useSyncIncomingMessages(cid, currentUserId);
+  
 
-  useEffect(() => {
-    if (!isNearBottom) {
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true,
-      }).start();
+  const {loadMoreMessages, sendMessage} = useChatContext();
+
+  const [showLoader, setShowLoader] = React.useState(loading);
+  const loaderOpacity = useSharedValue(loading ? 1 : 0);
+
+  React.useEffect(() => {
+    if (loading) {
+      setShowLoader(true);
+      loaderOpacity.value = withTiming(1, { duration: 300 });
     } else {
-      Animated.timing(fadeAnim, {
-        toValue: 0,
+      loaderOpacity.value = withTiming(0, { duration: 300 }, (finished) => {
+        if (finished) runOnJS(setShowLoader)(false);
+      });
+    }
+  }, [loading]);
+
+  const animatedLoaderStyle = useAnimatedStyle(() => ({
+    opacity: loaderOpacity.value,
+  }));
+
+  useEffect(() => {
+    let isMounted = true;
+    if (!channel) return;
+    setMessages([]); // Leere Nachrichten beim Channel-Wechsel
+    useActiveChatStore.getState().setLoading(true);
+    (async () => {
+      try {
+        const loaded = await loadMoreMessages(cid);
+        if (isMounted) {
+          useActiveChatStore.getState().setLoading(false);
+        }
+      } catch (e) {
+        if (isMounted) {
+          useActiveChatStore.getState().setLoading(false);
+        }
+      }
+    })();
+    return () => { isMounted = false; };
+  }, [cid]);
+
+  useEffect(() => {
+    if (!channel) {
+      console.warn(`Kein Channel für cid: ${cid}`);
+      return;
+    }
+    
+    try {
+      RNAnimated.timing(fadeAnim, {
+        toValue: isNearBottom ? 0 : 1,
         duration: 300,
         useNativeDriver: true,
       }).start();
+    } catch (error) {
+      console.error('Animation Error:', error);
     }
-  }, [isNearBottom]);
-
-  const currentUserId = userId;
+  }, [isNearBottom, channel]);
 
   const handlePressIn = () => {
-    Animated.spring(scaleAnim, {
+    RNAnimated.spring(scaleAnim, {
       toValue: 0.9,
       useNativeDriver: true,
     }).start();
   };
 
   const handlePressOut = () => {
-    Animated.spring(scaleAnim, {
+    RNAnimated.spring(scaleAnim, {
       toValue: 1,
       useNativeDriver: true,
     }).start();
   };
 
+  if (!channel) {
+    console.warn(`Kein Channel für cid: ${cid}`);
+    return null;
+  }
+
+  if (showLoader) {
+    return (
+      <Animated.View style={[{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'white' }, animatedLoaderStyle]}>
+        <LottieView
+          source={require('@/assets/animations/LoadingWarp.json')}
+          autoPlay
+          loop
+          style={{ width: 180, height: 180 }}
+        />
+        <Text style={{ marginTop: 16, fontSize: 16, color: '#ff9a00', fontWeight: '600' }}>Nachrichten werden geladen ...</Text>
+      </Animated.View>
+    );
+  }
+
   return (
     <View style={styles.container}>
-
       <CustomChatHeader
         otherUserImage={channel.custom_user_profileImage}
         otherUserName={channel.custom_user_vorname}
@@ -106,62 +169,59 @@ export default function ChannelScreen() {
         keyboardVerticalOffset={Platform.select({ ios: 80, android: 100 })}
       >
         {isMuted && <MutedNotice />}
+
         <FlatList
           ref={flatListRef}
           inverted
           onScroll={onScroll}
           data={activeMessages}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => {
-
-            return (
-              <CustomMessageBubble
-                message={item}
-                currentUserId={currentUserId}
-                fontSize={fontSize}
-
-              />
-            );
-          }}
+          renderItem={({ item }) => (
+            <CustomMessageBubble
+              message={item}
+              currentUserId={currentUserId}
+              fontSize={fontSize}
+            />
+          )}
           contentContainerStyle={{ padding: 10 }}
-        
           initialNumToRender={30}
           maxToRenderPerBatch={20}
           windowSize={5}
-          onEndReached={() => {
-            loadMoreMessages(cidParam);
-          }}
+          onEndReached={() => cid && loadMoreMessages(cid)}
           onEndReachedThreshold={0.1}
-          maintainVisibleContentPosition={{
-            minIndexForVisible: 1,
-          }}
+          maintainVisibleContentPosition={{ minIndexForVisible: 1 }}
         />
-        <Animated.View style={[styles.scrollButtonContainer, { 
-          opacity: fadeAnim,
-          transform: [{ scale: scaleAnim }],
-          display: isNearBottom ? 'none' : 'flex'
-        }]}>
-          <TouchableOpacity
-            style={styles.scrollButton}
-            onPress={scrollToBottom}
+
+        <RNAnimated.View
+          style={[styles.scrollButtonContainer, { opacity: fadeAnim, display: isNearBottom ? 'none' : 'flex' }]}
+        >
+          <AnimatedTouchable
+            style={[styles.scrollButton, { transform: [{ scale: scaleAnim }] }]}
+            onPress={() => scrollToBottom()}
             onPressIn={handlePressIn}
             onPressOut={handlePressOut}
           >
             <MaterialIcons name="arrow-downward" size={24} color="white" />
-          </TouchableOpacity>
-        </Animated.View>
+          </AnimatedTouchable>
+        </RNAnimated.View>
+
         <ScrollToBottomOnMount flatListRef={flatListRef} />
 
         <CustomInputField
           fontSize={fontSize}
-          cid={cidParam}
+          cid={cid}
           currentUserId={currentUserId}
           flatListRef={flatListRef}
+          onSendMessage={(text) =>
+            sendMessage(cid, text)
+          }
         />
       </KeyboardAvoidingView>
     </View>
   );
 }
+
+const AnimatedTouchable = RNAnimated.createAnimatedComponent(TouchableOpacity);
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: 'white' },
@@ -179,13 +239,6 @@ const styles = StyleSheet.create({
     height: 50,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
     elevation: 5,
   },
 });

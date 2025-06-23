@@ -22,7 +22,12 @@ export const useActiveChatStore = create<ActiveChatState>((set) => ({
           ? messagesOrUpdater(state.messages)
           : messagesOrUpdater;
 
-      const sorted = [...updated].sort(
+      // Deduplicate by id
+      const uniqueMessages = Array.from(
+        new Map(updated.map(msg => [msg.id, msg])).values()
+      );
+
+      const sorted = [...uniqueMessages].sort(
         (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
 

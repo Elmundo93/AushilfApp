@@ -5,20 +5,29 @@ import {
   Text,
   Animated,
   ActivityIndicator,
-
   StyleSheet,
-  
   TouchableOpacity,
+  Platform,
+  Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuthStore } from '@/components/stores/AuthStore';
 import { useDanksagungStore } from '@/components/stores/danksagungStores';
 import { FontSizeContext } from '@/components/provider/FontSizeContext';
-
+import { getIconForCategory, getBackgroundForCategory } from '@/components/Pinnwand/utils/CategoryAndOptionUtils';
 import UserProfileHeader from '@/components/Profile/UserProfileHeader';
 
+const CATEGORIES = [
+  { label: 'Garten', key: 'garten' },
+  { label: 'Haushalt', key: 'haushalt' },
+  { label: 'Soziales', key: 'soziales' },
+  { label: 'Gastro', key: 'gastro' },
+  { label: 'Handwerk', key: 'handwerk' },
+  { label: 'Bildung', key: 'bildung' },
+];
+
 const UserProfile = () => {
-  const { user, isLoading: userLoading, error: userError } = useAuthStore();
+  const { user, isLoading: userLoading, error: userError, setUser } = useAuthStore();
   const danksagungen = useDanksagungStore((state) =>
     state.danksagungen.filter((d) => d.userId === user?.id)
   );
@@ -26,8 +35,8 @@ const UserProfile = () => {
   const loading = useDanksagungStore((state) => state.loading);
   const error = useDanksagungStore((state) => state.error);
   const { fontSize: contextFontSize } = useContext(FontSizeContext);
-
-
+  const [isEditingCategories, setIsEditingCategories] = useState(false);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(user?.kategorien || []);
 
   const defaultFontSize = 22;
   const baseFontSize = 24;
@@ -49,6 +58,95 @@ const UserProfile = () => {
     []
   );
 
+  const handleCategoryToggle = (category: string) => {
+    setSelectedCategories(prev => {
+      if (prev.includes(category)) {
+        return prev.filter(c => c !== category);
+      } else {
+        return [...prev, category];
+      }
+    });
+  };
+
+  const handleSaveCategories = async () => {
+    if (!user) return;
+    
+    try {
+      const updatedUser = {
+        ...user,
+        kategorien: selectedCategories
+      };
+      await setUser(updatedUser);
+      setIsEditingCategories(false);
+    } catch (error) {
+      console.error('Fehler beim Speichern der Kategorien:', error);
+    }
+  };
+
+  const renderCategoryGrid = () => {
+    return (
+      <View style={styles.cardContainer}>
+        <View style={styles.iconsContainer}>
+          {CATEGORIES.map((category) => {
+            const isSelected = selectedCategories.includes(category.label);
+            const categoryColor = getBackgroundForCategory(category.key).backgroundColor;
+            
+            return (
+              <TouchableOpacity
+                key={category.key}
+                style={[
+                  styles.categoryButton,
+                  {
+                    backgroundColor: isSelected 
+                      ? categoryColor
+                      : 'rgba(200, 200, 200, 0.3)',
+                  },
+                ]}
+                onPress={() => isEditingCategories && handleCategoryToggle(category.label)}
+                activeOpacity={0.7}
+              >
+                <View style={[
+                  styles.categoryIconContainer,
+                  {
+                    backgroundColor: isSelected 
+                      ? 'rgba(255, 255, 255, 0.2)'
+                      : 'rgba(255, 255, 255, 0.9)',
+                  }
+                ]}>
+                  <Image
+                    source={getIconForCategory(category.key)}
+                    style={[
+                      styles.categoryIcon,
+                      {
+                        tintColor: '#444444',
+                      },
+                    ]}
+                  />
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+        {isEditingCategories && (
+          <View style={styles.editButtonsContainer}>
+            <TouchableOpacity 
+              style={styles.editButton} 
+              onPress={() => setIsEditingCategories(false)}
+            >
+              <Text style={styles.editButtonText}>Abbrechen</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.editButton} 
+              onPress={handleSaveCategories}
+            >
+              <Text style={styles.editButtonText}>Speichern</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
+    );
+  };
+
   const renderDanksagung = ({ item }: { item: { writtenText: string; vorname: string; nachname: string } }) => (
     <View style={styles.danksagungCard}>
       <Text style={[styles.danksagungText, { fontSize: finalFontSize }]}>{item.writtenText}</Text>
@@ -59,7 +157,59 @@ const UserProfile = () => {
   );
 
   const renderHeader = () => (
-    <UserProfileHeader user={user} formatName={formatName} danksagungsLength={danksagungen.length} />
+    <View style={styles.headerContainer}>
+
+
+      <View style={styles.profileTopRow}>
+        <Image
+          style={styles.profileImage}
+          source={
+            user?.profileImageUrl
+              ? { uri: user.profileImageUrl }
+              : require('@/assets/images/avatar-thinking-6-svgrepo-com.png')
+          }
+        />
+
+        <View style={styles.thanksAndCategories}>
+          <View style={styles.countCard}>
+            <Text style={styles.countNumber}>{danksagungen.length}</Text>
+            <Text style={styles.countLabel}>Danksagungen</Text>
+          </View>
+          
+        
+
+          {renderCategoryGrid()}
+          <TouchableOpacity 
+            style={styles.editCategoriesButton}
+            onPress={() => setIsEditingCategories(true)}
+          >
+            <Text style={styles.editCategoriesButtonText}>
+              {isEditingCategories ? 'Kategorien bearbeiten' : 'Kategorien anpassen'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <View style={styles.profileInfo}>
+        <Text style={[styles.userName, { fontSize: finalFontSize }]} numberOfLines={1}>
+          {formatName(user?.vorname || '', user?.nachname || '')}
+        </Text>
+        {user?.email && <Text style={styles.userEmail} numberOfLines={1}>{user.email}</Text>}
+
+        {user?.bio && (
+          <View style={styles.userBioWrapper}>
+            <Text style={[styles.userBioTitle, { fontSize: finalFontSize - 8 }]}>
+              Über mich:
+            </Text>
+            <Text style={[styles.userBio, { fontSize: finalFontSize - 8 }]} numberOfLines={2}>
+              {user.bio}
+            </Text>
+          </View>
+        )}
+      </View>
+
+      <View style={styles.trenner} />
+    </View>
   );
 
   if (userLoading || loading) {
@@ -85,7 +235,7 @@ const UserProfile = () => {
       <Animated.View
         style={[styles.gradientHeader, { transform: [{ translateY: gradientTranslateY }] }]}
       >
-        <LinearGradient   colors={['#ff9a00', '#ffc300', '#ffffff']}style={styles.gradient} />
+        <LinearGradient colors={['#ff9a00', '#ffc300', '#ffffff']} style={styles.gradient} />
       </Animated.View>
      
       <Animated.FlatList
@@ -100,7 +250,6 @@ const UserProfile = () => {
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={
           <View style={styles.emptyListContainer}>
-
             <Text style={[styles.emptyListText, { fontSize: finalFontSize }]}>
               Du hast noch keine Danksagungen erhalten.
             </Text>
@@ -114,8 +263,6 @@ const UserProfile = () => {
     </View>
   );
 };
-
-export default UserProfile;
 
 const styles = StyleSheet.create({
   container: {
@@ -140,91 +287,94 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerContainer: {
-    paddingTop: 20,
-    paddingHorizontal: 20,
-    marginBottom: 10,
+    backgroundColor: 'transparent',
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
   },
   profileTopRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
   },
-  avatar: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    backgroundColor: '#ccc',
+  profileImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    marginRight: 15,
+  },
+  thanksAndCategories: {
+    flex: 1,
+    marginLeft: 15,
   },
   countCard: {
-    marginLeft: 20,
-    backgroundColor: 'transparent',
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 3,
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    padding: 10,
+    borderRadius: 10,
     alignItems: 'center',
-    justifyContent: 'center',
-    alignSelf: 'flex-start',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    marginBottom: 10,
   },
   countNumber: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: 'bold',
-    color: '#000',
+    color: '#ff9a00',
   },
   countLabel: {
-    fontSize: 12,
-    color: '#333',
-    fontWeight: '500',
+    fontSize: 14,
+    color: '#666',
   },
   profileInfo: {
-    marginTop: 20,
+    marginTop: 10,
+    flex: 1,
   },
   userName: {
-    fontSize: 22,
-    fontWeight: '600',
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 5,
+    flex: 1,
   },
   userEmail: {
-    fontSize: 14,
-    color: 'gray',
+    fontSize: 16,
+    color: '#666',
+    marginBottom: 10,
   },
-  editBioButton: {
-    backgroundColor: '#f0f0f0',
-    borderWidth: 1,
-    borderColor: 'gray',
-    borderRadius: 20,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-  },
-  editBioButtonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginTop: 8,
-  },
-  editBioText: {
-    fontSize: 14,
-    color: 'gray',
-    fontWeight: 'bold',
-  },
-
-  bioWrapper: {
+  userBioWrapper: {
     marginTop: 10,
   },
-  bioText: {
-    fontSize: 14,
-    color: '#444',
+  userBioTitle: {
+    fontWeight: '600',
+    marginBottom: 5,
   },
-  bioInput: {
-    fontSize: 14,
-    color: '#333',
+  userBio: {
+    color: '#444',
+    lineHeight: 20,
+  },
+  trenner: {
+    height: 1,
+    backgroundColor: '#eee',
+    marginTop: 20,
+  },
+  editCategoriesButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
     padding: 8,
-    borderColor: '#ddd',
-    borderWidth: 1,
     borderRadius: 8,
-    minHeight: 40,
+    marginBottom: 10,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  editCategoriesButtonText: {
+    color: '#666',
+    fontSize: 16,
+    fontWeight: '600',
   },
   listContent: {
     paddingHorizontal: 15,
@@ -235,10 +385,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 1,
+    borderWidth: Platform.OS === 'ios' ? 1 : 0,
+    borderColor: Platform.OS === 'ios' ? '#eee' : 'transparent',
+    elevation: Platform.OS === 'android' ? 4 : 0,
   },
   danksagungText: {
     fontSize: 16,
@@ -258,4 +407,73 @@ const styles = StyleSheet.create({
     color: 'gray',
     marginVertical: 4,
   },
+  cardContainer: {
+    backgroundColor: 'rgba(240, 240, 240, 0.3)',
+    borderRadius: 16,
+    padding: 8,
+    marginVertical: 4,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    width: '100%',
+  },
+  iconsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 0,
+    width: '100%',
+  },
+  categoryButton: {
+    width: '30%',
+    aspectRatio: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+    marginTop: 4,
+    borderRadius: 12,
+  },
+  categoryIconContainer: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  categoryIcon: {
+    width: 36,
+    height: 36,
+  },
+  editButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: 16,
+  },
+  editButton: {
+    backgroundColor: '#FF9F43',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  editButtonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
 });
+
+export default UserProfile;

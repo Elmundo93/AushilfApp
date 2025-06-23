@@ -36,6 +36,7 @@ const PostHeader: React.FC<PostHeaderProps> = ({ item, updateLoadingState, allLo
       nachname: item.nachname,
       profileImageUrl: item.profileImageUrl,
       bio: item.userBio,
+      kategorien: item.kategorien || [],
     };
     setSelectedUser(userProfile);
     router.push({ pathname: '/(modal)/forreignProfile' });

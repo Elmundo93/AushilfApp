@@ -17,6 +17,7 @@ import { LoadingProvider } from '@/components/provider/LoadingContext';
 import { SQLiteProviderWrapper } from '@/components/provider/SQLiteProviderWrapper';
 import { DataProvider } from '@/components/provider/DataProvider';
 import { ChatProvider } from '@/components/provider/ChatProvider';
+import { StripeProvider } from '@stripe/stripe-react-native';
 
 
 export {
@@ -50,7 +51,6 @@ export default function RootLayout() {
 
   return <RootLayoutNav />;
 }
-
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
 
@@ -60,19 +60,23 @@ function RootLayoutNav() {
         <SQLiteProviderWrapper>
           <MenuProvider>
             <AuthProvider>
-            <LoadingProvider>
-              <DataProvider>
-                <ChatProvider>  
-                <Stack screenOptions={{ headerShown: false }}>
-                  <Stack.Screen name="(public)" />
-
-                <Stack.Screen name="(authenticated)" />
-
-                </Stack>
-                </ChatProvider>
-              </DataProvider>
+              <LoadingProvider>
+                <DataProvider>
+                  <ChatProvider>
+                    <StripeProvider
+                      publishableKey={process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY!}
+                      merchantIdentifier="merchant.com.aushilfapp"
+                      urlScheme="aushilfapp"
+                    >
+                      <Stack screenOptions={{ headerShown: false }}>
+                        <Stack.Screen name="(public)" />
+                        <Stack.Screen name="(authenticated)" />
+                      </Stack>
+                    </StripeProvider>
+                  </ChatProvider>
+                </DataProvider>
               </LoadingProvider>
-          </AuthProvider>
+            </AuthProvider>
           </MenuProvider>
         </SQLiteProviderWrapper>
       </GestureHandlerRootView>

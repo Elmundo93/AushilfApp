@@ -22,8 +22,7 @@ export default function IntroScreen() {
 
   const pathname = usePathname();
 
-  const steps = ['intro', 'userinfo', 'intent','about', 'profileImage', 'password'];
-  
+  const steps = ['intro', 'userinfo', 'intent', 'about', 'profileImage', 'password','conclusion','savety'];  
   const currentStep = steps.findIndex((step) => pathname.includes(step));
 
   return (

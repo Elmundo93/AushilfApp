@@ -20,12 +20,15 @@ export function useChannelSync() {
   const messagesService = useMessagesService(db);
 
   return async function syncChannels() {
+    let isActive = true;
     try {
       setLoading(true);
 
       const net = await NetInfo.fetch();
       const isOnline = net.isConnected && net.isInternetReachable;
 
+      // Check again after await
+      if (!isActive) return;
       if (isOnline && streamChatClient) {
         const filters = {
           type: 'messaging',
@@ -33,8 +36,10 @@ export function useChannelSync() {
         };
 
         const channels = await streamChatClient.queryChannels(filters);
+        if (!isActive || !streamChatClient) return;
 
         await saveChannelsToDb(db, channels);
+        if (!isActive || !streamChatClient) return;
 
         // Optional: letzte 1–3 Nachrichten für Vorschau speichern
         for (const ch of channels) {
@@ -44,13 +49,15 @@ export function useChannelSync() {
           const storedMsgs: StoredMessage[] = await Promise.all(rawMsgs.map(m =>
             messagesService.mapMessageToDbValues(m, ch)
           ));
+          if (!isActive || !streamChatClient) return;
           // 4) Persist them:
           await messagesService.saveMessagesToDb(storedMsgs);
         }
       }
 
       // Channels aus SQLite holen und Zustand setzen
-      const localChannels = await getChannelsFromDb(db);
+      const localChannels = await getChannelsFromDb(db, streamChatClient?.userID ?? '');
+      if (!isActive) return;
       setChannel(localChannels);
       setChannelsReady(true);
 
@@ -61,5 +68,6 @@ export function useChannelSync() {
     } finally {
       setLoading(false);
     }
+    return () => { isActive = false; };
   };
 }
