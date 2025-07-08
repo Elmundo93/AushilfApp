@@ -39,9 +39,10 @@ export type ChannelMetadata = {
 
 export interface StoredChannel {
   cid: string;
-  channel_id: string;
   meId: string; 
+  channel_id: string;
   channel_type: string;
+  custom_post_category_choosen: string;
   custom_post_option: string;
   custom_post_category: string;
   custom_post_id: number;
@@ -69,8 +70,15 @@ export interface ChatMessage {
   sender_vorname: string;
   sender_nachname: string;
   sender_image: string;
+  post_category: string;
+  post_option: string;
+  post_vorname: string;
+  post_nachname: string;
+  post_image: string;
   content: string;
   created_at: string;
   read: number;
+  custom_type?: 'initial' | 'message' | 'system' | string; 
+
 }
 

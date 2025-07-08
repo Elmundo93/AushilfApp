@@ -11,9 +11,24 @@ export function useDanksagungenService() {
     return db.getAllAsync<Danksagung>('SELECT * FROM danksagungen_fetched;');
   }
 
+  async function getDanksagungenForUser(userId: string): Promise<Danksagung[]> {
+    try {
+      // console.log(`🔍 Fetching danksagungen for user: ${userId}`);
+      const danksagungen = await db.getAllAsync<Danksagung>(
+        'SELECT * FROM danksagungen_fetched WHERE userId = ? ORDER BY created_at DESC;',
+        [userId]
+      );
+      // console.log(`✅ Found ${danksagungen?.length || 0} danksagungen for user ${userId}`);
+      return danksagungen || [];
+    } catch (error) {
+      console.error('❌ Error fetching danksagungen for user:', error);
+      return [];
+    }
+  }
+
   async function addDanksagungen(location: Location) {
     const arr = await fetchDanksagungen(location);
-    console.log('Fetched danksagungen:', arr);
+    // console.log('Fetched danksagungen:', arr);
 
     try {
       await db.withTransactionAsync(async () => {
@@ -32,7 +47,7 @@ export function useDanksagungenService() {
               d.nachname,
               d.writtenText,
               d.userId,
-              d.location,
+              d.location || '', // Handle null location values
               d.authorId,
               d.long,
               d.lat,
@@ -41,12 +56,12 @@ export function useDanksagungenService() {
           );
         }
       });
-      console.log('✅ Danksagungen in SQLite gespeichert');
+      // console.log('✅ Danksagungen in SQLite gespeichert');
     } catch (error) {
       console.error('❌ Error storing fetched danksagungen:', error);
       throw error;
     }
   }
 
-  return { getDanksagungen, addDanksagungen };
+  return { getDanksagungen, getDanksagungenForUser, addDanksagungen };
 }

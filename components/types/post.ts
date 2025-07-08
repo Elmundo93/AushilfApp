@@ -12,7 +12,7 @@ export interface Post {
     vorname: string;
     userBio: string;
     category: string;
-    kategorien: string[];
+
 }
 
  

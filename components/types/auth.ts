@@ -32,6 +32,7 @@ export type UserProfile = {
   profileImageUrl: string;
   bio: string;
   kategorien?: string[];
+  chosenCategory?: string;
 };
 
 export type SignupData = Pick<User, 'email' | 'vorname' | 'nachname'  >;

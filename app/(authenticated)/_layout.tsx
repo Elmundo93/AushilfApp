@@ -25,7 +25,7 @@ export default function AuthenticatedLayout() {
   const adjustedFontSize = (fontSize / defaultFontSize) * componentBaseFontSize;
   const finalFontSize = Math.min(adjustedFontSize, maxFontSize);
   const iconSize = Math.min(Math.max(fontSize * 1.5, minIconSize), maxIconSize);
-  const headerHeight =  Math.max(iconSize -10 );
+  const headerHeight =  Math.max(iconSize  );
   const { selectedUser } = useSelectedUserStore();
 
   return (
@@ -226,6 +226,7 @@ export default function AuthenticatedLayout() {
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 paddingHorizontal: 20,
+
                 height: headerHeight
               }}>
                 <View style={{ width: iconSize }} />

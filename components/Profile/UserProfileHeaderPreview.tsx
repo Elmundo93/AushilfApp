@@ -194,6 +194,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 20,
+    borderRadius: 20,
+    overflow: 'hidden',
   },
   profileImage: {
     width: 80,
@@ -207,9 +209,10 @@ const styles = StyleSheet.create({
   countCard: {
     backgroundColor: 'rgba(255, 255, 255, 0.4)',
     padding: 10,
-    borderRadius: 10,
+    borderRadius: 20,
     alignItems: 'center',
     marginBottom: 10,
+
   },
   countNumber: {
     fontSize: 24,
@@ -253,7 +256,7 @@ const styles = StyleSheet.create({
   },
   cardContainer: {
     backgroundColor: 'rgba(240, 240, 240, 0.3)',
-    borderRadius: 16,
+    borderRadius: 20,
     padding: 12,
     marginVertical: 8,
     shadowColor: '#000',

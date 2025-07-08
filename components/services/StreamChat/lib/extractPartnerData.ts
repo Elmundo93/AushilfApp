@@ -1,6 +1,5 @@
 export const extractPartnerData = (channel: any, currentUserId: string) => {
   if (!channel) {
-    console.warn('extractPartnerData: channel is undefined');
     return {
       userId: '',
       vorname: '',
@@ -9,12 +8,6 @@ export const extractPartnerData = (channel: any, currentUserId: string) => {
       bio: '',
     };
   }
-
-  console.log('Extracting partner data for channel:', {
-    custom_user_id: channel.custom_user_id,
-    custom_post_user_id: channel.custom_post_user_id,
-    currentUserId,
-  });
 
   const isPostCreator = channel.custom_post_user_id === currentUserId;
 

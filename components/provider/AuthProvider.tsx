@@ -49,7 +49,9 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
       '/profileImage',
       '/password',
       '/conclusion',
-      '/savety'
+      '/savety',
+      '/payment-success',
+      '/payment-cancelled'
     ];
     const isOnboardingRoute = onboardingRoutes.some(route => pathname.includes(route));
     
@@ -59,6 +61,12 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
       currentPath: pathname,
       onboardingRoutes
     });
+
+    // Special case: Allow users to stay on payment-success while webhook processes
+    if (pathname.includes('/payment-success')) {
+      console.log('💰 Payment success route - allowing user to stay while webhook processes');
+      return;
+    }
 
     // First check: Handle onboarding status
     if (user.onboarding_completed === false) {

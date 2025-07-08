@@ -2,13 +2,13 @@
 import { SQLiteDatabase } from 'expo-sqlite';
 
 export async function migrateDbIfNeeded(db: SQLiteDatabase) {
-  const DATABASE_VERSION = 44;
+  const DATABASE_VERSION = 56;
 
   // Aktuelle DB-Version auslesen
   const { user_version: currentDbVersion = 0 } =
     (await db.getFirstAsync<{ user_version: number }>('PRAGMA user_version')) ?? { user_version: 0 };
 
-  console.log(`Current DB Version: ${currentDbVersion}, Target Version: ${DATABASE_VERSION}`);
+  // console.log(`Current DB Version: ${currentDbVersion}, Target Version: ${DATABASE_VERSION}`);
   if (currentDbVersion >= DATABASE_VERSION) {
     return; // Keine Migration nötig
   }
@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS danksagungen_fetched (
   nachname TEXT NOT NULL,
   writtenText TEXT NOT NULL,
   userId TEXT NOT NULL,
-  location TEXT NOT NULL,
+  location TEXT,
   authorId TEXT NOT NULL,         
   long REAL NOT NULL,
   lat REAL NOT NULL,
@@ -59,6 +59,7 @@ CREATE TABLE IF NOT EXISTS danksagungen_fetched (
         meId TEXT,
         channel_id TEXT,
         channel_type TEXT,
+        custom_post_category_choosen TEXT,
         custom_post_option TEXT,
         custom_post_category TEXT,
         custom_post_id INTEGER,
@@ -70,6 +71,7 @@ CREATE TABLE IF NOT EXISTS danksagungen_fetched (
         custom_user_vorname TEXT,
         custom_user_nachname TEXT,
         custom_user_profileImage TEXT,
+
         custom_user_userBio TEXT,
         custom_user_id TEXT,
         last_message_text TEXT,
@@ -86,8 +88,14 @@ CREATE TABLE IF NOT EXISTS messages_fetched (
   cid TEXT NOT NULL,                   -- zu welchem Channel
   sender_id TEXT NOT NULL,
   sender_vorname TEXT,
+  custom_type TEXT,
   sender_nachname TEXT,
   sender_image TEXT,
+  post_category TEXT,
+  post_option TEXT,
+  post_vorname TEXT,
+  post_nachname TEXT,
+  post_image TEXT,
   content TEXT NOT NULL,
   created_at TEXT NOT NULL,
   read INTEGER NOT NULL                -- 0 = ungelesen, 1 = gelesen
@@ -147,7 +155,7 @@ CREATE TABLE IF NOT EXISTS chats_fetched (
       PRAGMA user_version = ${DATABASE_VERSION};
     `);
 
-    console.log('Database migrated to version', DATABASE_VERSION);
+    // console.log('Database migrated to version', DATABASE_VERSION);
   } catch (error) {
     console.error('Error migrating database', error);
   }

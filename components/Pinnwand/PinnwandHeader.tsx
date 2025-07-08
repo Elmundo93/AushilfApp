@@ -5,6 +5,7 @@ import Entypo from '@expo/vector-icons/Entypo';
 import { useRouter } from 'expo-router';
 import { FontSizeContext } from '@/components/provider/FontSizeContext';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 
 
 const PinnwandHeader: React.FC = () => {
@@ -18,63 +19,71 @@ const PinnwandHeader: React.FC = () => {
   const finalFontSize = Math.min(adjustedFontSize, maxFontSize);
 
   return (
-    <View>
-      <View style={styles.headerContainer}>
-        <Text numberOfLines={1} adjustsFontSizeToFit style={[styles.welcomeText1, { fontSize: finalFontSize }]}>
-          Willkommen auf der
-        </Text>
-        <Text numberOfLines={1} adjustsFontSizeToFit style={[styles.welcomeText, { fontSize: finalFontSize }]}>
-          Pinnwand!
-        </Text>
-        <Text numberOfLines={1} adjustsFontSizeToFit style={[styles.welcomeText, { fontSize: finalFontSize }]}>
-          Starte deine Suche
-        </Text>
-        <Text numberOfLines={1} adjustsFontSizeToFit style={[styles.welcomeText, { fontSize: finalFontSize }]}>
-          und
-        </Text>
-        <View style={styles.modalButtonContainer}>
+    <View style={styles.container}>
+      <BlurView intensity={60} tint="light" style={styles.blurView}>
+        <View style={styles.content}>
+          <Text numberOfLines={1} adjustsFontSizeToFit style={[styles.welcomeText1, { fontSize: finalFontSize }]}>
+            Willkommen auf der
+          </Text>
+          <Text numberOfLines={1} adjustsFontSizeToFit style={[styles.welcomeText, { fontSize: finalFontSize }]}>
+            Pinnwand!
+          </Text>
+          <Text numberOfLines={1} adjustsFontSizeToFit style={[styles.welcomeText, { fontSize: finalFontSize }]}>
+            Starte deine Suche
+          </Text>
+          <Text numberOfLines={1} adjustsFontSizeToFit style={[styles.welcomeText, { fontSize: finalFontSize }]}>
+            und
+          </Text>
           <TouchableOpacity style={styles.modalButton} onPress={() => router.push('/(modal)/createPost')}>
             <LinearGradient
               colors={['orange', 'rgb(255, 128, 0)']} 
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={StyleSheet.absoluteFillObject}
-/>
+            />
             <Text numberOfLines={2} adjustsFontSizeToFit style={[styles.modalButtonText, { fontSize: finalFontSize }]}>
               Verfasse einen Pinnwandbeitrag!
             </Text>
             <Entypo name="new-message" size={30} color="white" style={styles.modalButtonIcon} />
           </TouchableOpacity>
+          <View style={styles.lottieContainer}>
+            {[1, 2, 3].map((_, index) => (
+              <LottieView
+                key={index}
+                source={require('@/assets/animations/SpinnigGreenArrow.json')}
+                autoPlay
+                loop
+                style={styles.lottie}
+              />
+            ))}
+          </View>
         </View>
-      </View>
-      <View style={styles.lottieContainer}>
-        {[1, 2, 3].map((_, index) => (
-          <LottieView
-            key={index}
-            source={require('@/assets/animations/SpinnigGreenArrow.json')}
-            autoPlay
-            loop
-            style={styles.lottie}
-          />
-        ))}
-      </View>
+      </BlurView>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  headerContainer: {
+  container: {
     marginVertical: 20,
     marginHorizontal: 10,
-    paddingTop: 10,
-    padding: 10,
+    position: 'relative',
+    top: -15,
     borderWidth: 1,
     borderBottomLeftRadius: 50,
     borderBottomRightRadius: 50,
     borderTopWidth: 0,
-    position: 'relative',
-    top: -15,
-    borderColor: 'lightgray',
+    borderColor: 'orange',
+    overflow: 'hidden',
+    zIndex: 1000,
+  },
+  blurView: {
+    minHeight: 200,
+    zIndex: 1000,
+  },
+  content: {
+    paddingTop: 10,
+    padding: 10,
   },
   welcomeText1: {
     fontSize: 24,
@@ -86,11 +95,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     alignSelf: 'center',
     fontWeight: 'bold',
-  },
-  modalButtonContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   modalButton: {
     borderRadius: 25,

@@ -12,6 +12,18 @@
         "STRIPE_PUBLISHABLE_KEY": "pk_test_..."
       }
     },
+    "simulator": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "ios": {
+        "simulator": true
+      },
+      "env": {
+        "ENVIRONMENT": "development",
+        "SUPABASE_FUNCTIONS_URL": "https://rorjehxddmuelbakcyqo.functions.supabase.co",
+        "STRIPE_PUBLISHABLE_KEY": "pk_test_..."
+      }
+    },
     "preview": {
       "distribution": "internal",
       "env": {

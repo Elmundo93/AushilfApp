@@ -4,7 +4,6 @@ import ProfileImage from '@/components/Profile/ProfileImage/PostProfile';
 import { getOptionIcon, getCategoryIcon } from '@/components/Pinnwand/utils/iconHelper';
 import { formatName } from '@/components/Pinnwand/utils/Formatter';
 
-
 interface PostHeaderProps {
   vorname: string;
   nachname: string;
@@ -43,25 +42,34 @@ export function PostHeader({
 
 const styles = StyleSheet.create({
     headerContainer: {
-        marginVertical: 16,
+        marginVertical: 8,
       },
       headerProfileContainer: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 16,
         justifyContent: 'center',
+        paddingHorizontal: 8,
       },
       iconContainer: {
         flexDirection: 'column',
-        gap: 5,
+        gap: 8,
+        alignItems: 'center',
       },
       icon: {
-    
         borderRadius: 50,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
       },
       headerText: {
         fontSize: 24,
         fontWeight: 'bold',
         textAlign: 'center',
+        color: '#333',
+        flex: 1,
+        lineHeight: 28,
       }
 });

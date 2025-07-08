@@ -4,24 +4,22 @@ import {
   KeyboardAvoidingView, Platform, ScrollView, Alert,
 } from 'react-native';
 import { usePathname, useRouter } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
-import LottieView from 'lottie-react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SvgXml } from 'react-native-svg';
 import { useAuthStore } from '@/components/stores/AuthStore';
 import { startStripeSubscriptionFlow } from '@/components/services/stripe/startStripeSubscription';
-import onboardingStyles, { getLottieStyle } from './styles';
+import { onboardingSharedStyles, getResponsiveSize, getResponsivePadding, getResponsiveMargin } from './sharedStyles';
+import { OnboardingLayout } from '@/components/Onboarding/OnboardingLayout';
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 
-
-
-const steps = ['intro', 'userinfo', 'intent', 'about', 'profileImage', 'password', 'conclusion', 'savety'];
+const steps = ['intro', 'userinfo', 'userinfo2', 'intent', 'about', 'profileImage', 'password', 'conclusion', 'savety'];
 
 export default function SavetyScreen() {
   const { user } = useAuthStore();
   const router = useRouter();
   const pathname = usePathname();
   const currentStep = steps.findIndex((step) => pathname.includes(step));
-  const beeAnimation = require('@/assets/animations/Bee.json');
 
   const handleStripePress = () => {
     if (!user?.id || !user?.email) {
@@ -31,58 +29,46 @@ export default function SavetyScreen() {
     startStripeSubscriptionFlow({
       userId: user.id,
       email: user.email,
-      onSuccess: () => router.replace('/(authenticated)/pinnwand'),
+      onSuccess: () => router.replace('/(public)/(onboarding)/payment-success' as any),
       onCancel: () => Alert.alert('Abbruch', 'Du kannst später fortfahren'),
       onError: (msg) => Alert.alert('Fehler', msg),
     });
   };
 
   return (
-    <View style={onboardingStyles.safeAreaContainer}>
-      <LinearGradient
-        colors={['#ff9a00', '#ffc300', '#ffffff']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0.5 }}
-        style={StyleSheet.absoluteFill}
-      />
-
-      <TouchableOpacity
-        style={onboardingStyles.backButton}
-        onPress={() => router.replace('/(public)/(onboarding)/intro')}
-      >
-        <Ionicons name="arrow-back" size={28} color="black" />
-      </TouchableOpacity>
-
+    <OnboardingLayout
+      currentStep={currentStep}
+      steps={steps}
+      backRoute="/(public)/(onboarding)/intro"
+    >
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
-          {/* Lottie + Fortschritt */}
-          <View style={onboardingStyles.topContainer}>
-            <LottieView source={beeAnimation} autoPlay loop style={getLottieStyle(currentStep)} />
-            <View style={onboardingStyles.progressContainer}>
-              {steps.map((_, index) => (
-                <View
-                  key={index}
-                  style={[onboardingStyles.dot, index <= currentStep && onboardingStyles.activeDot]}
-                />
-              ))}
+          <View style={styles.outerContainer}>
+            <BlurView 
+              intensity={100} 
+              tint="light" 
+              style={[
+                onboardingSharedStyles.formCard, 
+                { 
+                  padding: getResponsivePadding(400), 
+                  borderRadius: 25,
+                  margin: 20
+                }
+              ]}
+            >
+            <View style={{ alignItems: 'center', marginBottom: 20 }}>
+              <SvgXml
+                xml={`<svg width="120" height="120" viewBox="0 0 24 24" fill="none"
+                      xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 1L3 5V11C3 16.55 6.84 21.74 12 23C17.16 21.74 21 16.55 21 11V5L12 1ZM12 11.99H19C18.47 16.11 15.72 19.78 12 20.93V12H5V6.3L12 3.19V11.99Z" fill="#FF9A00"/>
+                    </svg>`}
+                width={120}
+                height={120}
+                style={{ marginBottom: 10 }}
+              />
+              <Text style={styles.title}>🔒 Sicherheit steht an erster Stelle</Text>
             </View>
-            <View style={onboardingStyles.titleCard}>
-              <View style={[onboardingStyles.titleContainer, { marginTop: 28 }]}>
-                <SvgXml
-                  xml={`<svg width="120" height="120" viewBox="0 0 24 24" fill="none"
-                        xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 1L3 5V11C3 16.55 6.84 21.74 12 23C17.16 21.74 21 16.55 21 11V5L12 1ZM12 11.99H19C18.47 16.11 15.72 19.78 12 20.93V12H5V6.3L12 3.19V11.99Z" fill="#FF9A00"/>
-                      </svg>`}
-                  width={120}
-                  height={120}
-                />
-                <Text style={styles.title}>🔒 Sicherheit steht an erster Stelle</Text>
-              </View>
-            </View>
-          </View>
 
-          {/* Inhalt */}
-          <View style={onboardingStyles.card}>
             {infoBoxes.map((box, i) => (
               <View key={i} style={styles.infoBox}>
                 <Ionicons name={box.icon as any} size={28} color={box.color} />
@@ -97,12 +83,20 @@ export default function SavetyScreen() {
             </Text>
 
             <TouchableOpacity style={styles.button} onPress={handleStripePress}>
-              <Text style={styles.buttonText}>Verstanden & weiter</Text>
+              <LinearGradient
+                colors={['#FFB41E', '#FF9900']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.gradientButton}
+              >
+                <Text style={styles.buttonText}>Verstanden & weiter</Text>
+              </LinearGradient>
             </TouchableOpacity>
-          </View>
+          </BlurView>
+        </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </View>
+    </OnboardingLayout>
   );
 }
 
@@ -125,11 +119,16 @@ const infoBoxes = [
 ];
 
 const styles = StyleSheet.create({
+  outerContainer: {
+    borderRadius: 25,
+    overflow: 'hidden',
+  },
   title: {
     fontSize: 26,
     fontWeight: '600',
     color: '#333',
     textAlign: 'center',
+    marginBottom: 10,
   },
   infoBox: {
     flexDirection: 'row',
@@ -156,11 +155,17 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   button: {
+    borderRadius: 18,
+    overflow: 'hidden',
     marginTop: 24,
-    backgroundColor: '#ff9a00',
-    paddingVertical: 14,
-    borderRadius: 14,
+  },
+  gradientButton: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 18,
+    paddingVertical: 16,
+    paddingHorizontal: 32,
   },
   buttonText: {
     color: '#fff',

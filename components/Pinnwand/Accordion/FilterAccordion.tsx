@@ -1,34 +1,39 @@
-import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import React, { useContext } from 'react';
+import { View, Text, TouchableOpacity, LayoutAnimation } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { createRStyle } from 'react-native-full-responsive';
 import { FilterAccordionProps } from '@/components/types/components';
-import { useContext } from 'react';
 import { FontSizeContext } from '@/components/provider/FontSizeContext';
 import { usePostStore } from '@/components/stores/postStore';
+import { BlurView } from 'expo-blur';
+import CustomCheckbox from '../Checkboxes/CustomCheckbox';
+import CombinedSuchenBietenButton from '../Checkboxes/CombinedSuchenBietenButton';
 
-
-
-const FilterAccordion: React.FC<FilterAccordionProps> = React.memo(({
-  isExpanded,
-  onToggle,
-  renderCheckbox,
-}) => {
+const FilterAccordion: React.FC<FilterAccordionProps> = React.memo(({ isExpanded, onToggle }) => {
   const { fontSize } = useContext(FontSizeContext);
-  const { filters, setFilters } = usePostStore(); 
+  const { filters, setFilters } = usePostStore();
 
-  const maxFontSize = 45; // Passen Sie diesen Wert nach Bedarf an
+  const maxFontSize = 38;
+  const defaultFontSize = 24;
+  const baseFontSize = 24;
 
-  const defaultFontSize = 24; // Standard-Schriftgröße im Kontext
-  const componentBaseFontSize = 24; // Ausgangsschriftgröße für das Label
-  const minIconSize = 40;
-  const maxIconSize = 120;
-
-  // Begrenzen Sie die Schriftgröße auf den maximalen Wert
-  const adjustedFontSize = (fontSize / defaultFontSize) * componentBaseFontSize;
+  const adjustedFontSize = (fontSize / defaultFontSize) * baseFontSize;
   const finalFontSize = Math.min(adjustedFontSize, maxFontSize);
-  const iconSize = Math.min(Math.max(fontSize * 1.5, minIconSize), maxIconSize);
+
+  // Calculate dynamic width based on longest category name
+  const categories = ['Garten', 'Haushalt', 'Soziales', 'Gastro', 'Handwerk', 'Bildung'];
+  const longestCategory = categories.reduce((longest, current) => 
+    current.length > longest.length ? current : longest
+  );
+  
+  // Estimate width based on character count and font size
+  const estimatedCharWidth = finalFontSize * 0.6; // Approximate width per character
+  const padding = 32; // Horizontal padding
+  const iconWidth = 26; // Space for icon
+  const dynamicWidth = Math.max(100, longestCategory.length * estimatedCharWidth + padding + iconWidth);
+
   const handleSuchenBietenChange = (option: string) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setFilters({
       suchenChecked: option === 'suchen' ? !filters.suchenChecked : false,
       bietenChecked: option === 'bieten' ? !filters.bietenChecked : false,
@@ -36,75 +41,165 @@ const FilterAccordion: React.FC<FilterAccordionProps> = React.memo(({
   };
 
   const handleCategoryChange = (category: string) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setFilters({
       categories: {
-
+        ...filters.categories,
         [category]: !filters.categories[category],
       },
     });
   };
 
   return (
-    <View style={styles.accordContainer}>
-      <TouchableOpacity style={styles.accordHeader} onPress={onToggle}>
-        <Text style={[styles.accordTitle, { fontSize: finalFontSize }]}>Filter deine Suche:</Text>
-        <MaterialCommunityIcons 
-          name={isExpanded ? 'chevron-up' : 'chevron-down'}
-          size={iconSize} 
-          color="#bbb" 
-        />
-      </TouchableOpacity>
-      {isExpanded && (
-        <View style={styles.filtersContainer}>
-          {renderCheckbox('Suchen', filters.suchenChecked, () => handleSuchenBietenChange('suchen'))}
-          {renderCheckbox('Bieten', filters.bietenChecked, () => handleSuchenBietenChange('bieten'))}
-          <View style={styles.trenner} />
-          {renderCheckbox('Garten', filters.categories.garten, () => handleCategoryChange('garten'))}
-          {renderCheckbox('Haushalt', filters.categories.haushalt, () => handleCategoryChange('haushalt'))}
-          {renderCheckbox('Soziales', filters.categories.soziales, () => handleCategoryChange('soziales'))}
-          {renderCheckbox('Gastro', filters.categories.gastro, () => handleCategoryChange('gastro'))}
-          {renderCheckbox('Handwerk', filters.categories.handwerk, () => handleCategoryChange('handwerk'))}
-          {renderCheckbox('Bildung', filters.categories.bildung, () => handleCategoryChange('bildung'))}
-        </View>
-      )}
+    <View style={styles.outerContainer}>
+      <View style={styles.blurContainer}>
+        <BlurView intensity={30} tint="light" style={styles.blurView}>
+          <View style={styles.contentContainer}>
+            <TouchableOpacity
+              onPress={() => {
+                LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+                onToggle();
+              }}
+              style={styles.accordHeader}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              activeOpacity={0.7}
+            >
+              <View style={styles.headerContent}>
+                <Text style={[styles.accordTitle, { fontSize: finalFontSize }]}>Filter</Text>
+                <MaterialCommunityIcons
+                  name={isExpanded ? 'chevron-up' : 'chevron-down'}
+                  size={32}
+                  color="#333"
+                />
+              </View>
+            </TouchableOpacity>
+
+            {isExpanded && (
+              <View style={styles.filterGroup}>
+                <View style={styles.chipRow}>
+                  <CombinedSuchenBietenButton
+                    suchenChecked={filters.suchenChecked}
+                    bietenChecked={filters.bietenChecked}
+                    onSuchenPress={() => handleSuchenBietenChange('suchen')}
+                    onBietenPress={() => handleSuchenBietenChange('bieten')}
+                  />
+                </View>
+
+                <View style={styles.categoriesContainer}>
+                  <View style={styles.categoryRow}>
+                    {['Garten', 'Haushalt'].map((category, index) => (
+                      <CustomCheckbox
+                        key={category}
+                        label={category}
+                        isChecked={filters.categories[category.toLowerCase()]}
+                        onCheck={() => handleCategoryChange(category.toLowerCase())}
+                        width={dynamicWidth}
+                        position={index === 0 ? 'left' : 'right'}
+                      />
+                    ))}
+                  </View>
+                  <View style={styles.categoryRow}>
+                    {['Soziales', 'Gastro'].map((category, index) => (
+                      <CustomCheckbox
+                        key={category}
+                        label={category}
+                        isChecked={filters.categories[category.toLowerCase()]}
+                        onCheck={() => handleCategoryChange(category.toLowerCase())}
+                        width={dynamicWidth}
+                        position={index === 0 ? 'left' : 'right'}
+                      />
+                    ))}
+                  </View>
+                  <View style={styles.categoryRow}>
+                    {['Handwerk', 'Bildung'].map((category, index) => (
+                      <CustomCheckbox
+                        key={category}
+                        label={category}
+                        isChecked={filters.categories[category.toLowerCase()]}
+                        onCheck={() => handleCategoryChange(category.toLowerCase())}
+                        width={dynamicWidth}
+                        position={index === 0 ? 'left' : 'right'}
+                      />
+                    ))}
+                  </View>
+                </View>
+              </View>
+            )}
+          </View>
+        </BlurView>
+      </View>
     </View>
   );
 });
 
 const styles = createRStyle({
-  accordContainer: {
-    borderWidth: 1,
-    borderColor: 'lightgrey',
-    borderRadius: '25rs',
-    marginTop: '10rs',
-    width: '320rs',
+  outerContainer: {
+    width: 'auto',
+    minWidth: '200rs',
+    maxWidth: '90%',
     alignSelf: 'center',
+    marginTop: '8rs',
+    paddingHorizontal: '8rs',
+    zIndex: 999, // Lower than header
+    elevation: 3, // For Android
+  },
+  blurContainer: {
+    borderRadius: '20rs',
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'orange',
+    zIndex: 999,
+    elevation: 3,
+  },
+  blurView: {
+    width: '100%',
+    minHeight: '60rs',
+    zIndex: 999,
+  },
+  contentContainer: {
+    padding: '5rs',
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
   },
   accordHeader: {
+    paddingVertical: '12rs',
+    paddingHorizontal: '12rs',
+    width: '100%',
+    minHeight: '44rs',
+    justifyContent: 'center',
+  },
+  headerContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: '10rs',
   },
   accordTitle: {
-    fontSize: '16rs',
-    fontWeight: 'bold',
+    fontWeight: '600',
     color: '#333',
-    padding: '5rs',
+
   },
-  filtersContainer: {
+  filterGroup: {
+    marginTop: '8rs',
+    paddingTop: '8rs',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 165, 0, 0.2)',
+  },
+  chipRow: {
     flexDirection: 'row',
-    justifyContent: 'space-evenly',
-    flexWrap: 'wrap',
-
+    justifyContent: 'center',
+    paddingBottom: '4rs',
+    gap: '8rs',
   },
-  trenner: {
-    width: '100%',
-    height: 1,
-    backgroundColor: 'lightgrey',
-    
+  categoriesContainer: {
+    marginTop: '8rs',
   },
-
+  categoryRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    paddingBottom: '8rs',
+    gap: '8rs',
+    minHeight: '44rs',
+    alignItems: 'center',
+  },
 });
 
 export default FilterAccordion;

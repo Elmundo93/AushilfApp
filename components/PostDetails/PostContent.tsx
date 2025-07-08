@@ -22,7 +22,7 @@ export function PostContent({
   return (
     <View style={styles.contentContainer}>
       <Text style={[styles.headerText, { fontSize: finalFontSize }]}>
-        {`Aushilfe ${option === 'bieten' ? 'geboten' : 'gesucht'} in ${location} im Bereich ${
+        {`${option === 'bieten' ? 'bietet' : 'sucht'} in ${location} im Bereich ${
           category.charAt(0).toUpperCase() + category.slice(1)
         }`}
       </Text>
@@ -36,33 +36,37 @@ export function PostContent({
 const styles = StyleSheet.create({
     contentContainer: {
         marginBottom: 16,
-        borderWidth: 1,
-        borderColor: 'gray',
         padding: 16,
         borderRadius: 8,
         marginHorizontal: 16,
         marginTop: 16,
-    
-        
-      },
+    },
       postText: {
         fontSize: 16,
         alignSelf: 'center',
+        lineHeight: 24,
+        textAlign: 'left',
+        color: '#333',
       },
       dateText: {
         fontSize: 14,
-        color: 'gray',
+        color: '#666',
         alignSelf: 'flex-end',
+        marginTop: 12,
+        fontStyle: 'italic',
       },
       trenner: {
         height: 1,
         width: '100%',
-        backgroundColor: 'gray',
+        backgroundColor: 'rgba(255, 165, 0, 0.3)',
         marginVertical: 16,
+        borderRadius: 1,
       },
       headerText: {
         fontSize: 24,
         fontWeight: 'bold',
         textAlign: 'center',
+        color: '#333',
+        lineHeight: 28,
       }
 });

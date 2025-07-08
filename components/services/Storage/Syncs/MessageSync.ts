@@ -3,7 +3,7 @@ import { useAuthStore } from '@/components/stores/AuthStore';
 import { StoredMessage } from '@/components/Crud/SQLite/Services/messagesService';
 import { ChatMessage } from '@/components/types/stream';
 import { Channel } from 'stream-chat';
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import { MessageResponse, DefaultGenerics } from 'stream-chat';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useMessagesService } from '@/components/Crud/SQLite/Services/messagesService';
@@ -22,6 +22,11 @@ const transformMessage = (msg: MessageResponse<DefaultGenerics>, cid: string): S
     content: msg.text || '',
     created_at: msg.created_at || '',
     read: read,
+    post_category: '',
+    post_option: '',
+    post_vorname: '',
+    post_nachname: '',
+    post_image: '',
   };
 };
 
@@ -29,7 +34,7 @@ export function useMessageSync() {
   const db = useSQLiteContext();
   const messagesService = useMessagesService(db);
 
-  const syncMessagesForChannel = async (cid: string) => {
+  const syncMessagesForChannel = useCallback(async (cid: string) => {
     let isActive = true;
     try {
       const client = useAuthStore.getState().streamChatClient;
@@ -48,9 +53,9 @@ export function useMessageSync() {
       console.error(`❌ Fehler beim Sync von Channel ${cid}:`, err);
     }
     return () => { isActive = false; };
-  };
+  }, [messagesService]);
 
-  const syncMessagesForAllChannels = async () => {
+  const syncMessagesForAllChannels = useCallback(async () => {
     let isActive = true;
     try {
       const client = useAuthStore.getState().streamChatClient;
@@ -75,9 +80,9 @@ export function useMessageSync() {
       console.error('❌ Fehler beim Sync aller Nachrichten:', err);
     }
     return () => { isActive = false; };
-  };
+  }, [messagesService]);
 
-  const subscribeToNewMessages = () => {
+  const subscribeToNewMessages = useCallback(() => {
     let isActive = true;
     const client = useAuthStore.getState().streamChatClient;
     if (!client) return;
@@ -101,7 +106,7 @@ export function useMessageSync() {
       isActive = false;
       sub.unsubscribe();
     };
-  };
+  }, [messagesService]);
 
   return {
     syncMessagesForChannel,

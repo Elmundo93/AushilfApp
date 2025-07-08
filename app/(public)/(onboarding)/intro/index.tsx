@@ -1,75 +1,103 @@
 // app/(public)/onboarding/intro.tsx
 
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { usePathname } from 'expo-router';
+import { BlurView } from 'expo-blur';
+import { onboardingSharedStyles, getResponsiveSize, getResponsivePadding, getResponsiveMargin } from '../sharedStyles';
+import { OnboardingLayout } from '@/components/Onboarding/OnboardingLayout';
 import { LinearGradient } from 'expo-linear-gradient';
-import LottieView from 'lottie-react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { getLottieStyle } from '../styles';
-import { onboardingStyles} from '../styles'; 
-
-
 
 export default function IntroScreen() {
   const router = useRouter();
-  const beeAnimation = require('@/assets/animations/Bee.json');
+  const pathname = usePathname();
+  const steps = ['intro', 'userinfo', 'userinfo2', 'intent', 'about', 'profileImage', 'password', 'conclusion', 'savety'];
+  const currentStep = steps.findIndex((step) => pathname.includes(step));
 
   const handleNext = () => {
     router.push('userinfo' as any);
   };
 
-  const pathname = usePathname();
-
-  const steps = ['intro', 'userinfo', 'intent', 'about', 'profileImage', 'password','conclusion','savety'];  
-  const currentStep = steps.findIndex((step) => pathname.includes(step));
-
   return (
-    <SafeAreaView style={onboardingStyles.container}>
-      <LinearGradient
-        colors={['#ff9a00', '#ffc300', '#ffffff']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
-       <TouchableOpacity style={onboardingStyles.backButton} onPress={() => router.replace('/(public)/loginScreen')}>
-        <Ionicons name="arrow-back" size={28} color="black" />
-      </TouchableOpacity>
-
-      <View style={onboardingStyles.topContainer}>
-      <LottieView
-          source={beeAnimation}
-          autoPlay
-          loop
-          style={getLottieStyle(currentStep)}
-        />
-        <View style={onboardingStyles.progressContainer}>
-          {steps.map((_, index) => (
-            <View
-              key={index}
-              style={[onboardingStyles.dot, index <= currentStep && onboardingStyles.activeDot]}
-            />
-          ))}
-          
-        </View>
-
-        <View style={onboardingStyles.titleCard}>
-          <Text style={onboardingStyles.title}>Willkommen in der AushilfApp!</Text>
-        </View>
-      </View>
-      <View style={onboardingStyles.contentContainer}>
-        <View style={[onboardingStyles.card, {marginBottom: 150}]}>
-          <Text style={onboardingStyles.text}>
-            Schön, dass du da bist!{'\n\n'}
-            Wir möchten dir ein paar Fragen stellen, um dein Profil zu vervollständigen und dir passende Hilfe oder Angebote in deiner Nähe zu zeigen.
-          </Text>
-          <TouchableOpacity style={onboardingStyles.button} onPress={handleNext}>
-            <Text style={onboardingStyles.buttonText}>Jetzt starten</Text>
-          </TouchableOpacity>
+    <OnboardingLayout
+      currentStep={currentStep}
+      steps={steps}
+      headerTitle="Willkommen in der AushilfApp!"
+      backRoute="/(public)/loginScreen"
+    >
+      <View style={styles.contentContainer}>
+        <View style={styles.outerContainer}>
+          <BlurView 
+            intensity={100} 
+            tint="light" 
+            style={[
+              onboardingSharedStyles.formCard, 
+              { 
+                padding: getResponsivePadding(400), 
+                borderRadius: 25,
+                marginBottom: 150,
+                justifyContent: 'space-between'
+              }
+            ]}
+          >
+                      <Text style={styles.text}>
+              Schön, dass du da bist!{'\n\n'}
+              Wir möchten dir ein paar Fragen stellen, um dein Profil zu vervollständigen und dir passende Hilfe oder Angebote in deiner Nähe zu zeigen.
+            </Text>
+            <TouchableOpacity style={styles.button} onPress={handleNext}>
+              <LinearGradient
+                colors={['#FFB41E', '#FF9900']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.gradientButton}
+              >
+                <Text style={styles.buttonText}>Jetzt starten</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </BlurView>
         </View>
       </View>
-    </SafeAreaView>
+    </OnboardingLayout>
   );
 }
+
+const styles = StyleSheet.create({
+  outerContainer: {
+    borderRadius: 25,
+    overflow: 'hidden',
+  },
+  contentContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    justifyContent: 'flex-start',
+    flex: 1,
+    marginBottom: 20,
+  },
+  text: {
+    fontSize: 24,
+    color: '#333',
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 30,
+  },
+  button: {
+    borderRadius: 18,
+    overflow: 'hidden',
+    
+  },
+  gradientButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 18,
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+  },
+  buttonText: {
+    fontWeight: 'bold',
+    color: 'white',
+    fontSize: 18,
+  },
+});
 

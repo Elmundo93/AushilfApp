@@ -1,35 +1,31 @@
 // app/(public)/onboarding/intent.tsx
 
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, SafeAreaView, KeyboardAvoidingView, Platform, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, Image } from 'react-native';
 import { usePathname, useRouter } from 'expo-router';
 import { useOnboardingStore } from '@/components/stores/OnboardingContext';
-import LottieView from 'lottie-react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
 import { getIconForCategory } from '@/components/Pinnwand/utils/CategoryAndOptionUtils';
-import { getLottieStyle } from './styles';
-import { onboardingStyles} from './styles'; 
-
-
-
+import { onboardingSharedStyles, getResponsiveSize, getResponsivePadding, getResponsiveMargin } from './sharedStyles';
+import { OnboardingLayout } from '@/components/Onboarding/OnboardingLayout';
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 
 const CATEGORIES = [
-  { label: 'Garten', color: 'lightgreen', key: 'garten' },
-  { label: 'Haushalt', color: 'lightblue', key: 'haushalt' },
-  { label: 'Soziales', color: 'rgb(255, 102, 102)', key: 'soziales' },
-  { label: 'Gastro', color: 'rgb(255, 255, 102)', key: 'gastro' },
-  { label: 'Handwerk', color: 'orange', key: 'handwerk' },
-  { label: 'Bildung', color: 'lightgrey', key: 'bildung' },
+  { label: 'Garten', color: '#90EE90', key: 'garten' },
+  { label: 'Haushalt', color: '#ADD8E6', key: 'haushalt' },
+  { label: 'Soziales', color: '#FF6666', key: 'soziales' },
+  { label: 'Gastro', color: '#FFFF66', key: 'gastro' },
+  { label: 'Handwerk', color: '#FFA500', key: 'handwerk' },
+  { label: 'Bildung', color: '#D3D3D3', key: 'bildung' },
 ];
 
 export default function IntentScreen() {
-
-  const beeAnimation = require('@/assets/animations/Bee.json');
   const router = useRouter();
-  const { setField, categories, bio } = useOnboardingStore();
-
+  const { setField, categories } = useOnboardingStore();
   const [selectedCategories, setSelectedCategories] = useState<string[]>(categories || []);
+  const pathname = usePathname();
+  const steps = ['intro', 'userinfo', 'userinfo2', 'intent', 'about', 'profileImage', 'password', 'conclusion', 'savety'];
+  const currentStep = steps.findIndex((step) => pathname.includes(step));
 
   React.useEffect(() => {
     setSelectedCategories(categories || []);
@@ -39,7 +35,6 @@ export default function IntentScreen() {
     const newCategories = selectedCategories.includes(label)
       ? selectedCategories.filter(cat => cat !== label)
       : [...selectedCategories, label];
-    
     setSelectedCategories(newCategories);
     setField('categories', newCategories as any);
   };
@@ -48,24 +43,13 @@ export default function IntentScreen() {
     router.push('about' as any);
   };
 
-  const pathname = usePathname();
-
-  const steps = ['intro', 'userinfo', 'intent', 'about', 'profileImage', 'password','conclusion','savety'];
-    const currentStep = steps.findIndex((step) => pathname.includes(step));
-
-
   return (
-    <SafeAreaView style={onboardingStyles.container}>
-      <LinearGradient
-        colors={['#ff9a00', '#ffc300', '#ffffff']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
-      <TouchableOpacity style={onboardingStyles.backButton} onPress={() => router.replace('/(public)/(onboarding)/userinfo')}>
-        <Ionicons name="arrow-back" size={28} color="black" />
-      </TouchableOpacity>
-
+    <OnboardingLayout
+      currentStep={currentStep}
+      steps={steps}
+      headerTitle="Wobei möchtest du helfen oder Hilfe finden?"
+      backRoute="/(public)/(onboarding)/userinfo"
+    >
       <KeyboardAvoidingView 
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={{ flex: 1 }}
@@ -75,214 +59,139 @@ export default function IntentScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <View style={onboardingStyles.topContainer}>
-            <LottieView
-              source={beeAnimation}
-              autoPlay
-              loop
-              style={getLottieStyle(currentStep)}
-            />
-            <View style={onboardingStyles.progressContainer}>
-              {steps.map((_, index) => (
-                <View
-                  key={index}
-                  style={[onboardingStyles.dot, index <= currentStep && onboardingStyles.activeDot]}
-                />
-              ))}
-            </View>
-            <View style={onboardingStyles.titleCard}>
-              <View style={onboardingStyles.titleContainer}>
-                <Text style={onboardingStyles.title}>Wobei möchtest du helfen oder Hilfe finden?</Text>
-              </View>
-            </View>
-          </View>
-
-          <View style={onboardingStyles.contentContainer}>
-            <View style={onboardingStyles.card}>
-            
-                
-
-              <Text style={styles.subtitle}>Wähle die Bereiche in denen du Hilfe suchst oder anbieten möchtest. {'\n'} Sie werden später in deinem Profil angezeigt. </Text>
-              <View style={onboardingStyles.categoryContainer}>
+          <View style={styles.outerContainer}>
+            <BlurView 
+              intensity={20} 
+              tint="light" 
+              style={[
+                onboardingSharedStyles.formCard, 
+                { 
+                  margin: 20,
+                  padding: 20,
+                  borderRadius: 25,
+                  flex: 1,
+                  justifyContent: 'space-between'
+                }
+              ]}
+            >
+            <View style={styles.contentContainer}>
+              <Text style={styles.subtitle}>Wähle Kategorien in denen du Hilfe suchst oder anbieten möchtest. {'\n'}  </Text>
+              <View style={styles.categoryContainer}>
                 {CATEGORIES.map(({ label, color, key }) => (
                   <TouchableOpacity
                     key={label}
-                    style={[onboardingStyles.categoryButton, {
-                      backgroundColor: selectedCategories.includes(label) ? color : 'white',
-                      borderColor: color,
-                      borderWidth: 1,
-                      borderRadius: 25,
-                      paddingVertical: 12,
-                      paddingHorizontal: 20,
-                      margin: 5,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      minWidth: 100,
-                      minHeight: 100,
-                    }]}
+                    style={styles.categoryButton}
                     onPress={() => toggleCategory(label)}
                   >
-                    <Image 
-                      source={getIconForCategory(key)}
-                      style={{
-                        width: 60,
-                        height: 60,
-                        marginBottom: 10,
-                      }}
-                    />
-                    <Text style={{ 
-                      color: selectedCategories.includes(label) ? 'black' : 'grey', 
-                      fontWeight: '600',
-                      fontSize: 16,
-                      textAlign: 'center',
-                    }}>{label}</Text>
+                    <BlurView 
+                      intensity={80} 
+                      tint="light" 
+                      style={[
+                        styles.categoryBlurView,
+                        {
+                          borderColor: color,
+                          borderWidth: selectedCategories.includes(label) ? 2 : 1,
+                          backgroundColor: selectedCategories.includes(label) ? color + 'E0' : 'rgba(255, 255, 255, 0.3)',
+                        }
+                      ]}
+                    >
+                      <Image 
+                        source={getIconForCategory(key)}
+                        style={{
+                          width: 55,
+                          height: 55,
+                          marginBottom: 8,
+                          opacity: selectedCategories.includes(label) ? 1 : 0.7,
+                        }}
+                      />
+                      <Text style={{ 
+                        color: selectedCategories.includes(label) ? '#000' : '#333', 
+                        fontWeight: selectedCategories.includes(label) ? 'bold' : '600',
+                        fontSize: 15,
+                        textAlign: 'center',
+                        textShadowColor: 'rgba(255, 255, 255, 0.8)',
+                        textShadowOffset: { width: 0, height: 1 },
+                        textShadowRadius: 2,
+                      }}>{label}</Text>
+                    </BlurView>
                   </TouchableOpacity>
                 ))}
               </View>
-
-              <TouchableOpacity style={onboardingStyles.button} onPress={handleNext}>
-                <Text style={onboardingStyles.buttonText}>Weiter</Text>
-              </TouchableOpacity>
             </View>
-          </View>
+            <TouchableOpacity style={styles.button} onPress={handleNext}>
+              <LinearGradient
+                colors={['#FFB41E', '#FF9900']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.gradientButton}
+              >
+                <Text style={styles.buttonText}>Weiter</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </BlurView>
+        </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </OnboardingLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 25,
-  },
-  backButton: {
-    position: 'absolute',
-    top: 50,
-    left: 20,
-    zIndex: 10,
-    backgroundColor: 'rgba(255,255,255,0.7)',
-    padding: 10,
-    borderRadius: 20,
-  },
-  topContainer: {
-    paddingTop: 20,
-    marginTop: 30,
-  },
-  titleCard: {
-    padding: 25,
+  outerContainer: {
     borderRadius: 25,
-  },
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: '600',
-    color: '#222',
-    textAlign: 'center',
+    overflow: 'hidden',
   },
   contentContainer: {
     flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 25,
-    marginTop: -40,
-  },
-  progressContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    paddingTop: 20,
-    gap: 10,
-  },
-  card: {
-    backgroundColor: 'rgba(255,255,255,0.95)',
-    padding: 25,
-    borderRadius: 25,
-    marginTop: 50,
   },
   subtitle: {
-    fontSize: 18,
-    fontWeight: '500',
+    fontSize: 26,
+    color: '#444',
+    fontWeight: 'bold',
 
-    marginBottom: 10,
     textAlign: 'center',
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 20,
-  },
-  optionButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 25,
-    borderRadius: 25,
-    backgroundColor: 'white',
-    borderWidth: 1,
-    borderColor: '#aaa',
-  },
-  optionText: {
-    color: '#333',
-    fontSize: 16,
-  },
-  optionTextActive: {
-    color: 'white',
   },
   categoryContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
-    gap: 10,
+
+    flex: 1,
   },
   categoryButton: {
-    borderWidth: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    borderRadius: 20,
-    marginBottom: 10,
+    margin: 8,
+    borderRadius: 25,
+    overflow: 'hidden',
+    minWidth: 100,
+    minHeight: 50,
   },
-  textArea: {
+  categoryBlurView: {
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 15,
-    padding: 15,
-    textAlignVertical: 'top',
-    backgroundColor: '#fff',
-    height: 100,
+    borderRadius: 25,
+    padding: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 100,
+    minHeight: 100,
+  
+    elevation: 3,
   },
   button: {
-    backgroundColor: 'orange',
-    paddingVertical: 14,
-    borderRadius: 25,
+    borderRadius: 18,
+    overflow: 'hidden',
+    marginTop: 20,
+  },
+  gradientButton: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 30,
+    justifyContent: 'center',
+    borderRadius: 18,
+    paddingVertical: 16,
+    paddingHorizontal: 32,
   },
   buttonText: {
-    color: '#fff',
+    fontWeight: 'bold',
+    color: 'white',
     fontSize: 18,
-    fontWeight: '500',
-  },
-  dot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#ccc',
-  },
-  activeDot: {
-    backgroundColor: 'white',
-    transform: [{ scale: 1.2 }],
-  },
-  lottie: {
-    position: 'absolute',
-    top: -50,
-    left: 140,
-    right: 0,
-    bottom: 0,
-    width: 120,
-    height: 120,
-    alignSelf: 'center',
   },
 });

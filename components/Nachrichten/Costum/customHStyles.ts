@@ -41,7 +41,26 @@ export const styles = StyleSheet.create({
   menuContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    
+  },
+  iconContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 8,
+    marginRight: 8,
+  },
+  icon: {
+    width: 24,
+    height: 24,
+  },
+  editIndicator: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    backgroundColor: 'white',
+    borderRadius: 8,
+    padding: 2,
+    borderWidth: 1,
+    borderColor: '#ddd',
   },
   menuHint: {
     fontSize: 10,

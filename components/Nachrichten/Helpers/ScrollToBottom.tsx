@@ -9,6 +9,7 @@ export const useScrollToBottom = (
 ) => {
   const [isNearBottom, setIsNearBottom] = useState(true);
   const SCROLL_OFFSET_THRESHOLD = 150; // px from bottom (adjust as needed)
+  const lastTriggerRef = useRef(trigger);
 
   const onScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const offsetY = event.nativeEvent.contentOffset.y;
@@ -16,10 +17,12 @@ export const useScrollToBottom = (
   };
 
   useEffect(() => {
-    if (isNearBottom) {
+    // Only scroll if trigger actually changed and we're near bottom
+    if (trigger !== lastTriggerRef.current && isNearBottom) {
       flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+      lastTriggerRef.current = trigger;
     }
-  }, [trigger]);
+  }, [trigger, isNearBottom, flatListRef]);
 
   return {
     isNearBottom,

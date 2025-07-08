@@ -9,90 +9,151 @@ import 'react-native-get-random-values';
 import { FontSizeContext } from '@/components/provider/FontSizeContext'; 
 import { useContext } from 'react';
 import { useLocationStore } from '@/components/stores/locationStore';
+import { Danksagung } from '@/components/types/Danksagungen';
+import { useSQLiteContext } from 'expo-sqlite';
 
-
-const CreateDanksagung: React.FC<CreateDanksagungProps> = ({ userId:recipientUserId }) => {
+const CreateDanksagung: React.FC<CreateDanksagungProps> = ({ userId: recipientUserId }) => {
   const [writtenText, setWrittenText] = useState('');
-  const location = useLocationStore((state: any) => state.location);
-  const incrementDanksagungCount = useDanksagungStore(state => state.incrementDanksagungCount);
-  
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { user } = useAuthStore();
+  const { addDanksagung, removeDanksagung } = useDanksagungStore();
   const { fontSize } = useContext(FontSizeContext);
-  const maxFontSize = 38; // Passen Sie diesen Wert nach Bedarf an
-  const defaultFontSize = 22; // Standard-Schriftgröße im Kontext
-  const componentBaseFontSize = 20; // Ausgangsschriftgröße für das Label
-  const minIconSize = 35;
-  const maxIconSize = 60;
-  const iconSize = Math.min(Math.max(fontSize * 1.5, minIconSize), maxIconSize);
-
-  // Berechnung der angepassten Schriftgröße
-  const adjustedFontSize = (fontSize / defaultFontSize) * componentBaseFontSize;
-  const finalFontSize = Math.min(adjustedFontSize, maxFontSize);
-
-  const isTextValid = writtenText.length >= 5;
+  const location = useLocationStore((s) => s.location);
+  const db = useSQLiteContext();
 
   const generateCustomId = (): string => {
     const id = uuidv4();
-    console.log("Generated UUID: ", id);
+    // console.log("Generated UUID: ", id);
     return id;
   };
 
-  const onSubmit = useCallback(async () => {
-    if (writtenText.length <= 5) {
-      console.error('Bitte schreiben Sie eine längere Danksagung!');
-      return;
+  const persistDanksagungToSQLite = async (danksagung: Danksagung) => {
+    try {
+      await db.runAsync(
+        `INSERT OR REPLACE INTO danksagungen_fetched (
+           id, created_at, vorname, nachname, writtenText,
+           userId, location, authorId, long, lat, profileImageUrl
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+        [
+          danksagung.id,
+          danksagung.created_at,
+          danksagung.vorname,
+          danksagung.nachname,
+          danksagung.writtenText,
+          danksagung.userId,
+          danksagung.location,
+          danksagung.authorId,
+          danksagung.long,
+          danksagung.lat,
+          danksagung.profileImageUrl,
+        ]
+      );
+      // console.log('✅ Optimistic danksagung persisted to SQLite:', danksagung.id);
+    } catch (error) {
+      console.error('❌ Error persisting optimistic danksagung to SQLite:', error);
+      throw error;
     }
+  };
+
+  const removeDanksagungFromSQLite = async (danksagungId: string) => {
+    try {
+      await db.runAsync('DELETE FROM danksagungen_fetched WHERE id = ?', [danksagungId]);
+      // console.log('✅ Removed failed danksagung from SQLite:', danksagungId);
+    } catch (error) {
+      console.error('❌ Error removing failed danksagung from SQLite:', error);
+    }
+  };
+
+  const handleSubmit = useCallback(async () => {
+    if (!writtenText.trim() || !user || isSubmitting) return;
+
+    setIsSubmitting(true);
+    const tempId = generateCustomId();
 
     try {
-      const userData = useAuthStore.getState().user;
-      if (!userData) {
-        console.error('Benutzer nicht angemeldet');
-        return;
-      }
-      console.log("Recipient User ID (userId):", recipientUserId);
-      console.log("Author User ID (authorId):", userData.id);
-
-      const { error } = await supabase.from('Danksagungen').insert({
-        id: generateCustomId(),
-        writtenText, 
-        userId: recipientUserId, // Empfänger der Danksagung
-        authorId: userData.id, // Autor der Danksagung
+      // Create optimistic danksagung
+      const optimisticDanksagung: Danksagung = {
+        id: tempId,
+        writtenText,
+        userId: recipientUserId,
+        authorId: user.id,
         created_at: new Date().toISOString(),
-        profileImageUrl: userData.profileImageUrl || '',
-        vorname: userData.vorname,
-        nachname: userData.nachname,
-        location: userData.location,
-        lat: location?.latitude,  
-        long: location?.longitude,
+        profileImageUrl: user.profileImageUrl || '',
+        vorname: user.vorname,
+        nachname: user.nachname,
+        location: typeof user.location === 'string' ? user.location : (user.location ? JSON.stringify(user.location) : ''),
+        long: location?.longitude || 0,
+        lat: location?.latitude || 0,
+        userBio: user.bio || '',
+      };
 
+      // Add to store and persist to SQLite immediately
+      addDanksagung(optimisticDanksagung);
+      await persistDanksagungToSQLite(optimisticDanksagung);
+
+      // Clear input immediately for better UX
+      setWrittenText('');
+
+      // Send to Supabase
+      const { error } = await supabase.from('Danksagungen').insert({
+        id: tempId,
+        writtenText,
+        userId: recipientUserId,
+        authorId: user.id,
+        location: typeof user.location === 'string' ? user.location : (user.location ? JSON.stringify(user.location) : ''),
+        long: location?.longitude || 0,
+        lat: location?.latitude || 0,
+        vorname: user.vorname,
+        nachname: user.nachname,
+        profileImageUrl: user.profileImageUrl || '',
       });
+
       if (error) {
+        console.error('❌ Error creating danksagung:', error);
+        console.error('❌ Error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        // Remove optimistic danksagung on error
+        removeDanksagung(tempId);
+        await removeDanksagungFromSQLite(tempId);
         throw error;
       }
 
-      console.log('Danksagung erfolgreich erstellt');
-      setWrittenText('');
-      incrementDanksagungCount();
+      console.log('✅ Danksagung created successfully:', tempId);
     } catch (error) {
-      console.error('Fehler beim Erstellen der Danksagung:', error);
+      console.error('❌ Error in handleSubmit:', error);
+      // Remove optimistic danksagung on error
+      removeDanksagung(tempId);
+      await removeDanksagungFromSQLite(tempId);
+    } finally {
+      setIsSubmitting(false);
     }
-  }, [writtenText, generateCustomId, incrementDanksagungCount, recipientUserId]);
+  }, [writtenText, user, recipientUserId, location, addDanksagung, removeDanksagung, db]);
+
+  const adjustedFontSize = fontSize * 0.9;
 
   return (
     <View style={styles.container}>
       <TextInput
-        style={[styles.input, { fontSize: finalFontSize }]}
-        placeholder="Schreibe eine Danksagung..."
+        style={[styles.input, { fontSize: adjustedFontSize }]}
         value={writtenText}
         onChangeText={setWrittenText}
+        placeholder="Schreibe eine Danksagung..."
         multiline
+        maxLength={500}
+        editable={!isSubmitting}
       />
-      <TouchableOpacity  style={[
-          styles.button, 
-          !isTextValid && styles.disabledButton
-        ]} 
-        onPress={onSubmit}
-        disabled={!isTextValid}>
-        <Text style={[styles.buttonText, { fontSize: finalFontSize }, !isTextValid && styles.disabledButtonText]}>Abschicken</Text>
+      <TouchableOpacity
+        style={[styles.button, isSubmitting && styles.buttonDisabled]}
+        onPress={handleSubmit}
+        disabled={!writtenText.trim() || isSubmitting}
+      >
+        <Text style={[styles.buttonText, { fontSize: adjustedFontSize }]}>
+          {isSubmitting ? 'Wird gesendet...' : 'Danksagung senden'}
+        </Text>
       </TouchableOpacity>
     </View>
   );
@@ -127,13 +188,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
-  disabledButton: {
+  buttonDisabled: {
     backgroundColor: 'lightgrey',
     opacity: 0.5,
   },
-  disabledButtonText: {
-    color: 'white',
-  }
 });
 
 export default CreateDanksagung;

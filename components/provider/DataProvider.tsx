@@ -11,7 +11,7 @@ import { usePostSync }         from '@/components/services/Storage/Syncs/PostSyn
 import { useDanksagungSync }   from '@/components/services/Storage/Syncs/DanksagungsSync';
 import { usePostCountStore }   from '@/components/stores/postCountStores';
 import { useChannelSync }      from '@/components/services/Storage/Syncs/ChannelSync';
-import { useActiveChatStore } from '../stores/useActiveChatStore';
+
 import { Alert } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 
@@ -38,7 +38,7 @@ export const DataProvider = ({ children }: PropsWithChildren) => {
   const syncDanksagungen = useDanksagungSync();
   const syncChannelsAndMessages = useChannelSync();
 
-  const { setCid, setMessages, messages } = useActiveChatStore();
+
 
   const [loading, setLoading]     = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);

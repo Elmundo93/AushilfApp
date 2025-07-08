@@ -15,7 +15,7 @@ import { useAuthStore } from '@/components/stores/AuthStore';
 import { useDanksagungStore } from '@/components/stores/danksagungStores';
 import { FontSizeContext } from '@/components/provider/FontSizeContext';
 import { getIconForCategory, getBackgroundForCategory } from '@/components/Pinnwand/utils/CategoryAndOptionUtils';
-import UserProfileHeader from '@/components/Profile/UserProfileHeader';
+import ProfileImagePicker from '@/components/Profile/ProfileImage/ProfileImagePicker';
 
 const CATEGORIES = [
   { label: 'Garten', key: 'garten' },
@@ -161,14 +161,7 @@ const UserProfile = () => {
 
 
       <View style={styles.profileTopRow}>
-        <Image
-          style={styles.profileImage}
-          source={
-            user?.profileImageUrl
-              ? { uri: user.profileImageUrl }
-              : require('@/assets/images/avatar-thinking-6-svgrepo-com.png')
-          }
-        />
+       <ProfileImagePicker />
 
         <View style={styles.thanksAndCategories}>
           <View style={styles.countCard}>

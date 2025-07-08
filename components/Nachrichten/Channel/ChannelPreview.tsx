@@ -1,8 +1,9 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect, useRef } from 'react';
 import {
   View, Text, StyleSheet, Image, TouchableOpacity,
 } from 'react-native';
 import { format, isValid } from 'date-fns';
+import { Animated } from 'react-native';
 import { FontSizeContext } from '@/components/provider/FontSizeContext';
 import { ChannelPreviewProps } from '@/components/types/stream';
 import { useSelectedUserStore } from '@/components/stores/selectedUserStore';
@@ -25,6 +26,66 @@ const categoryIcons = {
   bildung: BildungsIconWithBackground,
 };
 
+// Animated Unread Badge Component
+const AnimatedUnreadBadge: React.FC<{ count: number; size: number }> = ({ count, size }) => {
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const scaleAnim = useRef(new Animated.Value(0.8)).current;
+
+  useEffect(() => {
+    if (count > 0) {
+      // Start with a subtle scale animation
+      Animated.sequence([
+        Animated.timing(scaleAnim, {
+          toValue: 1.1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start();
+
+      // Continuous pulse animation
+      const pulseAnimation = Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 1.05,
+            duration: 1500,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 1500,
+            useNativeDriver: true,
+          }),
+        ])
+      );
+      pulseAnimation.start();
+
+      return () => pulseAnimation.stop();
+    }
+  }, [count]);
+
+  if (count === 0) return null;
+
+  return (
+    <Animated.View
+      style={[
+        styles.unreadBadge,
+        {
+          width: size - 8,
+          height: size - 8,
+          transform: [{ scale: scaleAnim }, { scale: pulseAnim }],
+        },
+      ]}
+    >
+      <Text style={styles.unreadText}>{count}</Text>
+    </Animated.View>
+  );
+};
+
 const ChannelPreview: React.FC<ChannelPreviewProps> = ({ channel, onSelect }) => {
   const { fontSize } = useContext(FontSizeContext);
   const { setSelectedUser } = useSelectedUserStore();
@@ -42,6 +103,7 @@ const ChannelPreview: React.FC<ChannelPreviewProps> = ({ channel, onSelect }) =>
     profileImageUrl: channel.custom_user_profileImage || '',
     bio: channel.custom_user_userBio || '',
     kategorien: channel.custom_post_category ? [channel.custom_post_category] : [],
+    chosenCategory: channel.custom_post_category_choosen || '',
   };
 
   const rawDate = new Date(channel.last_message_at ?? '');
@@ -49,8 +111,25 @@ const ChannelPreview: React.FC<ChannelPreviewProps> = ({ channel, onSelect }) =>
   const lastMessageText = channel.last_message_text || 'Keine Nachrichten';
   const unreadCount = channel.unread_count || 0;
 
-  const category = channel.custom_post_category as keyof typeof categoryIcons;
-  const categoryIcon = categoryIcons[category] ?? null;
+  const validCategories = ['gastro', 'garten', 'haushalt', 'soziales', 'handwerk', 'bildung'];
+  const isValidCategory = (category: string) => validCategories.includes(category);
+  
+  const category = (channel.custom_post_category_choosen && isValidCategory(channel.custom_post_category_choosen)) 
+    ? channel.custom_post_category_choosen 
+    : channel.custom_post_category;
+  const categoryIcon = categoryIcons[category as keyof typeof categoryIcons] ?? null;
+
+  // Debug: Log category information
+  // console.log('🔍 ChannelPreview category debug:', {
+  //   cid: channel.cid,
+  //   custom_post_category: channel.custom_post_category,
+  //   custom_post_category_choosen: channel.custom_post_category_choosen,
+  //   effectiveCategory: category,
+  //   hasIcon: !!categoryIcon,
+  //   iconKeys: Object.keys(categoryIcons),
+  //   categoryType: typeof category,
+  //   categoryLength: category?.length
+  // });
 
   const handleAvatarPress = () => {
     setSelectedUser(partnerData);
@@ -88,11 +167,7 @@ const ChannelPreview: React.FC<ChannelPreviewProps> = ({ channel, onSelect }) =>
         </View>
         <View style={styles.rightContainer}>
           <Text style={[styles.date, { fontSize: adjustedFontSize - 6 }]}>{lastMessageDate}</Text>
-          {unreadCount > 0 && (
-            <View style={[styles.unreadBadge, { width: iconSize - 8, height: iconSize - 8 }]}>
-              <Text style={styles.unreadText}>{unreadCount}</Text>
-            </View>
-          )}
+          <AnimatedUnreadBadge count={unreadCount} size={iconSize} />
         </View>
       </TouchableOpacity>
     </View>

@@ -1,6 +1,6 @@
 // File: app/(authenticated)/(aushilfapp)/nachrichten/channel/[cid].tsx
 
-import React, { useEffect, useContext, useRef } from 'react';
+import React, { useEffect, useContext, useRef, useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -9,6 +9,7 @@ import {
   Platform,
   TouchableOpacity,
   Text,
+  ActivityIndicator,
 } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -33,15 +34,28 @@ import { extractPartnerData } from '@/components/services/StreamChat/lib/extract
 
 import { useInitChannel } from '@/components/services/Storage/Hooks/useInitChannel';
 import { useChatContext } from '@/components/provider/ChatProvider';
-import { useSendMessage } from '@/components/services/Storage/Hooks/useSendMessage';
-import { useSyncIncomingMessages } from '@/components/services/Storage/Hooks/useSyncInomingMessages';
+import { InitialMessageBanner } from '@/components/Nachrichten/initialMessageButton';
+import GastroIconWithBackground from '@/assets/images/GastroIconWithBackground.png';
+import GartenIconWithBackground from '@/assets/images/GartenIconWithBackground.png';
+import HaushaltWithBackground from '@/assets/images/HaushaltWithBackground.png';
+import SozialesIconWithBackground from '@/assets/images/SozialesIconWithBackground.png';
+import HandwerkIconWithBackground from '@/assets/images/HandwerkIconWithBackground.png';
+import BildungsIconWithBackground from '@/assets/images/BildungsIconWithBackground.png';
+import { LinearGradient } from 'expo-linear-gradient';
 
 
-
+const categoryIcons = {
+  gastro: GastroIconWithBackground,
+  garten: GartenIconWithBackground,
+  haushalt: HaushaltWithBackground,
+  soziales: SozialesIconWithBackground,
+  handwerk: HandwerkIconWithBackground,
+  bildung: BildungsIconWithBackground,
+};
 
 export default function ChannelScreen() {
   const { cid } = useLocalSearchParams<{ cid: string }>();
-  const flatListRef = useRef<FlatList<ChatMessage>>(null);
+  const flatListRef = useRef<FlatList<ChatMessage> | null>(null);
 
   const { fontSize } = useContext(FontSizeContext);
   const user = useAuthStore.getState().user;
@@ -49,65 +63,100 @@ export default function ChannelScreen() {
   const activeMessages = useActiveChatStore((s) => s.messages);
   const setMessages = useActiveChatStore((s) => s.setMessages);
   const loading = useActiveChatStore((s) => s.loading);
+  const setCid = useActiveChatStore((s) => s.setCid);
+  const activeCid = useActiveChatStore((s) => s.cid);
 
   const channel = channels.find((c) => c.cid === cid);
   const currentUserId = user?.id ?? '';
-  const partnerData = extractPartnerData(channel, currentUserId);
+
+  // Simple channel tracking
+  const [channelData, setChannelData] = useState(channel);
+
+  // Update channel data when channel is found
+  useEffect(() => {
+    if (channel) {
+      console.log('✅ ChannelScreen: Channel found:', channel.cid);
+      setChannelData(channel);
+    }
+  }, [channel]);
+
+  // Use stored channel data if available
+  const displayChannel = channelData || channel;
+  const partnerData = extractPartnerData(displayChannel, currentUserId);
   const isMuted = useMuteStore((s) => partnerData?.userId ? s.isMuted(partnerData.userId) : false);
 
-  const { onScroll, isNearBottom, scrollToBottom } = useScrollToBottom(flatListRef, activeMessages.length);
+  // ALL HOOKS MUST BE CALLED BEFORE ANY EARLY RETURNS
+  const { onScroll, isNearBottom, scrollToBottom } = useScrollToBottom(flatListRef as React.RefObject<FlatList<ChatMessage>>, activeMessages.length);
 
   const scaleAnim = useRef(new RNAnimated.Value(1)).current;
   const fadeAnim = useRef(new RNAnimated.Value(0)).current;
+  const contentFadeAnim = useSharedValue(0);
+
+  // Get chat context functions directly in component body
+  const { syncMessagesForChannel } = useChatContext();
 
   // Lokale SQLite-Nachrichten + Listener
   useInitChannel(cid);
-  // Temporär deaktiviert bis SQLite-Problem gelöst ist
-  // useSyncIncomingMessages(cid, currentUserId);
   
+  const {loadMoreMessages, sendMessage, markChannelAsRead, hasMoreMessages} = useChatContext();
 
-  const {loadMoreMessages, sendMessage} = useChatContext();
+  // Simplified loading state - only show loader if we have a channel but no messages
+  const shouldShowLoader = loading && activeMessages.length === 0;
+  const loaderOpacity = useSharedValue(shouldShowLoader ? 1 : 0);
 
-  const [showLoader, setShowLoader] = React.useState(loading);
-  const loaderOpacity = useSharedValue(loading ? 1 : 0);
+  // Error state for channel not found
+  const [showError, setShowError] = useState(false);
+
+  // Channel validation and error handling
+  useEffect(() => {
+    console.log('🔍 ChannelScreen: Component mounted with cid:', cid);
+    console.log('🔍 ChannelScreen: Available channels:', channels.map(ch => ch.cid));
+    console.log('🔍 ChannelScreen: Channel found:', channel ? 'YES' : 'NO');
+    
+    // Don't set CID in store here - it's already set by the navigation
+    // The useInitChannel hook handles all channel initialization and message syncing
+  }, [cid, channels, channel]);
+
+  // Fade in content when chat is ready
+  useEffect(() => {
+    if (!loading && displayChannel && activeMessages.length > 0) {
+      contentFadeAnim.value = withTiming(1, { duration: 500 });
+    }
+  }, [loading, displayChannel, activeMessages.length, contentFadeAnim]);
+
+  const contentAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: contentFadeAnim.value,
+  }));
 
   React.useEffect(() => {
-    if (loading) {
-      setShowLoader(true);
+    if (shouldShowLoader) {
       loaderOpacity.value = withTiming(1, { duration: 300 });
     } else {
-      loaderOpacity.value = withTiming(0, { duration: 300 }, (finished) => {
-        if (finished) runOnJS(setShowLoader)(false);
-      });
+      loaderOpacity.value = withTiming(0, { duration: 300 });
     }
-  }, [loading]);
+  }, [shouldShowLoader, loaderOpacity]);
 
   const animatedLoaderStyle = useAnimatedStyle(() => ({
     opacity: loaderOpacity.value,
   }));
 
+  // Mark channel as read when opened - only once
   useEffect(() => {
-    let isMounted = true;
-    if (!channel) return;
-    setMessages([]); // Leere Nachrichten beim Channel-Wechsel
-    useActiveChatStore.getState().setLoading(true);
-    (async () => {
-      try {
-        const loaded = await loadMoreMessages(cid);
-        if (isMounted) {
-          useActiveChatStore.getState().setLoading(false);
+    if (cid && displayChannel && !loading) {
+      // Only mark as read once when the channel is first opened and messages are loaded
+      const markAsRead = async () => {
+        try {
+          await markChannelAsRead(cid);
+        } catch (error) {
+          // Silent error handling
         }
-      } catch (e) {
-        if (isMounted) {
-          useActiveChatStore.getState().setLoading(false);
-        }
-      }
-    })();
-    return () => { isMounted = false; };
-  }, [cid]);
+      };
+      markAsRead();
+    }
+  }, [cid, displayChannel, loading, markChannelAsRead]); // Added markChannelAsRead to dependencies
 
   useEffect(() => {
-    if (!channel) {
+    if (!displayChannel) {
       console.warn(`Kein Channel für cid: ${cid}`);
       return;
     }
@@ -121,7 +170,53 @@ export default function ChannelScreen() {
     } catch (error) {
       console.error('Animation Error:', error);
     }
-  }, [isNearBottom, channel]);
+  }, [isNearBottom, displayChannel, fadeAnim]);
+
+  // Error timeout effect - must be before early returns
+  useEffect(() => {
+    if (!displayChannel) {
+      const timer = setTimeout(() => {
+        setShowError(true);
+      }, 3000); // Wait 3 seconds before showing error
+      
+      return () => clearTimeout(timer);
+    }
+  }, [displayChannel]);
+
+  // NOW WE CAN HAVE EARLY RETURNS
+  if (!displayChannel) {
+    console.log('⚠️ ChannelScreen: No channel found for cid:', cid);
+    console.log('⚠️ ChannelScreen: Available channels:', channels.map(ch => ch.cid));
+    
+    if (!showError) {
+      return (
+        <View style={styles.loadingContainer}>
+          <LottieView 
+            source={require('@/assets/animations/LoadingWarp.json')} 
+            autoPlay 
+            loop 
+            style={styles.loadingAnimation}
+          />
+          <Text style={styles.loadingText}>Chat wird geladen...</Text>
+          <Text style={styles.loadingSubText}>
+            CID: {cid}
+          </Text>
+        </View>
+      );
+    }
+    
+    return (
+      <View style={styles.container}>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>Channel nicht gefunden</Text>
+          <Text style={styles.errorSubText}>
+            Der Channel konnte nicht geladen werden.{'\n'}
+            Bitte versuchen Sie es erneut.
+          </Text>
+        </View>
+      </View>
+    );
+  }
 
   const handlePressIn = () => {
     RNAnimated.spring(scaleAnim, {
@@ -137,86 +232,130 @@ export default function ChannelScreen() {
     }).start();
   };
 
-  if (!channel) {
-    console.warn(`Kein Channel für cid: ${cid}`);
-    return null;
-  }
+  const validCategories = ['gastro', 'garten', 'haushalt', 'soziales', 'handwerk', 'bildung'];
+  const isValidCategory = (category: string) => validCategories.includes(category);
+  
+  const category = (displayChannel?.custom_post_category_choosen && isValidCategory(displayChannel.custom_post_category_choosen)) 
+    ? displayChannel.custom_post_category_choosen 
+    : displayChannel?.custom_post_category;
+  const categoryIcon = categoryIcons[category as keyof typeof categoryIcons] ?? null;
 
-  if (showLoader) {
+  // Show loader only if we have a channel but messages are still loading
+  if (shouldShowLoader) {
     return (
-      <Animated.View style={[{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'white' }, animatedLoaderStyle]}>
-        <LottieView
-          source={require('@/assets/animations/LoadingWarp.json')}
-          autoPlay
-          loop
-          style={{ width: 180, height: 180 }}
+      <View style={styles.loadingContainer}>
+        <LinearGradient
+          colors={['#FFA500', 'white', 'white']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 1 }}
+          style={StyleSheet.absoluteFill}
         />
-        <Text style={{ marginTop: 16, fontSize: 16, color: '#ff9a00', fontWeight: '600' }}>Nachrichten werden geladen ...</Text>
-      </Animated.View>
+        
+        <Animated.View style={[{ flex: 1, justifyContent: 'center', alignItems: 'center' }, animatedLoaderStyle]}>
+          <View style={styles.loadingCard}>
+            <LottieView
+              source={require('@/assets/animations/LoadingWarp.json')}
+              autoPlay
+              loop
+              style={{ width: 120, height: 120 }}
+            />
+            <Text style={styles.loadingTitle}>Chat wird geladen</Text>
+            <Text style={styles.loadingSubtitle}>Nachrichten werden vorbereitet...</Text>
+            
+            <View style={styles.loadingProgressContainer}>
+              <View style={[styles.loadingProgressDot, styles.loadingProgressDotActive]} />
+              <View style={[styles.loadingProgressDot, styles.loadingProgressDotActive]} />
+              <View style={styles.loadingProgressDot} />
+            </View>
+          </View>
+        </Animated.View>
+      </View>
     );
   }
 
   return (
     <View style={styles.container}>
       <CustomChatHeader
-        otherUserImage={channel.custom_user_profileImage}
-        otherUserName={channel.custom_user_vorname}
+        otherUserImage={displayChannel.custom_user_profileImage}
+        categoryIcon={categoryIcon as any}
+        otherUserName={displayChannel.custom_user_vorname}
+        channel={displayChannel}
       />
 
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.select({ ios: 80, android: 100 })}
-      >
-        {isMuted && <MutedNotice />}
-
-        <FlatList
-          ref={flatListRef}
-          inverted
-          onScroll={onScroll}
-          data={activeMessages}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <CustomMessageBubble
-              message={item}
-              currentUserId={currentUserId}
-              fontSize={fontSize}
-            />
-          )}
-          contentContainerStyle={{ padding: 10 }}
-          initialNumToRender={30}
-          maxToRenderPerBatch={20}
-          windowSize={5}
-          onEndReached={() => cid && loadMoreMessages(cid)}
-          onEndReachedThreshold={0.1}
-          maintainVisibleContentPosition={{ minIndexForVisible: 1 }}
-        />
-
-        <RNAnimated.View
-          style={[styles.scrollButtonContainer, { opacity: fadeAnim, display: isNearBottom ? 'none' : 'flex' }]}
+      <Animated.View style={[styles.flex, contentAnimatedStyle]}>
+        <KeyboardAvoidingView
+          style={styles.flex}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.select({ ios: 80, android: 100 })}
         >
-          <AnimatedTouchable
-            style={[styles.scrollButton, { transform: [{ scale: scaleAnim }] }]}
-            onPress={() => scrollToBottom()}
-            onPressIn={handlePressIn}
-            onPressOut={handlePressOut}
+          {isMuted && <MutedNotice />}
+
+          <FlatList
+            ref={flatListRef}
+            inverted
+            onScroll={onScroll}
+            data={activeMessages}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => {
+              const isInitial = item.custom_type === 'initial' || false;
+            
+              if (isInitial) {
+                return (
+                  <InitialMessageBanner
+                    postVorname={item.post_vorname}
+                    postNachname={item.post_nachname}
+                    postCategory={item.post_category}
+                    postOption={item.post_option}
+                    postText={item.content || ''}
+                    profileImageUrl={item.post_image}
+
+                  />
+                );
+              }
+            
+              return (
+                <CustomMessageBubble
+                  message={item}
+                  currentUserId={currentUserId}
+                  fontSize={fontSize}
+                />
+              );
+            }}
+            contentContainerStyle={{ padding: 10 }}
+            initialNumToRender={30}
+            maxToRenderPerBatch={20}
+            windowSize={5}
+            onEndReached={() => cid && hasMoreMessages && loadMoreMessages(cid)}
+            onEndReachedThreshold={0.1}
+            maintainVisibleContentPosition={{ minIndexForVisible: 1 }}
+          />
+
+          <RNAnimated.View
+            style={[styles.scrollButtonContainer, { opacity: fadeAnim, display: isNearBottom ? 'none' : 'flex' }]}
           >
-            <MaterialIcons name="arrow-downward" size={24} color="white" />
-          </AnimatedTouchable>
-        </RNAnimated.View>
+            <AnimatedTouchable
+              style={[styles.scrollButton, { transform: [{ scale: scaleAnim }] }]}
+              onPress={() => scrollToBottom()}
+              onPressIn={handlePressIn}
+              onPressOut={handlePressOut}
+            >
+              <MaterialIcons name="arrow-downward" size={24} color="white" />
+            </AnimatedTouchable>
+          </RNAnimated.View>
 
-        <ScrollToBottomOnMount flatListRef={flatListRef} />
+          <ScrollToBottomOnMount flatListRef={flatListRef as React.RefObject<FlatList<ChatMessage>>} />
 
-        <CustomInputField
-          fontSize={fontSize}
-          cid={cid}
-          currentUserId={currentUserId}
-          flatListRef={flatListRef}
-          onSendMessage={(text) =>
-            sendMessage(cid, text)
-          }
-        />
-      </KeyboardAvoidingView>
+          <CustomInputField
+            fontSize={fontSize}
+            cid={cid}
+            currentUserId={currentUserId}
+            flatListRef={flatListRef as React.RefObject<FlatList<ChatMessage>>}
+            onSendMessage={(text) =>
+              sendMessage(cid, text)
+            }
+          />
+        </KeyboardAvoidingView>
+      </Animated.View>
     </View>
   );
 }
@@ -240,5 +379,85 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 5,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'white',
+  },
+  loadingCard: {
+    backgroundColor: 'white',
+    borderRadius: 15,
+    padding: 20,
+    alignItems: 'center',
+    width: '80%',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  loadingTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+    marginTop: 10,
+  },
+  loadingSubtitle: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 5,
+    textAlign: 'center',
+  },
+  loadingProgressContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: 20,
+    width: '100%',
+  },
+  loadingProgressDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#ccc',
+  },
+  loadingProgressDotActive: {
+    backgroundColor: '#FFA500',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+    textAlign: 'center',
+  },
+  errorSubText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 5,
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+  },
+  loadingSubText: {
+    marginTop: 5,
+    fontSize: 14,
+    color: '#999',
+    textAlign: 'center',
+  },
+  loadingAnimation: {
+    width: 150,
+    height: 150,
+    marginBottom: 20,
   },
 });

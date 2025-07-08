@@ -1,5 +1,5 @@
-import React, { useState, useContext } from 'react';
-import { View, Image, Text, TouchableOpacity, Animated } from 'react-native';
+import React, { useState, useContext, useCallback } from 'react';
+import { View, Image, Text, TouchableOpacity, Animated, Pressable } from 'react-native';
 import { createRStyle } from 'react-native-full-responsive';
 import { useRouter } from 'expo-router';
 import { Post } from '@/components/types/post';
@@ -11,17 +11,66 @@ import { FontSizeContext } from '@/components/provider/FontSizeContext';
 import ShimmerPlaceholder from 'react-native-shimmer-placeholder';
 import { LinearGradient } from 'expo-linear-gradient';
 import { usePlaceholderAnimation } from '../Animation/PlaceholderAnimation';
+import { BlurView } from 'expo-blur';
+import { Ionicons } from '@expo/vector-icons';
 
 interface PostItemProps {
   item: Post;
 }
+
+// Optimized button component with best practices
+interface ViewPostButtonProps {
+  onPress: () => void;
+  fontSize: number;
+  isLoading: boolean;
+}
+
+const ViewPostButton: React.FC<ViewPostButtonProps> = ({ onPress, fontSize, isLoading }) => {
+  const [isPressed, setIsPressed] = useState(false);
+
+  const handlePressIn = useCallback(() => setIsPressed(true), []);
+  const handlePressOut = useCallback(() => setIsPressed(false), []);
+
+  const buttonTextSize = Math.min(fontSize + 3, 20);
+  const iconSize = Math.min(fontSize + 6, 24);
+
+  return (
+    <ShimmerPlaceholder
+      visible={!isLoading}
+      style={styles.shimmerButton}
+      shimmerColors={['#FFE5B4', '#FFA500', '#FFE5B4']}
+      shimmerStyle={{ locations: [0, 0.5, 1] }}
+    >
+      <Pressable
+        style={[
+          styles.optimizedButton,
+          isPressed && styles.buttonPressed,
+        ]}
+        onPress={onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        accessible
+        accessibilityRole="button"
+        accessibilityLabel="Beitrag ansehen"
+        accessibilityHint="Öffnet die Detailansicht des Beitrags"
+        accessibilityState={{ disabled: isLoading }}
+      >
+        <View style={styles.buttonContent}>
+          <Text style={[styles.optimizedButtonText, { fontSize: buttonTextSize }]}>
+            Beitrag ansehen!
+          </Text>
+          <Ionicons name="search" size={iconSize} color="orange" style={styles.buttonIcon} />
+        </View>
+      </Pressable>
+    </ShimmerPlaceholder>
+  );
+};
 
 const PostItem: React.FC<PostItemProps> = ({ item }) => {
   const { fontSize } = useContext(FontSizeContext);
   const router = useRouter();
   const { setSelectedPost } = useSelectedPostStore();
  
-
   const maxFontSize = 24; 
   const defaultFontSize = 28; 
   const componentBaseFontSize = 22; 
@@ -48,10 +97,13 @@ const PostItem: React.FC<PostItemProps> = ({ item }) => {
     }));
   };
 
+  const handleViewPost = useCallback(() => {
+    setSelectedPost(item);
+    router.push('/(modal)/postDetail');
+  }, [item, setSelectedPost, router]);
+
   return (
     <View>
-        
-
       <View style={styles.stringscontainer}>
         <Image source={require('@/assets/images/PinnwandHeader.png')} style={styles.strings} />
         <PostMenu 
@@ -61,7 +113,7 @@ const PostItem: React.FC<PostItemProps> = ({ item }) => {
         />
       </View>
 
-      <View style={styles.post}>
+      <BlurView intensity={60} tint="light" style={styles.post}>
         <View style={styles.postInside}>
           <PostHeader 
             item={item} 
@@ -76,55 +128,77 @@ const PostItem: React.FC<PostItemProps> = ({ item }) => {
             />
             
             <View style={[styles.postContainer, { height: iconSize * 2 }]}>
-
-            <ShimmerPlaceholder visible={allLoaded} style={styles.shimmerPostContainer}  shimmerColors={['#FFE5B4', '#FFA500', '#FFE5B4']} shimmerStyle={{ locations: [0, 0.5, 1] }} >
-              <Text style={[styles.postText, { fontSize: finalFontSize }]} numberOfLines={4}>
-                {item.postText}
-              </Text>
+              <ShimmerPlaceholder 
+                visible={allLoaded} 
+                style={styles.shimmerPostContainer}  
+                shimmerColors={['#FFE5B4', '#FFA500', '#FFE5B4']} 
+                shimmerStyle={{ locations: [0, 0.5, 1] }}
+              >
+                <Text style={[styles.postText, { fontSize: finalFontSize }]} numberOfLines={4}>
+                  {item.postText}
+                </Text>
               </ShimmerPlaceholder>
-
             </View>
-           
           </View>
 
           <View style={styles.buttonContainer}>
-
-          <ShimmerPlaceholder visible={allLoaded} style={styles.shimmerButton} shimmerColors={['#FFE5B4', '#FFA500', '#FFE5B4']} shimmerStyle={{ locations: [0, 0.5, 1] }} >
-              <TouchableOpacity
-                style={styles.button}
-                onPress={() => {
-                  setSelectedPost(item); 
-                  router.push('/(modal)/postDetail'); 
-                }}
-              >
-                <LinearGradient
-                  colors={['#FFA500', '#FF8C00', '#fcb63d']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.modalButton}
-                >
-                  <Text style={[styles.buttonText, { fontSize: finalFontSize + 3 }]}>Beitrag ansehen!</Text>
-                </LinearGradient>
-              </TouchableOpacity>
-              </ShimmerPlaceholder>
-
+            <ViewPostButton
+              onPress={handleViewPost}
+              fontSize={finalFontSize}
+              isLoading={!allLoaded}
+            />
           </View>
-
         </View>
-      </View>
+      </BlurView>
       <View style={styles.trenner}></View>
-
     </View>
   );
 };
 
 const styles = createRStyle({
+
+  optimizedButton: {
+    backgroundColor: 'white',
+    borderRadius: 25,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    elevation: 4,
+    borderWidth: 2,
+    borderColor: 'orange',
+    alignSelf: 'center',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 10,
+    marginBottom: 10,
+    marginLeft: 10,
+    marginRight: 10,
+
+  
+  },
+  
+  buttonPressed: {
+    transform: [{ scale: 0.97 }],
+    opacity: 0.9,
+  },
+  
+  optimizedButtonText: {
+    color: 'orange',
+    fontWeight: 'bold',
+    textAlign: 'center',
+    fontFamily: 'System', // Replace with your app font if needed
+  },
+  
+  shimmerButton: {
+    minHeight: 50,
+    minWidth: 200,
+    borderRadius: 25,
+    alignSelf: 'center', // Optional: centers the shimmer
+  },
   trenner: {
     height: 5,
     backgroundColor: '#FFA500',
     opacity: 0.2,
     marginVertical: 30,
-
     width: '90%',
     alignSelf: 'center',
     borderRadius: 50,
@@ -146,7 +220,7 @@ const styles = createRStyle({
     width: '95%',
     alignSelf: 'center',
     borderWidth: 1,
-    borderColor: 'lightgray',
+    borderColor: 'orange',
     overflow: 'hidden',
     borderRadius: 50,
   },
@@ -184,13 +258,44 @@ const styles = createRStyle({
   buttonContainer: {
     alignItems: 'center',
     alignSelf: 'flex-end',
+    marginTop: 10,
   },
+  // Optimized button styles
+
+  buttonGradient: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    minHeight: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+
+  },
+
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  buttonIcon: {
+    marginLeft: 4,
+    
+  },
+  shimmerPostContainer: {
+    minHeight: 30,
+    minWidth: 200,
+    borderRadius: 25,
+    overflow: 'visible',
+  },
+
+  // Legacy styles for backward compatibility
   button: {
     padding: 10,
     borderRadius: 5,
+    overflow: 'hidden',
   },
   buttonText: {
-    color: '#fff',
+    color: 'orange',
     fontWeight: 'bold',
   },
   modalButton: {
@@ -200,20 +305,6 @@ const styles = createRStyle({
     padding: 10,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  shimmerPostContainer: {
-    minHeight: 30,
-    minWidth: 200,
-    borderRadius: 25,
-    overflow: 'visible',
-
-
-
-  },
-  shimmerButton: {
-    minHeight: 50,
-    minWidth: 200,
-    borderRadius: 25,
   },
 });
 

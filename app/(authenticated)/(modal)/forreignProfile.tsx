@@ -1,4 +1,4 @@
-import React, { useRef, useContext } from 'react';
+import React, { useRef, useContext, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -14,6 +14,8 @@ import { useDanksagungStore } from '@/components/stores/danksagungStores';
 import { FontSizeContext } from '@/components/provider/FontSizeContext';
 import ForeignProfileHeader from '@/components/Header/ForreignProfileHeader';
 import { CategoryType } from '@/components/types/stream';
+import { useDanksagungenService } from '@/components/Crud/SQLite/Services/danksagungenService';
+import { useSQLiteContext } from 'expo-sqlite';
 
 const normalizeCategories = (categories: string[] | undefined): string[] => {
   if (!categories) return [];
@@ -22,11 +24,11 @@ const normalizeCategories = (categories: string[] | undefined): string[] => {
 
 const ForreignProfile = () => {
   const { selectedUser } = useSelectedUserStore();
-  const allDanksagungen = useDanksagungStore((state) => state.danksagungen);
-  const danksagungCount = useDanksagungStore((state) => state.danksagungCount);
-  const loading = useDanksagungStore((state) => state.loading);
-  const error = useDanksagungStore((state) => state.error);
+  const { danksagungen, loading, error, setDanksagungen, setLoading, setError } = useDanksagungStore();
   const { fontSize } = useContext(FontSizeContext);
+  const db = useSQLiteContext();
+  const { getDanksagungenForUser } = useDanksagungenService();
+  const isFetchingRef = useRef(false);
 
   const defaultFontSize = 22;
   const baseFontSize = 24;
@@ -43,9 +45,37 @@ const ForreignProfile = () => {
     extrapolate: 'clamp',
   });
 
-  const danksagungen = allDanksagungen.filter(
+  // Filter danksagungen for the selected user
+  const userDanksagungen = danksagungen.filter(
     (d) => d.userId === selectedUser?.userId
   );
+
+  // Memoize the fetch function to prevent infinite loops
+  const fetchUserDanksagungen = useCallback(async () => {
+    if (!selectedUser?.userId || isFetchingRef.current) return;
+    
+    isFetchingRef.current = true;
+    setLoading(true);
+    setError(null);
+    
+    try {
+      // console.log(`🔍 Fetching danksagungen for user: ${selectedUser.userId}`);
+      const userDanksagungen = await getDanksagungenForUser(selectedUser.userId);
+      setDanksagungen(userDanksagungen);
+      // console.log(`✅ Loaded ${userDanksagungen.length} danksagungen for user ${selectedUser.userId}`);
+    } catch (err) {
+      console.error('❌ Error fetching user danksagungen:', err);
+      setError('Fehler beim Laden der Danksagungen');
+    } finally {
+      setLoading(false);
+      isFetchingRef.current = false;
+    }
+  }, [selectedUser?.userId, getDanksagungenForUser, setDanksagungen, setLoading, setError]);
+
+  // Fetch danksagungen for the selected user when component mounts or user changes
+  useEffect(() => {
+    fetchUserDanksagungen();
+  }, [selectedUser?.userId]); // Only depend on userId, not the entire function
 
   const formatName = (v: string, n: string) => `${v} ${n.charAt(0)}.`;
 
@@ -96,11 +126,11 @@ const ForreignProfile = () => {
             bio={selectedUser.bio}
             userId={selectedUser.userId}
             fontSize={finalFontSize}
-            danksagungCount={danksagungen.length}
+            danksagungCount={userDanksagungen.length}
             kategorien={normalizedCategories}
           />
         }
-        data={danksagungen}
+        data={userDanksagungen}
         renderItem={renderDanksagung}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
@@ -114,7 +144,7 @@ const ForreignProfile = () => {
             </Text>
           </View>
         }
-        extraData={danksagungCount}
+        extraData={userDanksagungen.length}
       />
     </View>
   );

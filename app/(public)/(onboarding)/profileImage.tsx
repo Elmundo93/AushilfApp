@@ -6,17 +6,17 @@ import {
   TouchableOpacity,
   Image,
   ScrollView,
-  SafeAreaView,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter, usePathname } from 'expo-router';
 import { useOnboardingStore } from '@/components/stores/OnboardingContext';
-import { LinearGradient } from 'expo-linear-gradient';
-import LottieView from 'lottie-react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { getLottieStyle, onboardingStyles } from './styles';
+import { onboardingSharedStyles, getResponsiveSize, getResponsivePadding, getResponsiveMargin } from './sharedStyles';
+import { OnboardingLayout } from '@/components/Onboarding/OnboardingLayout';
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 
 const AVATAR_COLLECTIONS = [
   {
@@ -44,9 +44,8 @@ export default function ProfileImageScreen() {
   const [selectedSeed, setSelectedSeed] = useState<string | null>(null);
   const pathname = usePathname();
 
-  const steps = ['intro', 'userinfo', 'intent', 'about', 'profileImage', 'password','conclusion','savety'];
-    const currentStep = steps.findIndex((step) => pathname.includes(step));
-  const beeAnimation = require('@/assets/animations/Bee.json');
+  const steps = ['intro', 'userinfo', 'userinfo2', 'intent', 'about', 'profileImage', 'password', 'conclusion', 'savety'];
+  const currentStep = steps.findIndex((step) => pathname.includes(step));
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -75,21 +74,11 @@ export default function ProfileImageScreen() {
   };
 
   return (
-    <View style={onboardingStyles.safeAreaContainer}>
-      <LinearGradient
-        colors={['#ff9a00', '#ffc300', '#ffffff']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
-
-<TouchableOpacity
-        style={onboardingStyles.backButton}
-        onPress={() => router.back()}
-      >
-        <Ionicons name="arrow-back" size={28} color="black" />
-      </TouchableOpacity>
-
+    <OnboardingLayout
+      currentStep={currentStep}
+      steps={steps}
+      headerTitle="Wähle dein Profilbild!"
+    >
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
@@ -99,208 +88,179 @@ export default function ProfileImageScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-           <View style={onboardingStyles.topContainer}>
-            <LottieView source={beeAnimation} autoPlay loop style={getLottieStyle(currentStep)} />
-            <View style={onboardingStyles.progressContainer}>
-              {steps.map((_, index) => (
-                <View
-                  key={index}
-                  style={[onboardingStyles.dot, index <= currentStep && onboardingStyles.activeDot]}
-                />
-              ))}
-            </View>
-            <View style={onboardingStyles.titleCard}>
-              <View style={onboardingStyles.titleContainer}>
-                <Text style={onboardingStyles.title}>Wähle dein Profilbild!</Text>
-              </View>
-            </View>
-          </View>
+          <View style={styles.outerContainer}>
+            <BlurView 
+              intensity={100} 
+              tint="light" 
+              style={[
+                onboardingSharedStyles.formCard, 
+                { 
+                  padding: getResponsivePadding(400), 
+                  borderRadius: 25,
+                  margin: 20
+                }
+              ]}
+            >
 
-
-          <View style={styles.contentContainer}>
-            <View style={styles.card}>
-              {profileImage && (
+              <View style={styles.topRow}>
                 <View style={styles.previewContainer}>
                   <Text style={styles.subtitle}>Vorschau</Text>
-                  <Image source={{ uri: profileImage }} style={styles.previewImage} />
+                  <Image 
+                    source={profileImage ? { uri: profileImage } : require('@/assets/images/avatar-thinking-4-svgrepo-com.png')} 
+                    style={styles.previewImage} 
+                  />
                 </View>
-              )}
 
-              <TouchableOpacity style={styles.imageButton} onPress={pickImage}>
-                <Ionicons name="camera" size={40} color="#666" />
-                <Text style={styles.imageButtonText}>Profilbild auswählen</Text>
-              </TouchableOpacity>
-
-              <View style={styles.orContainer}>
-                <View style={styles.orLine} />
-                <Text style={styles.orText}>Oder wähle einen Avatar</Text>
-                <View style={styles.orLine} />
+                <TouchableOpacity style={styles.imageButton} onPress={pickImage}>
+                  <Ionicons name="camera" size={40} color="#666" />
+                  <Text style={styles.imageButtonText}>Profilbild auswählen</Text>
+                </TouchableOpacity>
               </View>
 
-              {AVATAR_COLLECTIONS.map(({ label, baseUrl, seeds }) => (
-                <View key={label} style={{ marginBottom: 20 }}>
-                  <Text style={styles.avatarCollectionLabel}>{label}</Text>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                    {seeds.map((seed) => {
-                      const uri = getAvatarUrl(baseUrl, seed);
-                      const isSelected = profileImage === uri;
-                      return (
-                        <TouchableOpacity
-                          key={seed}
-                          onPress={() => handleAvatarSelect(baseUrl, seed)}
-                          style={[
-                            styles.avatarContainer,
-                            isSelected && styles.avatarSelectedBorder,
-                          ]}
-                        >
-                          <Image source={{ uri }} style={styles.avatar} />
-                        </TouchableOpacity>
-                      );
-                    })}
-                  </ScrollView>
-                </View>
-              ))}
-
-              <TouchableOpacity style={styles.button} onPress={handleNext}>
-                <Text style={styles.buttonText}>Weiter</Text>
-              </TouchableOpacity>
+            <View style={styles.orContainer}>
+              <View style={styles.orLine} />
+              <Text style={styles.orText}>Oder wähle einen Avatar</Text>
+              <View style={styles.orLine} />
             </View>
-          </View>
+
+            {AVATAR_COLLECTIONS.map(({ label, baseUrl, seeds }) => (
+              <View key={label} style={{ marginBottom: 20 }}>
+                <Text style={styles.avatarCollectionLabel}>{label}</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  {seeds.map((seed) => {
+                    const uri = getAvatarUrl(baseUrl, seed);
+                    const isSelected = profileImage === uri;
+                    return (
+                      <TouchableOpacity
+                        key={seed}
+                        onPress={() => handleAvatarSelect(baseUrl, seed)}
+                        style={[
+                          styles.avatarContainer,
+                          isSelected && styles.avatarSelectedBorder,
+                        ]}
+                      >
+                        <Image source={{ uri }} style={styles.avatar} />
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              </View>
+            ))}
+
+            <TouchableOpacity style={styles.button} onPress={handleNext}>
+              <LinearGradient
+                colors={['#FFB41E', '#FF9900']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.gradientButton}
+              >
+                <Text style={styles.buttonText}>Weiter</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </BlurView>
+        </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </View>
+    </OnboardingLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  outerContainer: {
+    borderRadius: 25,
+    overflow: 'hidden',
   },
-  backButton: {
-    position: 'absolute',
-    top: 40,
-    left: 20,
-    zIndex: 10,
-  },
-  topContainer: {
-    alignItems: 'center',
-    marginTop: 100,
-  },
-  progressContainer: {
+  topRow: {
     flexDirection: 'row',
-    marginVertical: 10,
-  },
-  dot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#ddd',
-    marginHorizontal: 4,
-  },
-  activeDot: {
-    backgroundColor: '#ff9a00',
-  },
-  titleCard: {
-    marginTop: 10,
-    paddingHorizontal: 20,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  contentContainer: {
-    flex: 1,
-    paddingHorizontal: 20,
-  },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    padding: 20,
-    marginTop: 20,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 5,
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 20,
   },
   previewContainer: {
     alignItems: 'center',
-    marginBottom: 20,
+    flex: 1,
+    marginRight: 20,
   },
   subtitle: {
     fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
     marginBottom: 10,
-    color: '#555',
   },
   previewImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 80,
+    height: 80,
+    borderRadius: 50,
     borderWidth: 3,
     borderColor: '#ff9a00',
   },
   imageButton: {
-    flexDirection: 'row',
     alignItems: 'center',
-    alignSelf: 'center',
-    gap: 10,
+    padding: 20,
+    borderWidth: 2,
+
+    borderStyle: 'dashed',
+    borderRadius: 12,
     marginBottom: 20,
-    borderWidth: .5,
-    borderColor: '#ccc',
-    padding:20,
-    borderRadius:24
+    borderColor: '#ff9a00',
   },
   imageButtonText: {
+    marginTop: 8,
     fontSize: 16,
     color: '#666',
   },
   orContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 15,
+    marginVertical: 20,
   },
   orLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#ccc',
+    backgroundColor: '#ddd',
   },
   orText: {
     marginHorizontal: 10,
-    color: '#777',
-    fontSize: 14,
+    fontSize: 22,
+    color: '#666',
   },
   avatarCollectionLabel: {
     fontSize: 16,
     fontWeight: '600',
-    marginBottom: 8,
-    marginLeft: 6,
     color: '#333',
+    marginBottom: 10,
   },
   avatarContainer: {
-    marginHorizontal: 6,
-    padding: 3,
-    borderRadius: 50,
-    backgroundColor: '#fff',
+    marginRight: 10,
+    padding: 2,
+    borderRadius: 25,
+    borderWidth: 2,
+    borderColor: 'transparent',
   },
   avatarSelectedBorder: {
     borderColor: '#ff9a00',
-    borderWidth: 3,
   },
   avatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
   },
   button: {
-    backgroundColor: '#ff9a00',
-    paddingVertical: 14,
-    borderRadius: 12,
+    borderRadius: 18,
+    overflow: 'hidden',
     marginTop: 20,
   },
+  gradientButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 18,
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+  },
   buttonText: {
-    textAlign: 'center',
     fontWeight: 'bold',
-    color: '#fff',
-    fontSize: 16,
+    color: 'white',
+    fontSize: 18,
   },
 });

@@ -11,12 +11,14 @@ type StreamChatOverviewState = {
   setChannelsReady: (val: boolean) => void;
 };
 
-export const useStreamChatStore = create<StreamChatOverviewState>((set) => ({
+export const useStreamChatStore = create<StreamChatOverviewState>((set, get) => ({
   channels: [],
   loading: false,
   channelsReady: false,
 
-  setChannels: (channels) => set({ channels }),
+  setChannels: (channels) => {
+    set({ channels });
+  },
 
   setLoading: (val) => set({ loading: val }),
   setChannelsReady: (val) => set({ channelsReady: val }),

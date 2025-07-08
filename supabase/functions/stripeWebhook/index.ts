@@ -108,7 +108,10 @@ serve(async (req) => {
 
       const { error: updateError } = await supabase
         .from('Users')
-        .update({ is_verified: true })
+        .update({ 
+          is_verified: true,
+          onboarding_completed: true 
+        })
         .eq('id', userId);
 
       if (updateError) {

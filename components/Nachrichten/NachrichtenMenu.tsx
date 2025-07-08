@@ -30,15 +30,9 @@ const NachrichtenMenu: React.FC<{ iconSize?: number; iconColor?: string }> = ({
   const user = useAuthStore((s) => s.user);
   const [isMuted, setIsMuted] = useState(false);
   const channel = channels.find((ch) => ch.cid === cid);
-  console.log('Channel structure:', JSON.stringify(channel, null, 2));
   const partnerData = channel ? extractPartnerData(channel, user?.id ?? '') : null;
 
   const adjustedFontSize = Math.min((fontSize / 24) * 22, 28);
-
-  console.log('partnerData', partnerData);
-  console.log('user', user);
-
-  
 
   useEffect(() => {
     const checkIfMuted = async () => {

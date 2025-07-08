@@ -1,7 +1,6 @@
 import React, { useEffect, useCallback, useRef } from 'react';
-import { View, Animated, StyleSheet, Platform, UIManager, LayoutAnimation } from 'react-native';
+import { View, Animated, StyleSheet, Platform, UIManager, LayoutAnimation, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { FlatList } from 'react-native-gesture-handler';
 import LottieView from 'lottie-react-native';
 
 import PinnwandHeader from '@/components/Pinnwand/PinnwandHeader';
@@ -16,7 +15,7 @@ import { usePostStore } from '@/components/stores/postStore';
 import RefreshHandler from '@/components/Pinnwand/RefreshHandler';
 import AskForLocation from '@/components/Pinnwand/AskForLocation';
 import { useLocationStore } from '@/components/stores/locationStore'
-
+import BackgroundImage from '@/components/Onboarding/OnboardingBackground';
 
 
 
@@ -32,22 +31,6 @@ const Pinnwand: React.FC = () => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const [isAccordionExpanded, setIsAccordionExpanded] = React.useState(false);
 
-  
-
-  
-
-
-
-
-
-
-  const toggleAccordion = useCallback(() => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setIsAccordionExpanded(prev => !prev);
-  }, []);
-
-
-
   // Fade-in animation on loading complete
   useEffect(() => {
     if (!loading) {
@@ -60,7 +43,10 @@ const Pinnwand: React.FC = () => {
     }
   }, [loading, fadeAnim]);
 
- 
+  const toggleAccordion = useCallback(() => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setIsAccordionExpanded(prev => !prev);
+  }, []);
 
   const renderCheckbox = useCallback((label: string, isChecked: boolean, onCheck: () => void) => (
     <CustomCheckbox
@@ -79,8 +65,60 @@ const Pinnwand: React.FC = () => {
     return <PostItem item={item} />;
   }, []);
 
+  // Erstelle die Daten für die FlatList mit Header und Posts
+  const listData = React.useMemo(() => {
+    const data = [];
+    
+    // Header-Komponente als erstes Element
+    data.push({
+      id: 'header',
+      type: 'header',
+      component: <PinnwandHeader />
+    });
+    
+    // FilterAccordion als zweites Element (wird sticky sein)
+    data.push({
+      id: 'filter',
+      type: 'filter',
+      component: (
+        <FilterAccordion
+          isExpanded={isAccordionExpanded}
+          onToggle={toggleAccordion}
+          renderCheckbox={renderCheckbox}
+        />
+      )
+    });
+    
+    // Posts hinzufügen
+    filteredPosts.forEach(post => {
+      data.push({
+        id: post.id,
+        type: 'post',
+        post: post
+      });
+    });
+    
+    return data;
+  }, [filteredPosts, isAccordionExpanded, toggleAccordion, renderCheckbox]);
+
+  const renderListItem = useCallback(({ item }: { item: any }) => {
+    switch (item.type) {
+      case 'header':
+        return item.component;
+      case 'filter':
+        return item.component;
+      case 'post':
+        return <PostItem item={item.post} />;
+      default:
+        return null;
+    }
+  }, []);
+
+  const scrollY = useRef(new Animated.Value(0)).current;
+
   return (
     <SafeAreaView style={styles.container}>
+      <BackgroundImage step="pinnwand" />
     {!locationPermission ? (
       <AskForLocation />
     ) : loading ? (
@@ -94,25 +132,30 @@ const Pinnwand: React.FC = () => {
         />
       </View>
     ) : (
-      <Animated.View style={{ opacity: fadeAnim, flex: 1 }}>
-        <FlatList
-          ListHeaderComponent={
-            <>
-              <PinnwandHeader />
-              <FilterAccordion
-                isExpanded={isAccordionExpanded}
-                onToggle={toggleAccordion}
-                renderCheckbox={renderCheckbox}
-              />
-            </>
-          }
-          data={filteredPosts}
-          keyExtractor={(item) => item.id}
-          renderItem={renderItem}
-          ListEmptyComponent={<EmptyListComponent />}
-          refreshControl={<RefreshHandler location={location} />}
+      <View style={{ flex: 1 }}>
+      <Animated.FlatList
+    data={filteredPosts}
+    keyExtractor={(item) => item.id}
+    renderItem={renderItem}
+    ListEmptyComponent={<EmptyListComponent />}
+    refreshControl={<RefreshHandler location={location} />}
+    ListHeaderComponent={
+      <>
+        <PinnwandHeader />
+        <FilterAccordion
+          isExpanded={isAccordionExpanded}
+          onToggle={toggleAccordion}
+          renderCheckbox={renderCheckbox}
         />
-      </Animated.View>
+      </>
+    }
+    onScroll={Animated.event(
+      [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+      { useNativeDriver: false }
+    )}
+    scrollEventThrottle={16}
+  />
+  </View>
     )}
   </SafeAreaView>
   );
@@ -122,7 +165,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    marginTop: -50,
+    marginTop: -85,
+  },
+  stickyHeaderStyle: {
+    marginTop: -20, // Move sticky header higher
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    paddingTop: 8,
+    paddingBottom: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 165, 0, 0.2)',
+   
   },
   loaderContainer: {
     justifyContent: 'center',
@@ -135,6 +187,7 @@ const styles = StyleSheet.create({
   spacer: {
     height: 150,
   },
+
   emptyListContainer: {
     borderWidth: 1,
     borderRadius: 25,
