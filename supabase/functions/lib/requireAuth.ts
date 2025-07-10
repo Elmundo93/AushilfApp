@@ -1,20 +1,34 @@
-import { supabaseAdmin } from './supabaseClient.ts';
-import { decode } from 'https://deno.land/x/djwt@v2.8/mod.ts';
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 
 export async function requireAuth(req: Request) {
-  const token = req.headers.get('Authorization')?.replace('Bearer ', '');
-  if (!token) throw new Error('Kein Auth-Header übergeben');
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    throw new Error("Authorization header missing or invalid");
+  }
+  const jwt = authHeader.split(" ")[1];
+
+  // Load environment variables
+  const supabaseUrl = Deno.env.get('SUPABASE_URL');
+  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error("Supabase configuration missing");
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
   try {
-    const payload = (await decode(token))[1] as { user_id: string };
-    const userId = payload?.user_id;
-    if (!userId) throw new Error('Kein User-ID im Token gefunden');
-
-    const { data, error } = await supabaseAdmin.auth.getUserById(userId);
-    if (error || !data?.user) throw new Error('Benutzer nicht gefunden');
-
-    return data.user;
+    console.log("Verifying JWT and extracting user ID");
+    const { data: { user }, error } = await supabase.auth.getUser(jwt);
+    if (error || !user) {
+      console.error("Invalid token:", error ? error.message : "No user found");
+      throw new Error("Invalid token");
+    }
+    
+    console.log("User authenticated:", user.id);
+    return user;
   } catch (e) {
-    throw new Error('Token ungültig oder fehlerhaft: ' + String(e));
+    console.error("Auth error:", e);
+    throw new Error("Token ungültig oder fehlerhaft: " + String(e));
   }
 }

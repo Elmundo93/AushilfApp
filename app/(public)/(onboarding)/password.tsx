@@ -17,7 +17,7 @@ export default function PasswordScreen() {
   const { password, setField, userInfo } = useOnboardingStore();
   const pathname = usePathname();
 
-  const steps = ['intro', 'userinfo', 'userinfo2', 'intent', 'about', 'profileImage', 'password', 'conclusion', 'savety'];
+  const steps = ['intro', 'userinfo', 'userinfo2', 'intent', 'about', 'profileImage', 'password', 'conclusion', 'verify-identity', 'subscribe'];
   const currentStep = steps.findIndex((step) => pathname.includes(step));
   const [showPassword, setShowPassword] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState({

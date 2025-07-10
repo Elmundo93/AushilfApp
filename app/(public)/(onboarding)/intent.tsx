@@ -24,7 +24,7 @@ export default function IntentScreen() {
   const { setField, categories } = useOnboardingStore();
   const [selectedCategories, setSelectedCategories] = useState<string[]>(categories || []);
   const pathname = usePathname();
-  const steps = ['intro', 'userinfo', 'userinfo2', 'intent', 'about', 'profileImage', 'password', 'conclusion', 'savety'];
+  const steps = ['intro', 'userinfo', 'userinfo2', 'intent', 'about', 'profileImage', 'password', 'conclusion', 'verify-identity', 'subscribe'];
   const currentStep = steps.findIndex((step) => pathname.includes(step));
 
   React.useEffect(() => {

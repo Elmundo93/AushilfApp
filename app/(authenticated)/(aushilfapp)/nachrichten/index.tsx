@@ -1,11 +1,12 @@
 // nachrichten/index.tsx
 import React, { useContext, useState, useEffect } from 'react';
-import { View, FlatList, ActivityIndicator, StyleSheet, Text } from 'react-native';
-import { router } from 'expo-router';
+import { View, FlatList, ActivityIndicator, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { router, useFocusEffect } from 'expo-router';
 import { FontSizeContext } from '@/components/provider/FontSizeContext';
 import { CategoryFilter } from '@/components/Nachrichten/CategoryFilter';
 import ChannelPreview from '@/components/Nachrichten/Channel/ChannelPreview';
-import { useFilteredChannelsStreamChatStore } from '@/components/hooks/useFilteredChannels';
+import MutedUsersList from '@/components/Nachrichten/MutedUsersList';
+import { useFilteredChannelsStreamChatStore, useMutedChannels, useMutedUsers } from '@/components/hooks/useFilteredChannels';
 import { useStreamChatStore } from '@/components/stores/useStreamChatStore';
 import { StoredChannel } from '@/components/types/stream';
 import { useChatContext } from '@/components/provider/ChatProvider';
@@ -16,9 +17,14 @@ import { useSQLiteContext } from 'expo-sqlite';
 import { useAuthStore } from '@/components/stores/AuthStore';
 import { useActiveChatStore } from '@/components/stores/useActiveChatStore';
 import { useOptimizedChatLoading } from '@/components/Chat/hooks/useOptimizedChatLoading';
+import { useSafeLoading } from '@/components/hooks/useLoading';
+import { useMuteStore } from '@/components/stores/useMuteStore';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
 function ChannelList() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [showMuted, setShowMuted] = useState(false);
+  const [showMutedUsers, setShowMutedUsers] = useState(false);
   const { fontSize } = useContext(FontSizeContext);
   const db = useSQLiteContext();
   const { streamChatClient, user } = useAuthStore();
@@ -32,8 +38,13 @@ function ChannelList() {
   const { isInitialized } = useOptimizedChatLoading();
 
   const channels = useFilteredChannelsStreamChatStore(selectedCategory);
-  const loading = useStreamChatStore((s) => s.loading);
+  const mutedChannels = useMutedChannels();
+  const mutedUsers = useMutedUsers();
+  const rawLoading = useStreamChatStore((s) => s.loading);
   const channelsReady = useStreamChatStore((s) => s.channelsReady);
+
+  // Use safe loading to prevent conflicts with global loading
+  const loading = useSafeLoading(rawLoading);
 
   const minIconSize = 75;
   const maxIconSize = 280;
@@ -51,12 +62,6 @@ function ChannelList() {
     });
   };
 
-  useEffect(() => {
-    // Entfernt: Automatischer Sync beim Laden der ChannelList
-    // Das verursacht das Problem, da es den Store zurücksetzt
-    // Der Sync sollte nur bei Bedarf erfolgen, nicht automatisch
-  }, [user?.id]);
-
   useChatListeners(streamChatClient, null, addMessage, setZustandChannels, db, user, activeMessages);
   useChatLifecycle(user?.id, db);
 
@@ -64,6 +69,66 @@ function ChannelList() {
   useEffect(() => {
     // Removed excessive logging to prevent loops
   }, [channels.length, loading, isInitialized, channelsReady, selectedCategory]);
+
+  const renderMutedSection = () => {
+    if (mutedChannels.length === 0) return null;
+
+    return (
+      <View style={styles.mutedSection}>
+        <TouchableOpacity 
+          style={styles.mutedHeader}
+          onPress={() => setShowMuted(!showMuted)}
+        >
+          <MaterialCommunityIcons 
+            name={showMuted ? "chevron-down" : "chevron-right"} 
+            size={20} 
+            color="#666" 
+          />
+          <Text style={styles.mutedHeaderText}>
+            Stummgeschaltete Channels ({mutedChannels.length})
+          </Text>
+        </TouchableOpacity>
+        
+        {showMuted && (
+          <View style={styles.mutedChannels}>
+            {mutedChannels.map((channel) => (
+              <ChannelPreview
+                key={channel.cid}
+                channel={channel}
+                onSelect={handleChannelSelect}
+              />
+            ))}
+          </View>
+        )}
+      </View>
+    );
+  };
+
+  const renderMutedUsersSection = () => {
+    if (mutedUsers.length === 0) return null;
+
+    return (
+      <View style={styles.mutedSection}>
+        <TouchableOpacity 
+          style={styles.mutedHeader}
+          onPress={() => setShowMutedUsers(!showMutedUsers)}
+        >
+          <MaterialCommunityIcons 
+            name={showMutedUsers ? "chevron-down" : "chevron-right"} 
+            size={20} 
+            color="#666" 
+          />
+          <Text style={styles.mutedHeaderText}>
+            Stummgeschaltete Benutzer ({mutedUsers.length})
+          </Text>
+        </TouchableOpacity>
+        
+        {showMutedUsers && (
+          <MutedUsersList />
+        )}
+      </View>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -77,11 +142,6 @@ function ChannelList() {
           />
           <ActivityIndicator size="large" color="#007AFF" style={styles.spinner} />
         </View>
-      ) : channels.length === 0 && channelsReady ? (
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>Keine Nachrichten vorhanden</Text>
-          <Text style={styles.emptySubText}>Suchen Sie nach Posts und starten Sie eine Konversation!</Text>
-        </View>
       ) : (
         <>
           <CategoryFilter
@@ -89,6 +149,31 @@ function ChannelList() {
             onSelectCategory={handleCategorySelect}
             iconSize={iconSize}
           />
+          {renderMutedUsersSection()}
+          {renderMutedSection()}
+          
+          {channels.length === 0 && mutedChannels.length === 0 && mutedUsers.length === 0 && channelsReady ? (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>Keine Nachrichten vorhanden</Text>
+              <Text style={styles.emptySubText}>
+                {selectedCategory 
+                  ? `Keine Chats in der Kategorie "${selectedCategory}" gefunden. Wählen Sie eine andere Kategorie oder alle Kategorien.`
+                  : 'Suchen Sie nach Posts und starten Sie eine Konversation!'
+                }
+              </Text>
+              {selectedCategory && (
+                <TouchableOpacity 
+                  style={styles.resetFilterButton}
+                  onPress={() => setSelectedCategory(null)}
+                >
+                  <View style={styles.resetFilterGradient}>
+                    <Text style={styles.resetFilterText}>Alle Kategorien anzeigen</Text>
+                    <Text style={styles.resetFilterSubText}>Filter zurücksetzen</Text>
+                  </View>
+                </TouchableOpacity>
+              )}
+            </View>
+          ) : (
           <FlatList
             data={channels}
             keyExtractor={(item) => item.cid}
@@ -101,6 +186,7 @@ function ChannelList() {
             contentContainerStyle={styles.channelList}
             showsVerticalScrollIndicator={false}
           />
+          )}
         </>
       )}
     </View>
@@ -134,15 +220,71 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   emptyText: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 10,
   },
   emptySubText: {
-    fontSize: 16,
+    fontSize: 20,
     textAlign: 'center',
     color: '#666',
+  },
+  mutedSection: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  mutedHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    backgroundColor: '#f8f8f8',
+  },
+  mutedHeaderText: {
+    marginLeft: 8,
+    fontSize: 14,
+    color: '#666',
+    fontWeight: '500',
+  },
+  mutedChannels: {
+    backgroundColor: '#f8f8f8',
+  },
+  resetFilterButton: {
+    marginTop: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    backgroundColor: 'orange',
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+    minWidth: 200,
+    alignSelf: 'center',
+  },
+  resetFilterGradient: {
+    backgroundColor: 'orange',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  resetFilterText: {
+    color: 'white',
+    fontSize: 22,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  resetFilterSubText: {
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: 16,
+    marginTop: 2,
+    textAlign: 'center',
   },
 });
 

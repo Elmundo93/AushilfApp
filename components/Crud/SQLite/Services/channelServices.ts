@@ -14,7 +14,51 @@ function formatMaybeDate(input: string | Date | undefined | null): string | null
 function safeGetPartner(channel: Channel): any {
   try {
     const meId = channel.getClient().userID;
-    return Object.values(channel.state.members).find((m) => m.user?.id !== meId)?.user || {};
+    
+    // Try to get partner data from channel metadata first
+    const channelData = channel.data;
+    if (channelData) {
+      // If current user is the post creator, partner is the post user
+      // If current user is not the post creator, partner is the post creator
+      const isPostCreator = channelData.custom_post_user_id === meId;
+      
+      if (isPostCreator) {
+        // Current user is post creator, partner is the user who responded
+        return {
+          id: channelData.custom_user_id || '',
+          vorname: channelData.custom_user_vorname || '',
+          nachname: channelData.custom_user_nachname || '',
+          image: channelData.custom_user_profileImage || '',
+          userBio: channelData.custom_user_userBio || '',
+        };
+      } else {
+        // Current user is not post creator, partner is the post creator
+        return {
+          id: channelData.custom_post_user_id || '',
+          vorname: channelData.custom_post_vorname || '',
+          nachname: channelData.custom_post_nachname || '',
+          image: channelData.custom_post_profileImage || '',
+          userBio: channelData.custom_post_userBio || '',
+        };
+      }
+    }
+    
+    // Fallback: try to get from channel members
+    const members = Object.values(channel.state.members || {});
+    const partner = members.find((m: any) => m.user?.id !== meId)?.user;
+    
+    if (partner) {
+      return {
+        id: partner.id || '',
+        vorname: partner.vorname || partner.name?.split(' ')[0] || '',
+        nachname: partner.nachname || partner.name?.split(' ').slice(1).join(' ') || '',
+        image: partner.image || '',
+        userBio: partner.userBio || '',
+      };
+    }
+    
+    console.warn('[WARN] No partner data found in channel:', channel.cid);
+    return {};
   } catch (e) {
     console.warn('[WARN] Partnerdaten konnten nicht extrahiert werden:', e);
     return {};
@@ -30,7 +74,7 @@ export function mapChannelToDbValues(channel: Channel): StoredChannel {
   const meId = channel.getClient().userID;
   const partner = safeGetPartner(channel);
 
-  return {
+  const mappedChannel = {
     cid: channel.cid,
     meId: channel.getClient().userID || '',
     channel_id: channel.id || '',
@@ -56,6 +100,18 @@ export function mapChannelToDbValues(channel: Channel): StoredChannel {
     unread_count: channel.countUnread(),
     partner_user_id: partner?.id || '',
   };
+
+  // Debug logging
+  console.log('🔍 mapChannelToDbValues for channel:', channel.cid, {
+    custom_post_vorname: mappedChannel.custom_post_vorname,
+    custom_post_nachname: mappedChannel.custom_post_nachname,
+    custom_user_vorname: mappedChannel.custom_user_vorname,
+    custom_user_nachname: mappedChannel.custom_user_nachname,
+    partner_id: mappedChannel.custom_user_id,
+    partner_user_id: mappedChannel.partner_user_id
+  });
+
+  return mappedChannel;
 }
 
 export async function saveChannelsToDb(
@@ -132,19 +188,18 @@ export async function getChannelsFromDb(
     )) || [];
     
     // Debug: Log what's loaded from database
-    // console.log('🔍 Debugging channels loaded from SQLite:');
-    // channels.forEach((channel, index) => {
-    //   const effectiveCategory = (channel.custom_post_category_choosen && isValidCategory(channel.custom_post_category_choosen)) 
-    //     ? channel.custom_post_category_choosen 
-    //     : channel.custom_post_category;
-    //   console.log(`SQLite Channel ${index}:`, {
-    //     cid: channel.cid,
-    //     custom_post_category: channel.custom_post_category,
-    //     custom_post_category_choosen: channel.custom_post_category_choosen,
-    //     effectiveCategory: effectiveCategory,
-    //     isValid: channel.custom_post_category_choosen ? isValidCategory(channel.custom_post_category_choosen) : 'N/A'
-    //   });
-    // });
+    console.log('🔍 Debugging channels loaded from SQLite:');
+    channels.forEach((channel, index) => {
+      console.log(`SQLite Channel ${index}:`, {
+        cid: channel.cid,
+        custom_post_vorname: channel.custom_post_vorname,
+        custom_post_nachname: channel.custom_post_nachname,
+        custom_user_vorname: channel.custom_user_vorname,
+        custom_user_nachname: channel.custom_user_nachname,
+        custom_user_id: channel.custom_user_id,
+        partner_user_id: channel.partner_user_id
+      });
+    });
     
     return channels;
   } catch (error) {

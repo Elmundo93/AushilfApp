@@ -7,6 +7,7 @@ import { useSQLiteContext } from 'expo-sqlite';
 import { syncFromSupabase, loadUserFromLocal } from '@/components/services/Storage/Syncs/UserSyncService';
 import { useTokenManager } from '@/components/services/token/TokenManager';
 import { useMuteStore } from '@/components/stores/useMuteStore';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
 const AuthProvider = ({ children }: PropsWithChildren) => {
@@ -31,8 +32,31 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
   
   const loadMutedUsers = async () => {
     const client = useAuthStore.getState().streamChatClient;
-    const mutedIds = client?.mutedUsers?.map((m) => m.target.id) ?? [];
-    useMuteStore.getState().setMutedUserIds(mutedIds);
+    if (!client) return;
+    
+    try {
+      // Load muted users from StreamChat
+      const mutedUsers = client.mutedUsers || [];
+      const mutedUserIds = mutedUsers.map((m) => m.target.id);
+      useMuteStore.getState().setMutedUserIds(mutedUserIds);
+      console.log('✅ Loaded muted users from StreamChat:', mutedUserIds.length);
+      
+      // Load muted users data from AsyncStorage for persistence
+      try {
+        const storedMutedUsers = await AsyncStorage.getItem('mutedUsers');
+        if (storedMutedUsers) {
+          const parsedUsers = JSON.parse(storedMutedUsers);
+          useMuteStore.getState().setMutedUsers(parsedUsers);
+          console.log('✅ Loaded muted users data from storage:', parsedUsers.length);
+        }
+      } catch (storageError) {
+        console.warn('⚠️ Could not load muted users from storage:', storageError);
+      }
+      
+      console.log('✅ Mute store initialized');
+    } catch (error) {
+      console.error('❌ Error loading muted users:', error);
+    }
   };
 
   const isRedirecting = useRef(false);
@@ -48,8 +72,13 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
       '/about',
       '/profileImage',
       '/password',
+      '/payment-success',
+      '/payment-cancelled',
       '/conclusion',
-      '/savety',
+      '/verify-identity',
+      '/verify-identity-success',
+      '/verify-identity-canceled',
+      '/subscribe',
       '/payment-success',
       '/payment-cancelled'
     ];

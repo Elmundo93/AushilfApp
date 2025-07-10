@@ -24,7 +24,7 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
 
   const router = useRouter();
-  const { setIsLoading } = useLoading();
+  const { withLoading } = useLoading();
   const { loginWithEmail } = useAuth();
 
   const beeAnimation = require('@/assets/animations/Bee.json');
@@ -34,17 +34,17 @@ export default function LoginScreen() {
       return Alert.alert('Fehler', 'Bitte E-Mail und Passwort eingeben.');
     }
 
-    setLoading(true);
-    setIsLoading(true);
-
     try {
-      const user = await loginWithEmail(email, password);
-      // Navigation übernimmt der AuthProvider!
+      setLoading(true);
+      await withLoading(async () => {
+        const user = await loginWithEmail(email, password);
+        // Navigation übernimmt der AuthProvider!
+        return user;
+      }, 'Anmeldung läuft...');
     } catch (e) {
       Alert.alert('Login fehlgeschlagen', 'Prüfen Sie Ihre Zugangsdaten.');
     } finally {
       setLoading(false);
-      setIsLoading(false);
     }
   };
 

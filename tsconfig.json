@@ -29,6 +29,6 @@
     "custom.d.ts",
     ".expo/types/**/*.ts",
     "expo-env.d.ts"
-  ],
+, "app/(public)/(onboarding)/savety.tsxxxxx"  ],
   "extends": "expo/tsconfig.base"
 }

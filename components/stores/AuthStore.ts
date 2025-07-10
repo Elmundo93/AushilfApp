@@ -48,6 +48,9 @@ export const useAuthStore = create<AuthState>((set) => ({
   registrationProgress: 0,
   registrationSuccessConfirmed: false,
   anmeldungsToggle: false,
+  isVerified: false,
+  is_id_verified: false,
+  id_veried_name_match: false,
 
   setUser: (user) =>
     set((state) => {

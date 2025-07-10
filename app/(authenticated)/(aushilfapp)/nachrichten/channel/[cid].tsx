@@ -35,6 +35,7 @@ import { extractPartnerData } from '@/components/services/StreamChat/lib/extract
 import { useInitChannel } from '@/components/services/Storage/Hooks/useInitChannel';
 import { useChatContext } from '@/components/provider/ChatProvider';
 import { InitialMessageBanner } from '@/components/Nachrichten/initialMessageButton';
+import { useSafeLoading } from '@/components/hooks/useLoading';
 import GastroIconWithBackground from '@/assets/images/GastroIconWithBackground.png';
 import GartenIconWithBackground from '@/assets/images/GartenIconWithBackground.png';
 import HaushaltWithBackground from '@/assets/images/HaushaltWithBackground.png';
@@ -62,9 +63,12 @@ export default function ChannelScreen() {
   const channels = useStreamChatStore((s) => s.channels);
   const activeMessages = useActiveChatStore((s) => s.messages);
   const setMessages = useActiveChatStore((s) => s.setMessages);
-  const loading = useActiveChatStore((s) => s.loading);
+  const rawLoading = useActiveChatStore((s) => s.loading);
   const setCid = useActiveChatStore((s) => s.setCid);
   const activeCid = useActiveChatStore((s) => s.cid);
+
+  // Use safe loading to prevent conflicts with global loading
+  const loading = useSafeLoading(rawLoading);
 
   const channel = channels.find((c) => c.cid === cid);
   const currentUserId = user?.id ?? '';
@@ -83,7 +87,21 @@ export default function ChannelScreen() {
   // Use stored channel data if available
   const displayChannel = channelData || channel;
   const partnerData = extractPartnerData(displayChannel, currentUserId);
-  const isMuted = useMuteStore((s) => partnerData?.userId ? s.isMuted(partnerData.userId) : false);
+  const isMuted = useMuteStore((s) => partnerData?.userId ? s.isUserMuted(partnerData.userId) : false);
+
+  // Debug: Log channel data to see what's being displayed
+  useEffect(() => {
+    if (displayChannel) {
+      console.log('🔍 ChannelScreen: Display channel data:', {
+        cid: displayChannel.cid,
+        custom_post_vorname: displayChannel.custom_post_vorname,
+        custom_post_nachname: displayChannel.custom_post_nachname,
+        custom_user_vorname: displayChannel.custom_user_vorname,
+        custom_user_nachname: displayChannel.custom_user_nachname,
+        partnerData: partnerData
+      });
+    }
+  }, [displayChannel, partnerData]);
 
   // ALL HOOKS MUST BE CALLED BEFORE ANY EARLY RETURNS
   const { onScroll, isNearBottom, scrollToBottom } = useScrollToBottom(flatListRef as React.RefObject<FlatList<ChatMessage>>, activeMessages.length);
@@ -113,9 +131,12 @@ export default function ChannelScreen() {
     console.log('🔍 ChannelScreen: Available channels:', channels.map(ch => ch.cid));
     console.log('🔍 ChannelScreen: Channel found:', channel ? 'YES' : 'NO');
     
-    // Don't set CID in store here - it's already set by the navigation
-    // The useInitChannel hook handles all channel initialization and message syncing
-  }, [cid, channels, channel]);
+    // Sync messages from Stream Chat when channel is found
+    if (cid && channel) {
+      console.log('🔄 Triggering message sync for channel:', cid);
+      syncMessagesForChannel(cid);
+    }
+  }, [cid, channel]); // Only depend on cid and channel
 
   // Fade in content when chat is ready
   useEffect(() => {
@@ -140,10 +161,9 @@ export default function ChannelScreen() {
     opacity: loaderOpacity.value,
   }));
 
-  // Mark channel as read when opened - only once
+  // Mark channel as read when opened
   useEffect(() => {
     if (cid && displayChannel && !loading) {
-      // Only mark as read once when the channel is first opened and messages are loaded
       const markAsRead = async () => {
         try {
           await markChannelAsRead(cid);
@@ -153,7 +173,7 @@ export default function ChannelScreen() {
       };
       markAsRead();
     }
-  }, [cid, displayChannel, loading, markChannelAsRead]); // Added markChannelAsRead to dependencies
+  }, [cid, displayChannel, loading]); // Only depend on stable values
 
   useEffect(() => {
     if (!displayChannel) {
@@ -276,9 +296,9 @@ export default function ChannelScreen() {
   return (
     <View style={styles.container}>
       <CustomChatHeader
-        otherUserImage={displayChannel.custom_user_profileImage}
+        otherUserImage={partnerData.profileImageUrl || displayChannel.custom_user_profileImage}
         categoryIcon={categoryIcon as any}
-        otherUserName={displayChannel.custom_user_vorname}
+        otherUserName={`${partnerData.vorname} ${partnerData.nachname}`.trim() || 'Unbekannter Benutzer'}
         channel={displayChannel}
       />
 

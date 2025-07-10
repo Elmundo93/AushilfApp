@@ -13,7 +13,7 @@ export default function UserInfo2Screen() {
   const router = useRouter();
   const pathname = usePathname();
   const { width: screenWidth } = useWindowDimensions();
-  const steps = ['intro', 'userinfo', 'userinfo2', 'intent', 'about', 'profileImage', 'password', 'conclusion', 'savety'];
+  const steps = ['intro', 'userinfo', 'userinfo2', 'intent', 'about', 'profileImage', 'password', 'conclusion', 'verify-identity', 'subscribe'];
   const currentStep = steps.findIndex((step) => pathname.includes(step));
 
   const {

@@ -8,6 +8,7 @@ import { useChannelServices } from '@/components/Crud/SQLite/Services/channelSer
 import { useMessagesService } from '@/components/Crud/SQLite/Services/messagesService';
 import { logger } from '@/components/utils/logger';
 import { dbMutex } from '@/components/Crud/SQLite/Services/dbMutex';
+import { useStreamChatStore } from '@/components/stores/useStreamChatStore';
 
 export const useChatListeners = (
   streamChatClient: any,
@@ -88,19 +89,33 @@ export const useChatListeners = (
           addMessage(newMessage); // This will be handled by the store's addMessage logic
         }
 
-        // Only update channel list if this is a new message (not just a channel update)
+        // Update channel list from database after new message (background sync)
         if (!isActive || !streamChatClient || !user) return;
         
-        // Optimized: Only reload channels occasionally, not on every message
-        const shouldUpdateChannels = Math.random() < 0.1; // 10% chance to update channels
-        if (shouldUpdateChannels) {
-          try {
-            const localChs = await getChannelsFromDb(db, user?.id ?? '');
-            if (!isActive || !streamChatClient || !user) return;
-            setZustandChannels(localChs);
-          } catch (error) {
-            console.warn('⚠️ Channel list update failed:', error);
-          }
+        try {
+          console.log('🔄 Background channel sync after new message...');
+          const localChs = await getChannelsFromDb(db, user?.id ?? '');
+          if (!isActive || !streamChatClient || !user) return;
+          
+          // Get current store channels to preserve newly created channels
+          const currentStoreChannels = useStreamChatStore.getState().channels;
+          
+          // Merge local channels with store channels, prioritizing store channels
+          const mergedChannels = [...currentStoreChannels];
+          
+          // Add local channels that don't exist in store
+          localChs.forEach(localChannel => {
+            const existsInStore = mergedChannels.some(storeChannel => storeChannel.cid === localChannel.cid);
+            if (!existsInStore) {
+              console.log('➕ Adding local channel to merged list:', localChannel.cid);
+              mergedChannels.push(localChannel);
+            }
+          });
+          
+          setZustandChannels(mergedChannels);
+          console.log('✅ Background channel sync completed');
+        } catch (error) {
+          console.warn('⚠️ Background channel sync failed:', error);
         }
       } catch (e) {
         logger.error('Subscription New Message Error:', e);
@@ -138,13 +153,33 @@ export const useChatListeners = (
           Object.values(vals)
         );
         
-        // Only update channel list occasionally for channel updates too
+        // Update channel list from database after channel update (background sync)
         if (!isActive || !streamChatClient || !user) return;
-        const shouldUpdateChannels = Math.random() < 0.05; // 5% chance for channel updates
-        if (shouldUpdateChannels) {
+        
+        try {
+          console.log('🔄 Background channel sync after channel update...');
           const localChs = await getChannelsFromDb(db, user?.id ?? '');
           if (!isActive || !streamChatClient || !user) return;
-          setZustandChannels(localChs);
+          
+          // Get current store channels to preserve newly created channels
+          const currentStoreChannels = useStreamChatStore.getState().channels;
+          
+          // Merge local channels with store channels, prioritizing store channels
+          const mergedChannels = [...currentStoreChannels];
+          
+          // Add local channels that don't exist in store
+          localChs.forEach(localChannel => {
+            const existsInStore = mergedChannels.some(storeChannel => storeChannel.cid === localChannel.cid);
+            if (!existsInStore) {
+              console.log('➕ Adding local channel to merged list:', localChannel.cid);
+              mergedChannels.push(localChannel);
+            }
+          });
+          
+          setZustandChannels(mergedChannels);
+          console.log('✅ Background channel sync completed');
+        } catch (error) {
+          console.warn('⚠️ Background channel sync failed:', error);
         }
       } catch (e) {
         logger.error('Subscription Channel Update Error:', e);
@@ -159,5 +194,5 @@ export const useChatListeners = (
       subNew.unsubscribe();
       subUpd.unsubscribe();
     };
-  }, [streamChatClient, activeCid]); // Removed activeMessages from dependencies to prevent loops
+  }, [streamChatClient, activeCid, addMessage, setZustandChannels, db, user, activeMessages, getChannelsFromDb, mapChannelToDbValues, mapMessageToDbValues, saveMessagesToDb]);
 };

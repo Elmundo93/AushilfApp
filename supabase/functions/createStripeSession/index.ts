@@ -43,8 +43,8 @@ serve(async (req) => {
       ],
       customer_email: email,
       metadata: { user_id },
-      success_url: 'https://www.wir-helfen-aus.de/payment-success',
-      cancel_url: 'https://www.wir-helfen-aus.de/payment-cancelled',
+      success_url: `${appUrl}/payment-success`,
+      cancel_url: `${appUrl}/payment-cancelled`,
     });
   
     console.log('✅ Stripe Session erstellt:', { 

@@ -16,6 +16,7 @@ import RefreshHandler from '@/components/Pinnwand/RefreshHandler';
 import AskForLocation from '@/components/Pinnwand/AskForLocation';
 import { useLocationStore } from '@/components/stores/locationStore'
 import BackgroundImage from '@/components/Onboarding/OnboardingBackground';
+import { useSafeLoading } from '@/components/hooks/useLoading';
 
 
 
@@ -26,7 +27,10 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 const Pinnwand: React.FC = () => {
   const location = useLocationStore((state) => state.location);
   const { locationPermission } = useLocationStore();
-  const { filteredPosts, loading } = usePostStore();
+  const { filteredPosts, loading: rawLoading } = usePostStore();
+
+  // Use safe loading to prevent conflicts with global loading
+  const loading = useSafeLoading(rawLoading);
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const [isAccordionExpanded, setIsAccordionExpanded] = React.useState(false);

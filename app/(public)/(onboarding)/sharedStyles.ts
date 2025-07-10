@@ -1,7 +1,7 @@
 import { StyleSheet, Dimensions } from 'react-native';
 import { LinearGradient } from 'react-native-svg';
 
-const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+
 
 export const onboardingSharedStyles = StyleSheet.create({
   // Layout

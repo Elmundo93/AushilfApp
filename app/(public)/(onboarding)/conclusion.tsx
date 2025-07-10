@@ -16,14 +16,7 @@ import { BlurView } from 'expo-blur';
 import { ScrollIndicator } from '@/components/Animation/ScrollIndicator';
 import { useScrollIndicator } from '@/components/hooks/useScrollIndicator';
 
-const CATEGORIES = [
-  { label: 'Garten', key: 'garten' },
-  { label: 'Haushalt', key: 'haushalt' },
-  { label: 'Soziales', key: 'soziales' },
-  { label: 'Gastro', key: 'gastro' },
-  { label: 'Handwerk', key: 'handwerk' },
-  { label: 'Bildung', key: 'bildung' },
-];
+
 
 export default function ConclusionScreen() {
   const { user, setUser } = useAuthStore();
@@ -41,7 +34,7 @@ export default function ConclusionScreen() {
     reset,
     password,
   } = useOnboardingStore();
-  const steps = ['intro', 'userinfo', 'userinfo2', 'intent', 'about', 'profileImage', 'password', 'conclusion', 'savety'];
+  const steps = ['intro', 'userinfo', 'userinfo2', 'intent', 'about', 'profileImage', 'password', 'conclusion', 'verify-identity', 'subscribe'];
   const currentStep = steps.findIndex((step) => pathname.includes(step));
   
   const [isExpanded, setIsExpanded] = React.useState(false);
@@ -107,7 +100,7 @@ export default function ConclusionScreen() {
 
       setUser({ ...updatedUser });
       reset();
-      router.push('savety' as any);
+      router.push('/(public)/(onboarding)/verify-identity' as any);
     } catch (error) {
       console.error('❌ Fehler beim Abschluss des Onboardings:', error);
       Alert.alert(

@@ -17,6 +17,8 @@ import { useActiveChatStore } from '@/components/stores/useActiveChatStore';
 import { chatService } from '@/components/services/StreamChat/chatService';
 import { useAuthStore } from '@/components/stores/AuthStore';
 import { extractPartnerData } from '@/components/services/StreamChat/lib/extractPartnerData';
+import { useSQLiteContext } from 'expo-sqlite';
+import { useMuteStore } from '@/components/stores/useMuteStore';
 
 const NachrichtenMenu: React.FC<{ iconSize?: number; iconColor?: string }> = ({
   iconSize = 24,
@@ -24,79 +26,106 @@ const NachrichtenMenu: React.FC<{ iconSize?: number; iconColor?: string }> = ({
 }) => {
   const { fontSize } = useContext(FontSizeContext);
   const [visible, setVisible] = useState(false);
+  const [isMuting, setIsMuting] = useState(false);
   const { setSelectedUser } = useSelectedUserStore();
   const { channels } = useStreamChatStore();
   const { cid } = useActiveChatStore();
   const user = useAuthStore((s) => s.user);
-  const [isMuted, setIsMuted] = useState(false);
   const channel = channels.find((ch) => ch.cid === cid);
   const partnerData = channel ? extractPartnerData(channel, user?.id ?? '') : null;
+  const db = useSQLiteContext();
+
+  // Enhanced mute state management
+  const { isUserMuted, isChannelMuted, toggleUserMute, toggleChannelMute, setLoading } = useMuteStore();
+  const isUserMutedState = partnerData ? isUserMuted(partnerData.userId) : false;
+  const isChannelMutedState = cid ? isChannelMuted(cid) : false;
 
   const adjustedFontSize = Math.min((fontSize / 24) * 22, 28);
 
-  useEffect(() => {
-    const checkIfMuted = async () => {
-      if (!partnerData) return;
-      const client = useAuthStore.getState().streamChatClient;
-      const mutedIds = client?.mutedUsers?.map((m) => m.target.id);
-      setIsMuted(mutedIds?.includes(partnerData.userId) ?? false);
-    };
-  
-    checkIfMuted();
-  }, [partnerData]);
-
   const handleViewProfile = () => {
     if (!partnerData) return;
+    console.log('partnerData', partnerData);
     setSelectedUser(partnerData);
     setVisible(false);
+    router.back();
+    
     setTimeout(() => {
       router.push('/(modal)/forreignProfile');
     }, 100);
   };
 
-  const handleBlockUser = async () => {
+  const handleToggleUserMute = async () => {
     if (!partnerData) return;
     setVisible(false);
-    try {
-      await chatService.blockUser(partnerData.userId);
-      Alert.alert('Erfolg', `${partnerData.vorname} wurde blockiert.`);
-    } catch (e: any) {
-      Alert.alert('Fehler beim Blockieren', e.message);
-    }
-  };
-  
-  const handleToggleMute = async () => {
-    if (!partnerData) return;
-    setVisible(false);
-    const client = useAuthStore.getState().streamChatClient;
+    setLoading(true);
 
     try {
-      if (isMuted) {
+      if (isUserMutedState) {
         await chatService.unmuteUser(partnerData.userId);
+        toggleUserMute(partnerData.userId);
         Alert.alert('Erfolg', `${partnerData.vorname} wurde wieder hörbar.`);
       } else {
         await chatService.muteUser(partnerData.userId);
+        toggleUserMute(partnerData.userId, {
+          vorname: partnerData.vorname,
+          nachname: partnerData.nachname,
+          profileImageUrl: partnerData.profileImageUrl,
+        });
         Alert.alert('Erfolg', `${partnerData.vorname} wurde stummgeschaltet.`);
       }
-    
-      const mutedIds = client?.mutedUsers?.map((m) => m.target.id);
-      setIsMuted(mutedIds?.includes(partnerData.userId) ?? false);
     } catch (e: any) {
       Alert.alert('Fehler', e.message);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleDeleteChat = async () => {
+  const handleToggleChannelMute = async () => {
     if (!cid) return;
-    setVisible(false);
-    try {
-      const [type, id] = cid.split(':');
-      await chatService.deleteChannel(type, id);
-      Alert.alert('Erfolg', 'Chat wurde gelöscht.');
-      // optional: Zustand aktualisieren oder Navigation zurück
-    } catch (e: any) {
-      Alert.alert('Fehler beim Löschen', e.message);
-    }
+    
+    // Show confirmation dialog
+    Alert.alert(
+      isChannelMutedState ? 'Channel wieder hörbar machen?' : 'Channel stummschalten?',
+      isChannelMutedState 
+        ? 'Möchten Sie diesen Channel wieder hörbar machen?'
+        : 'Möchten Sie diesen Channel stummschalten? Sie erhalten keine Benachrichtigungen mehr.',
+      [
+        { text: 'Abbrechen', style: 'cancel' },
+        {
+          text: isChannelMutedState ? 'Hörbar machen' : 'Stummschalten',
+          style: 'default',
+          onPress: async () => {
+            setVisible(false);
+            setIsMuting(true);
+            setLoading(true);
+            
+            try {
+              console.log('🔇 Starting channel mute toggle for cid:', cid);
+              
+              if (isChannelMutedState) {
+                await chatService.unmuteChannel(cid);
+                toggleChannelMute(cid);
+                Alert.alert('Erfolg', 'Channel wurde wieder hörbar gemacht.');
+              } else {
+                await chatService.muteChannel(cid);
+                toggleChannelMute(cid);
+                Alert.alert('Erfolg', 'Channel wurde stummgeschaltet.');
+              }
+              
+            } catch (e: any) {
+              console.error('❌ Channel mute toggle failed:', e);
+              Alert.alert(
+                'Fehler beim Stummschalten', 
+                e.message || 'Der Channel konnte nicht stummgeschaltet werden. Bitte versuchen Sie es erneut.'
+              );
+            } finally {
+              setIsMuting(false);
+              setLoading(false);
+            }
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -118,10 +147,10 @@ const NachrichtenMenu: React.FC<{ iconSize?: number; iconColor?: string }> = ({
         <Pressable style={styles.overlay} onPress={() => setVisible(false)}>
           <View style={styles.menuBox}>
             <MenuItem onPress={handleViewProfile} text="Profil betrachten" fontSize={adjustedFontSize} />
-            <MenuItem onPress={handleDeleteChat} text="Chat löschen" fontSize={adjustedFontSize} />
+           
             <MenuItem
-  onPress={handleToggleMute}
-  text={isMuted ? 'Stummschaltung aufheben' : 'Benutzer stummschalten'}
+  onPress={handleToggleUserMute}
+  text={isUserMutedState ? 'Stummschaltung aufheben' : 'Benutzer stummschalten'}
   fontSize={adjustedFontSize}
 />
            

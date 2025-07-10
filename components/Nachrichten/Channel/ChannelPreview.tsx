@@ -1,22 +1,20 @@
-import React, { useContext, useEffect, useRef } from 'react';
-import {
-  View, Text, StyleSheet, Image, TouchableOpacity,
-} from 'react-native';
-import { format, isValid } from 'date-fns';
-import { Animated } from 'react-native';
+import React, { useContext } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { FontSizeContext } from '@/components/provider/FontSizeContext';
-import { ChannelPreviewProps } from '@/components/types/stream';
-import { useSelectedUserStore } from '@/components/stores/selectedUserStore';
-import { useRouter } from 'expo-router';
-import DefaultAvatar from '@/assets/images/DefaultAvatar.png';
+import { StoredChannel } from '@/components/types/stream';
+import { useMuteStore } from '@/components/stores/useMuteStore';
+import { useAuthStore } from '@/components/stores/AuthStore';
+import { extractPartnerData } from '@/components/services/StreamChat/lib/extractPartnerData';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+
+// Category icons
+import GastroIconWithBackground from '@/assets/images/GastroIconWithBackground.png';
 import GartenIconWithBackground from '@/assets/images/GartenIconWithBackground.png';
 import HaushaltWithBackground from '@/assets/images/HaushaltWithBackground.png';
 import SozialesIconWithBackground from '@/assets/images/SozialesIconWithBackground.png';
-import GastroIconWithBackground from '@/assets/images/GastroIconWithBackground.png';
 import HandwerkIconWithBackground from '@/assets/images/HandwerkIconWithBackground.png';
 import BildungsIconWithBackground from '@/assets/images/BildungsIconWithBackground.png';
-import { UserProfile } from '@/components/types/auth';
-import { styles } from './styles';
+
 const categoryIcons = {
   gastro: GastroIconWithBackground,
   garten: GartenIconWithBackground,
@@ -26,155 +24,160 @@ const categoryIcons = {
   bildung: BildungsIconWithBackground,
 };
 
-// Animated Unread Badge Component
-const AnimatedUnreadBadge: React.FC<{ count: number; size: number }> = ({ count, size }) => {
-  const pulseAnim = useRef(new Animated.Value(1)).current;
-  const scaleAnim = useRef(new Animated.Value(0.8)).current;
-
-  useEffect(() => {
-    if (count > 0) {
-      // Start with a subtle scale animation
-      Animated.sequence([
-        Animated.timing(scaleAnim, {
-          toValue: 1.1,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-        Animated.timing(scaleAnim, {
-          toValue: 1,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-      ]).start();
-
-      // Continuous pulse animation
-      const pulseAnimation = Animated.loop(
-        Animated.sequence([
-          Animated.timing(pulseAnim, {
-            toValue: 1.05,
-            duration: 1500,
-            useNativeDriver: true,
-          }),
-          Animated.timing(pulseAnim, {
-            toValue: 1,
-            duration: 1500,
-            useNativeDriver: true,
-          }),
-        ])
-      );
-      pulseAnimation.start();
-
-      return () => pulseAnimation.stop();
-    }
-  }, [count]);
-
-  if (count === 0) return null;
-
-  return (
-    <Animated.View
-      style={[
-        styles.unreadBadge,
-        {
-          width: size - 8,
-          height: size - 8,
-          transform: [{ scale: scaleAnim }, { scale: pulseAnim }],
-        },
-      ]}
-    >
-      <Text style={styles.unreadText}>{count}</Text>
-    </Animated.View>
-  );
-};
+interface ChannelPreviewProps {
+  channel: StoredChannel;
+  onSelect: (channel: StoredChannel) => void;
+}
 
 const ChannelPreview: React.FC<ChannelPreviewProps> = ({ channel, onSelect }) => {
   const { fontSize } = useContext(FontSizeContext);
-  const { setSelectedUser } = useSelectedUserStore();
-  const router = useRouter();
+  const { isChannelMuted, isUserMuted } = useMuteStore();
+  const user = useAuthStore((s) => s.user);
+  
+  // Extract partner data to get the correct name to display
+  const partnerData = extractPartnerData(channel, user?.id ?? '');
+  
+  // Check if channel or user is muted
+  const isChannelMutedState = isChannelMuted(channel.cid);
+  const isUserMutedState = partnerData?.userId ? isUserMuted(partnerData.userId) : false;
+  const isMuted = isChannelMutedState || isUserMutedState;
 
-  const minIconSize = 30;
-  const maxIconSize = 50;
-  const adjustedFontSize = fontSize * 1.2;
-  const iconSize = Math.min(Math.max(fontSize * 1.5, minIconSize), maxIconSize);
-
-  const partnerData: UserProfile = {
-    userId: channel.partner_user_id as string || '',
-    vorname: channel.custom_user_vorname || '',
-    nachname: channel.custom_user_nachname || '',
-    profileImageUrl: channel.custom_user_profileImage || '',
-    bio: channel.custom_user_userBio || '',
-    kategorien: channel.custom_post_category ? [channel.custom_post_category] : [],
-    chosenCategory: channel.custom_post_category_choosen || '',
-  };
-
-  const rawDate = new Date(channel.last_message_at ?? '');
-  const lastMessageDate = isValid(rawDate) ? format(rawDate, 'HH:mm') : '';
-  const lastMessageText = channel.last_message_text || 'Keine Nachrichten';
-  const unreadCount = channel.unread_count || 0;
-
+  // Get category and icon
   const validCategories = ['gastro', 'garten', 'haushalt', 'soziales', 'handwerk', 'bildung'];
   const isValidCategory = (category: string) => validCategories.includes(category);
   
   const category = (channel.custom_post_category_choosen && isValidCategory(channel.custom_post_category_choosen)) 
     ? channel.custom_post_category_choosen 
     : channel.custom_post_category;
-  const categoryIcon = categoryIcons[category as keyof typeof categoryIcons] ?? null;
+  const categoryIcon = category ? categoryIcons[category as keyof typeof categoryIcons] : null;
 
-  // Debug: Log category information
-  // console.log('🔍 ChannelPreview category debug:', {
-  //   cid: channel.cid,
-  //   custom_post_category: channel.custom_post_category,
-  //   custom_post_category_choosen: channel.custom_post_category_choosen,
-  //   effectiveCategory: category,
-  //   hasIcon: !!categoryIcon,
-  //   iconKeys: Object.keys(categoryIcons),
-  //   categoryType: typeof category,
-  //   categoryLength: category?.length
-  // });
+  const adjustedFontSize = Math.min((fontSize / 24) * 16, 20);
+  const subFontSize = Math.min((fontSize / 24) * 14, 18);
 
-  const handleAvatarPress = () => {
-    setSelectedUser(partnerData);
-    router.push('/(modal)/forreignProfile');
-  };
+  const containerStyle = [
+    styles.container,
+    isMuted && styles.mutedContainer
+  ].filter(Boolean) as any;
+
+  // Use partner data for display name and image
+  const displayName = `${partnerData.vorname} ${partnerData.nachname}`.trim() || 'Unbekannter Benutzer';
+  const displayImage = partnerData.profileImageUrl || channel.custom_post_profileImage;
 
   return (
-    <View style={styles.outerContainer}>
-      <TouchableOpacity onPress={handleAvatarPress}>
-        <View style={styles.avatarContainer}>
-          <Image
-            source={
-              partnerData.profileImageUrl
-                ? { uri: partnerData.profileImageUrl as string }
-                : DefaultAvatar as any
-            }
-            style={[styles.avatar, { width: iconSize + 12, height: iconSize + 12 }]}
-          />
-        </View>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.contentContainer} onPress={() => onSelect(channel)}>
-        <View style={styles.leftContainer}>
-          {categoryIcon && (
-            <Image source={categoryIcon as any} style={[styles.icon, { width: iconSize, height: iconSize }]} />
+    <TouchableOpacity
+      style={containerStyle}
+      onPress={() => onSelect(channel)}
+    >
+      <View style={styles.avatarContainer}>
+        <Image
+          source={
+            displayImage
+              ? { uri: displayImage }
+              : require('@/assets/images/DefaultAvatar.png')
+          }
+          style={styles.avatar}
+        />
+        {isMuted && (
+          <View style={styles.muteIndicator}>
+            <MaterialCommunityIcons name="volume-off" size={12} color="white" />
+          </View>
+        )}
+        {categoryIcon && (
+          <Image source={categoryIcon as any} style={styles.categoryIcon} />
+        )}
+      </View>
+      
+      <View style={styles.content}>
+        <View style={styles.header}>
+          <Text style={[styles.name, { fontSize: adjustedFontSize }, isMuted && styles.mutedText]}>
+            {displayName}
+          </Text>
+          {channel.last_message_at && (
+            <Text style={[styles.time, { fontSize: subFontSize }, isMuted && styles.mutedText]}>
+              {new Date(channel.last_message_at).toLocaleDateString('de-DE')}
+            </Text>
           )}
         </View>
-        <View style={styles.middleContainer}>
-          <Text style={[styles.channelName, { fontSize: adjustedFontSize }]}>
-            {partnerData.vorname} {partnerData.nachname?.[0] || ''}.
+        
+        <Text style={[styles.lastMessage, { fontSize: subFontSize }, isMuted && styles.mutedText]}>
+          {channel.last_message_text || 'Keine Nachrichten'}
+        </Text>
+        
+        {isMuted && (
+          <Text style={[styles.mutedLabel, { fontSize: subFontSize }]}>
+            {isChannelMutedState ? 'Channel stummgeschaltet' : 'Benutzer stummgeschaltet'}
           </Text>
-          <Text style={[styles.lastMessage, { fontSize: adjustedFontSize }]} numberOfLines={1}>
-            {lastMessageText}
-          </Text>
-        </View>
-        <View style={styles.rightContainer}>
-          <Text style={[styles.date, { fontSize: adjustedFontSize - 6 }]}>{lastMessageDate}</Text>
-          <AnimatedUnreadBadge count={unreadCount} size={iconSize} />
-        </View>
-      </TouchableOpacity>
-    </View>
+        )}
+      </View>
+    </TouchableOpacity>
   );
 };
 
-export default ChannelPreview;
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+    backgroundColor: 'white',
+  },
+  mutedContainer: {
+    backgroundColor: '#f8f8f8',
+    opacity: 0.7,
+  },
+  avatarContainer: {
+    position: 'relative',
+    marginRight: 12,
+  },
+  avatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+  },
+  muteIndicator: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    backgroundColor: '#666',
+    borderRadius: 8,
+    padding: 2,
+  },
+  categoryIcon: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+  },
+  content: {
+    flex: 1,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  name: {
+    fontWeight: '600',
+    color: '#333',
+  },
+  time: {
+    color: '#666',
+  },
+  lastMessage: {
+    color: '#666',
+    marginBottom: 4,
+  },
+  mutedText: {
+    color: '#999',
+  },
+  mutedLabel: {
+    color: '#ff6b6b',
+    fontStyle: 'italic',
+  },
+});
 
-// Styles bleiben gleich wie bei dir
+export default ChannelPreview;
 

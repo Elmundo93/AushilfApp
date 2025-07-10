@@ -12,6 +12,8 @@ import { useAuthStore } from '@/components/stores/AuthStore';
 import { useActiveChatStore } from '@/components/stores/useActiveChatStore';
 import { chatService } from '@/components/services/StreamChat/chatService';
 import { FontSizeContext } from '@/components/provider/FontSizeContext';
+import { useSQLiteContext } from 'expo-sqlite';
+import { useStreamChatStore } from '@/components/stores/useStreamChatStore';
 
 type Props = {
   chatPartnerId: string;
@@ -21,10 +23,20 @@ const NachrichtenMenu: React.FC<Props> = ({ chatPartnerId }) => {
   const { fontSize } = useContext(FontSizeContext);
   const currentUserId = useAuthStore((s) => s.user?.id ?? '');
   const router = useRouter();
-  const chat = useActiveChatStore((s) => s.messages);
+  const { cid } = useActiveChatStore((s) => s);
+  const db = useSQLiteContext();
 
-  const isMuted = chat?.muted_by_ids?.includes(currentUserId);
-  const isBlocked = chat?.blocked_by === currentUserId;
+  // Get the channel from StreamChat store
+  const channels = useStreamChatStore((s) => s.channels);
+  const channel = channels.find((ch: any) => ch.cid === cid);
+  
+  // Check mute/block status from StreamChat client
+  const streamClient = useAuthStore((s) => s.streamChatClient);
+  const mutedIds = streamClient?.mutedUsers?.map((m: any) => m.target.id) || [];
+  const isMuted = mutedIds.includes(chatPartnerId);
+  
+  // For now, we'll assume not blocked unless we have explicit block data
+  const isBlocked = false;
 
   const handleToggleMute = async () => {
     try {
@@ -53,7 +65,7 @@ const NachrichtenMenu: React.FC<Props> = ({ chatPartnerId }) => {
           onPress: async () => {
             try {
               await chatService.blockUser(chatPartnerId); // Zielnutzer blockieren
-              await chatService.deleteChannel('messaging', chatPartnerId); // Chat löschen
+              await chatService.deleteChannel('messaging', chatPartnerId, db); // Chat löschen
               Alert.alert('Erfolg', 'Benutzer wurde blockiert und Chat gelöscht.');
               router.back(); // Zurück zur Übersicht
             } catch (e) {

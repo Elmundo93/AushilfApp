@@ -14,6 +14,7 @@ import { MenuProvider } from 'react-native-popup-menu';
 import { FontSizeProvider } from '@/components/provider/FontSizeContext';
 import { useColorScheme } from '@/components/hooks/useColorScheme';
 import { LoadingProvider } from '@/components/provider/LoadingContext';
+import { LoadingModal } from '@/components/Animation/LoadingModal';
 import { SQLiteProviderWrapper } from '@/components/provider/SQLiteProviderWrapper';
 import { DataProvider } from '@/components/provider/DataProvider';
 import { ChatProvider } from '@/components/provider/ChatProvider';
@@ -72,6 +73,7 @@ function RootLayoutNav() {
                         <Stack.Screen name="(public)" />
                         <Stack.Screen name="(authenticated)" />
                       </Stack>
+                      <LoadingModal />
                     </StripeProvider>
                   </ChatProvider>
                 </DataProvider>

@@ -20,7 +20,27 @@ export function useChannelSync() {
 
   const messagesService = useMessagesService(db);
 
+  // Add sync state to prevent concurrent syncs
+  let isSyncing = false;
+  let lastSyncTime = 0;
+
   return useCallback(async function syncChannels() {
+    // Prevent concurrent syncs
+    if (isSyncing) {
+      console.log('⚠️ Channel sync already in progress, skipping...');
+      return;
+    }
+    
+    // Rate limiting: minimum 5 seconds between syncs
+    const now = Date.now();
+    if (now - lastSyncTime < 5000) {
+      console.log('⚠️ Channel sync rate limited, skipping...');
+      return;
+    }
+    
+    isSyncing = true;
+    lastSyncTime = now;
+    
     let isActive = true;
     try {
       console.log('🔄 Starting channel sync...');
@@ -101,9 +121,10 @@ export function useChannelSync() {
       
     } catch (e: any) {
       console.error('❌ Fehler beim Channel-Sync:', e);
-      throw e;
+      // Don't throw error to prevent app crashes
     } finally {
       setLoading(false);
+      isSyncing = false;
     }
   }, [db, streamChatClient, saveChannelsToDb, getChannelsFromDb, cleanupInvalidCategories, messagesService, setChannel, setChannelsReady, setLoading]);
 }

@@ -62,5 +62,4 @@ const styles = StyleSheet.create({
         minHeight: 20,
         maxHeight: 50,
       },
-
 });

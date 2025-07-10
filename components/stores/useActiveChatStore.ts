@@ -15,6 +15,10 @@ type ActiveChatState = {
   setLoading: (loading: boolean) => void;
   setHasMoreMessages: (hasMore: boolean) => void;
   clearMessages: () => void;
+  // Additional utility methods for respectful store management
+  clearActiveChat: () => void;
+  getMessage: (messageId: string) => ChatMessage | undefined;
+  hasMessage: (messageId: string) => boolean;
 };
 
 export const useActiveChatStore = create<ActiveChatState>((set, get) => ({
@@ -94,4 +98,17 @@ export const useActiveChatStore = create<ActiveChatState>((set, get) => ({
   setHasMoreMessages: (hasMore) => set({ hasMoreMessages: hasMore }),
   
   clearMessages: () => set({ messages: [], hasMoreMessages: true }),
+  
+  // Additional utility methods for respectful store management
+  clearActiveChat: () => set({ cid: null, messages: [], hasMoreMessages: true }),
+  
+  getMessage: (messageId) => {
+    const { messages } = get();
+    return messages.find(msg => msg.id === messageId);
+  },
+  
+  hasMessage: (messageId) => {
+    const { messages } = get();
+    return messages.some(msg => msg.id === messageId);
+  },
 }));

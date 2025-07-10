@@ -22,7 +22,7 @@ export default function AboutScreen() {
   const { bio, setField, persist, userInfo } = useOnboardingStore();
   const [localBio, setLocalBio] = useState(bio || '');
   const pathname = usePathname();
-  const steps = ['intro', 'userinfo', 'userinfo2', 'intent', 'about', 'profileImage', 'password', 'conclusion', 'savety'];
+  const steps = ['intro', 'userinfo', 'userinfo2', 'intent', 'about', 'profileImage', 'password', 'conclusion', 'verify-identity', 'subscribe'];
   const currentStep = steps.findIndex((step) => pathname.includes(step));
   const MAX_WORDS = 20;
   const wordCount = localBio.trim().split(/\s+/).filter(word => word.length > 0).length;

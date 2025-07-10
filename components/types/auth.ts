@@ -21,7 +21,8 @@ export interface User {
   steuernummer?: string;
   kategorien?: string[];
   onboarding_completed?: boolean;
-
+  is_id_verified?: boolean;
+  id_veried_name_match?: boolean;
   // Weitere Benutzerfelder hier
 }
 // types/userProfile.ts

@@ -9,7 +9,7 @@ import { PrivacyModal } from '@/components/Onboarding/PrivacyModal';
 export default function UserInfoScreen() {
   const router = useRouter();
   const pathname = usePathname();
-  const steps = ['intro', 'userinfo', 'userinfo2', 'intent', 'about', 'profileImage', 'password', 'conclusion', 'savety'];
+  const steps = ['intro', 'userinfo', 'userinfo2', 'intent', 'about', 'profileImage', 'password', 'conclusion', 'verify-identity', 'subscribe'];
   const currentStep = steps.findIndex((step) => pathname.includes(step));
 
   const {

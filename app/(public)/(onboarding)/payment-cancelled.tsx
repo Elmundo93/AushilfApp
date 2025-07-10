@@ -6,7 +6,7 @@ export default function PaymentCancelled() {
   const router = useRouter();
 
   const handleRetry = () => {
-    router.replace('/(public)/(onboarding)/savety');
+    router.replace('/(public)/(onboarding)/subscribe');
   };
 
   return (
@@ -17,7 +17,7 @@ export default function PaymentCancelled() {
         Du hast den Verifizierungsprozess abgebrochen. Du kannst ihn jederzeit neu starten.
       </Text>
       <Pressable style={styles.button} onPress={handleRetry}>
-        <Text style={styles.buttonText}>Zurück zur Sicherheitsabfrage</Text>
+        <Text style={styles.buttonText}>Zurück zur App</Text>
       </Pressable>
     </View>
   );

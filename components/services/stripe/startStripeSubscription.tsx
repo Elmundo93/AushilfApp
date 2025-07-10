@@ -32,15 +32,9 @@ export async function startStripeSubscriptionFlow({
     const { url } = await res.json();
     if (!url) throw new Error('Keine Checkout-URL erhalten');
 
-    const redirectUri = Linking.createURL('onboarding/payment-success');
+    await WebBrowser.openBrowserAsync(url);
 
-    const result = await WebBrowser.openAuthSessionAsync(url, redirectUri);
-
-    if (result.type === 'success') {
-      onSuccess();
-    } else {
-      onCancel?.();
-    }
+    onSuccess();
   } catch (err: any) {
     onError?.(err.message);
   } finally {

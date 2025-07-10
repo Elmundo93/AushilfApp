@@ -14,6 +14,9 @@ import { useAuthStore } from '@/components/stores/AuthStore';
 import { useStreamChatStore } from '@/components/stores/useStreamChatStore';
 import { useActiveChatStore } from '@/components/stores/useActiveChatStore';
 import { ChatMessage, StoredChannel } from '@/components/types/stream';
+import { User } from '@/components/types/auth';
+import { Post } from '@/components/types/post';
+import { useChatNavigation, ChatNavigationOptions } from '@/components/services/Chat/ChatNavigationService';
 import { useChannelSync } from '@/components/services/Storage/Syncs/ChannelSync';
 import { useMessageSync } from '@/components/services/Storage/Syncs/useMessageSync';
 import { useMessagesService } from '@/components/Crud/SQLite/Services/messagesService';
@@ -21,6 +24,7 @@ import { useChannelServices } from '@/components/Crud/SQLite/Services/channelSer
 import { useChatLifecycle } from '@/components/services/Storage/Hooks/useChatLifecycle';
 import { useChatListeners } from '@/components/services/Storage/Hooks/useChatListener';
 import { useSendMessage } from '@/components/services/Storage/Hooks/useSendMessage';
+import { chatService } from '@/components/services/StreamChat/chatService';
 
 interface ChatContextType {
   channels: StoredChannel[];
@@ -32,9 +36,11 @@ interface ChatContextType {
   syncChannels: () => Promise<void>;
   getMessages: (cid: string) => Promise<any[]>;
   syncMessagesForChannel: (cid: string, initialLimit?: number) => Promise<void>;
-  deleteChannel: (cid: string) => Promise<void>;
   blockUser: (userId: string, reason?: string) => Promise<void>;
   markChannelAsRead: (cid: string) => Promise<void>;
+  initializeChatWithPost: (currentUser: User, postDetails: Post, options?: ChatNavigationOptions) => Promise<string | null>;
+  navigateToChat: (cid: string) => void;
+  navigateToChatList: () => void;
 }
 
 const ChatContext = createContext<ChatContextType>({
@@ -47,16 +53,21 @@ const ChatContext = createContext<ChatContextType>({
   syncChannels: async () => {},
   getMessages: async () => [],
   syncMessagesForChannel: async () => {},
-  deleteChannel: async () => {},
   blockUser: async () => {},
   markChannelAsRead: async () => {},
+  initializeChatWithPost: async () => null,
+  navigateToChat: () => {},
+  navigateToChatList: () => {},
 });
 
 export const useChatContext = () => useContext(ChatContext);
 
-export const ChatProvider = ({ children }: PropsWithChildren<{}>) => {
+export const ChatProvider = ({ children }: PropsWithChildren) => {
   const { user, streamChatClient } = useAuthStore();
   const db = useSQLiteContext();
+
+  // Use the new chat navigation hook
+  const { initializeChatWithPost, navigateToChat, navigateToChatList } = useChatNavigation();
 
   const {
     setCid,
@@ -297,27 +308,7 @@ export const ChatProvider = ({ children }: PropsWithChildren<{}>) => {
 
   const getMessages = useCallback((cid: string) => getMessagesForChannel(cid), [getMessagesForChannel]);
 
-  const deleteChannel = useCallback(async (cid: string) => {
-    if (!streamChatClient) return;
-    const [type, id] = cid.split(':');
-    const channel = streamChatClient.channel(type, id);
 
-    try {
-      await channel.delete();
-      await db.runAsync('DELETE FROM channels_fetched WHERE cid = ?', [cid]);
-      await db.runAsync('DELETE FROM messages_fetched WHERE cid = ?', [cid]);
-
-      const localChs = await getChannelsFromDb(db, user?.id ?? '');
-      setZustandChannels(localChs);
-
-      if (activeCid === cid) {
-        setCid(null);
-        clearMessages();
-      }
-    } catch (err) {
-      console.error('❌ Fehler beim Löschen des Channels:', err);
-    }
-  }, [streamChatClient, db, user?.id, getChannelsFromDb, setZustandChannels, activeCid, setCid, clearMessages]);
 
   const blockUser = useCallback(async (userId: string, reason = 'Verstoß gegen Regeln') => {
     if (!streamChatClient) return;
@@ -392,9 +383,11 @@ export const ChatProvider = ({ children }: PropsWithChildren<{}>) => {
         syncChannels,
         getMessages,
         syncMessagesForChannel,
-        deleteChannel,
         blockUser,
         markChannelAsRead,
+        initializeChatWithPost,
+        navigateToChat,
+        navigateToChatList,
       }}
     >
       {children}

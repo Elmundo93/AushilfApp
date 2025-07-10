@@ -34,6 +34,8 @@ export async function syncFromSupabase(db: SQLiteDatabase, userId: string): Prom
     steuernummer: data.steuernummer ?? '',
     kategorien: data.kategorien ?? [],
     onboarding_completed: data.onboarding_completed ?? false,
+    is_id_verified: data.is_id_verified ?? false,
+    id_veried_name_match: data.id_veried_name_match ?? false,
   };
 
   await saveUserInfo(db, user);
@@ -62,6 +64,8 @@ export async function pushUserToSupabase(user: User): Promise<boolean> {
       steuernummer: user.steuernummer,
       kategorien: user.kategorien ?? [],
       onboarding_completed: user.onboarding_completed ?? false,
+      is_id_verified: user.is_id_verified ?? false,
+      id_verified_name_match: user.id_veried_name_match ?? false,
     })
     .eq('id', user.id);
 

@@ -1,12 +1,16 @@
-import React, { createContext, useState, useContext, ReactNode } from 'react';
+import React, { createContext, useContext, useState, PropsWithChildren } from 'react';
 
-// Typ für den Kontext definieren
 interface LoadingContextType {
   isLoading: boolean;
-  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  loadingMessage: string;
+  loadingStep: number;
+  showGlobalLoading: (message: string, duration?: number) => Promise<void>;
+  hideGlobalLoading: () => Promise<void>;
+  updateLoadingProgress: (step: number, message: string) => void;
+  isGlobalLoading: boolean;
+  withLoading: <T>(operation: () => Promise<T>, message: string) => Promise<T>;
 }
 
-// Kontext mit dem richtigen Typ erstellen
 const LoadingContext = createContext<LoadingContextType | undefined>(undefined);
 
 export const useLoading = () => {
@@ -17,12 +21,59 @@ export const useLoading = () => {
   return context;
 };
 
-export const LoadingProvider = ({ children }: { children: ReactNode }) => {
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+export const LoadingProvider = ({ children }: PropsWithChildren) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState('');
+  const [loadingStep, setLoadingStep] = useState(1);
+
+  const showGlobalLoading = async (message: string, duration?: number) => {
+    setLoadingMessage(message);
+    setLoadingStep(1);
+    setIsLoading(true);
+    
+    // Auto-hide after duration if specified
+    if (duration) {
+      setTimeout(() => {
+        hideGlobalLoading();
+      }, duration);
+    }
+  };
+
+  const hideGlobalLoading = async () => {
+    setIsLoading(false);
+    setLoadingMessage('');
+
+  };
+
+  const updateLoadingProgress = (step: number, message: string) => {
+    setLoadingStep(step);
+    setLoadingMessage(message);
+  };
+
+  const withLoading = async <T,>(operation: () => Promise<T>, message: string): Promise<T> => {
+    try {
+      await showGlobalLoading(message);
+      const result = await operation();
+      return result;
+    } finally {
+      await hideGlobalLoading();
+    }
+  };
+
+  const value: LoadingContextType = {
+    isLoading,
+    loadingMessage,
+    loadingStep,
+    showGlobalLoading,
+    hideGlobalLoading,
+    updateLoadingProgress,
+    isGlobalLoading: isLoading,
+    withLoading,
+  };
 
   return (
-    <LoadingContext.Provider value={{ isLoading, setIsLoading }}>
+    <LoadingContext.Provider value={value}>
       {children}
     </LoadingContext.Provider>
   );
-};
+}; 

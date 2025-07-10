@@ -44,7 +44,7 @@ export default function ProfileImageScreen() {
   const [selectedSeed, setSelectedSeed] = useState<string | null>(null);
   const pathname = usePathname();
 
-  const steps = ['intro', 'userinfo', 'userinfo2', 'intent', 'about', 'profileImage', 'password', 'conclusion', 'savety'];
+  const steps = ['intro', 'userinfo', 'userinfo2', 'intent', 'about', 'profileImage', 'password', 'conclusion', 'verify-identity', 'subscribe'];
   const currentStep = steps.findIndex((step) => pathname.includes(step));
 
   const pickImage = async () => {
