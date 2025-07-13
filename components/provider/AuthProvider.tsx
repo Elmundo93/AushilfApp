@@ -26,9 +26,14 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
 
   useTokenManager();
 
+  const hasVerifiedIdentity = useMemo(() => {
+    return user?.is_id_verified === true;
+  }, [user?.is_id_verified]);
+
   const isFullyAuthenticated = useMemo(() => {
-    return !!(user && token && streamChatClient);
-  }, [user, token, streamChatClient]);
+    console.log('🔍 isFullyAuthenticated:', user?.onboarding_completed);  
+    return !!(user && token && streamChatClient && user.onboarding_completed);
+  }, [user, token, streamChatClient, user?.onboarding_completed]);
   
   const loadMutedUsers = async () => {
     const client = useAuthStore.getState().streamChatClient;
@@ -62,6 +67,18 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
   const isRedirecting = useRef(false);
 
   useEffect(() => {
+    // Handle logout scenario: when user is null but we're in authenticated routes
+    if (!user && segments[0] === '(authenticated)') {
+      if (pathname !== '/(public)/loginScreen' && !isRedirecting.current) {
+        console.log('🔄 User logged out - redirecting to Login...');
+        isRedirecting.current = true;
+        router.replace('/(public)/loginScreen' as any);
+        setTimeout(() => { isRedirecting.current = false; }, 500);
+      }
+      return;
+    }
+
+    // Handle normal authentication flow
     if (!isFullyAuthenticated || !user) return;
 
     // Define onboarding routes
@@ -133,6 +150,8 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
       return;
     }
   }, [isFullyAuthenticated, user, pathname, segments]);
+
+
 
   // 🔄 Initialer User Sync bei App-Start / Login
   useEffect(() => {

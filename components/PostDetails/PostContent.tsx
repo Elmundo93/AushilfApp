@@ -19,41 +19,81 @@ export function PostContent({
   created_at,
   finalFontSize
 }: PostContentProps) {
+  // Calculate dynamic line height based on font size
+  const dynamicLineHeight = finalFontSize * 1.4; // 1.4x the font size for good readability
+  const headerLineHeight = finalFontSize * 1.3;
+  const dateLineHeight = finalFontSize * 1.2;
+
   return (
     <View style={styles.contentContainer}>
-      <Text style={[styles.headerText, { fontSize: finalFontSize }]}>
+      <Text 
+        style={[
+          styles.headerText, 
+          { 
+            fontSize: finalFontSize,
+            lineHeight: headerLineHeight
+          }
+        ]} 
+        numberOfLines={0}
+      >
         {`${option === 'bieten' ? 'bietet' : 'sucht'} in ${location} im Bereich ${
           category.charAt(0).toUpperCase() + category.slice(1)
         }`}
       </Text>
       <View style={styles.trenner} />
-      <Text style={[styles.postText, { fontSize: finalFontSize }]}>{postText}</Text>
-      <Text style={[styles.dateText, { fontSize: finalFontSize }]}>{formatDate(created_at)}</Text>
+      <Text 
+        style={[
+          styles.postText, 
+          { 
+            fontSize: finalFontSize,
+            lineHeight: dynamicLineHeight
+          }
+        ]} 
+        numberOfLines={0}
+      >
+        {postText}
+      </Text>
+      <Text 
+        style={[
+          styles.dateText, 
+          { 
+            fontSize: finalFontSize,
+            lineHeight: dateLineHeight
+          }
+        ]} 
+        numberOfLines={0}
+      >
+        {formatDate(created_at)}
+      </Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
     contentContainer: {
-        marginBottom: 16,
-        padding: 16,
+        flex: 1,
+        padding: 20,
         borderRadius: 8,
-        marginHorizontal: 16,
+        marginHorizontal: 8,
         marginTop: 16,
+        marginBottom: 16,
+        minHeight: 250, // Increased minimum height
     },
       postText: {
-        fontSize: 16,
-        alignSelf: 'center',
-        lineHeight: 24,
+        alignSelf: 'stretch',
         textAlign: 'left',
         color: '#333',
+        flex: 1, // Allow text to expand
+        flexWrap: 'wrap',
+        paddingVertical: 8, // Add vertical padding for better spacing
       },
       dateText: {
-        fontSize: 14,
         color: '#666',
         alignSelf: 'flex-end',
-        marginTop: 12,
+        marginTop: 16,
         fontStyle: 'italic',
+        flexWrap: 'wrap',
+        paddingVertical: 4, // Add some padding
       },
       trenner: {
         height: 1,
@@ -63,10 +103,10 @@ const styles = StyleSheet.create({
         borderRadius: 1,
       },
       headerText: {
-        fontSize: 24,
         fontWeight: 'bold',
         textAlign: 'center',
         color: '#333',
-        lineHeight: 28,
+        flexWrap: 'wrap',
+        paddingVertical: 4, // Add some padding
       }
 });

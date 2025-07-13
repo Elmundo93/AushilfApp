@@ -16,7 +16,15 @@ import { BlurView } from 'expo-blur';
 import { ScrollIndicator } from '@/components/Animation/ScrollIndicator';
 import { useScrollIndicator } from '@/components/hooks/useScrollIndicator';
 
-
+// Mapping von Kategorie-Keys zu Labels
+const CATEGORY_MAPPING = {
+  'garten': 'Garten',
+  'haushalt': 'Haushalt',
+  'soziales': 'Soziales',
+  'gastro': 'Gastro',
+  'handwerk': 'Handwerk',
+  'bildung': 'Bildung',
+};
 
 export default function ConclusionScreen() {
   const { user, setUser } = useAuthStore();
@@ -31,7 +39,7 @@ export default function ConclusionScreen() {
     categories,
     setField,
     persist,
-    reset,
+
     password,
   } = useOnboardingStore();
   const steps = ['intro', 'userinfo', 'userinfo2', 'intent', 'about', 'profileImage', 'password', 'conclusion', 'verify-identity', 'subscribe'];
@@ -56,13 +64,26 @@ export default function ConclusionScreen() {
     setSelectedCategories(categories || []);
   }, [categories]);
 
+  // Konvertiere Kategorie-Keys zu Labels für die Anzeige
+  const categoryLabels = selectedCategories.map(key => CATEGORY_MAPPING[key as keyof typeof CATEGORY_MAPPING] || key);
+
   const handleCategoryToggle = (category: string) => {
-    const newCategories = selectedCategories.includes(category)
-      ? selectedCategories.filter(cat => cat !== category)
-      : [...selectedCategories, category];
+    // Finde den Key für das Label
+    const categoryKey = Object.keys(CATEGORY_MAPPING).find(key => CATEGORY_MAPPING[key as keyof typeof CATEGORY_MAPPING] === category);
     
-    setSelectedCategories(newCategories);
-    setField('categories', newCategories);
+    if (categoryKey) {
+      const newCategories = selectedCategories.includes(categoryKey)
+        ? selectedCategories.filter(cat => cat !== categoryKey)
+        : [...selectedCategories, categoryKey];
+      
+      setSelectedCategories(newCategories);
+      setField('categories', newCategories);
+      persist();
+    }
+  };
+
+  const handleBioChange = (text: string) => {
+    setField('bio', text);
     persist();
   };
 
@@ -94,12 +115,12 @@ export default function ConclusionScreen() {
           bio: bio ?? '',
           profileImageUrl: profileImage ?? '',
           kategorien: selectedCategories,
-          onboarding_completed: true,
+
         });
       }
 
       setUser({ ...updatedUser });
-      reset();
+
       router.push('/(public)/(onboarding)/verify-identity' as any);
     } catch (error) {
       console.error('❌ Fehler beim Abschluss des Onboardings:', error);
@@ -114,13 +135,12 @@ export default function ConclusionScreen() {
     <OnboardingLayout
       currentStep={currentStep}
       steps={steps}
-
       backRoute="/(public)/(onboarding)/intent"
     >
       <ScrollView
         ref={scrollViewRef}
         contentContainerStyle={{
-          paddingTop: 20,
+
           paddingBottom: 40,
         }}
         showsVerticalScrollIndicator={false}
@@ -129,66 +149,70 @@ export default function ConclusionScreen() {
         onLayout={handleLayout}
         scrollEventThrottle={16}
       >
-        <View style={styles.outerContainer}>
+        <View style={styles.container}>
+          {/* Main content card */}
           <BlurView 
             intensity={100} 
             tint="light" 
-            style={[
-              onboardingSharedStyles.formCard, 
-              { 
-                padding: getResponsivePadding(400), 
-                borderRadius: 25,
-                marginHorizontal: 20,
-                marginVertical: 10
-              }
-            ]}
+            style={styles.mainCard}
           >
-
-          <Text style={onboardingSharedStyles.headerTitle}>Zusammenfassung</Text>
-          <View style={styles.contentContainer}>
-            <View style={styles.sideInfoCard}>
+            <Text style={onboardingSharedStyles.headerTitle}>Zusammenfassung</Text>
+            
+            {/* Success info card */}
+            <View style={styles.successCard}>
               <Ionicons name="checkmark-circle-outline" size={24} color="#2e7d32" />
-              <Text style={styles.sideInfoText}>Andere Nutzer können dir in der AushilfApp sogar Danksagungen hinterlassen! 🎉</Text>
-            </View>
-
-            <View style={styles.profilePreviewContainer}>
-              <UserProfileHeaderPreview
-                user={{
-                  fullName: userInfo.vorname + ' ' + userInfo.nachname,
-                  email: userInfo.email,
-                  profileImage: profileImage || '',
-                  bio: bio || '',
-                  kategorien: selectedCategories,
-                }}
-                danksagungsLength={0}
-                isEditable={true}
-                onCategoryToggle={handleCategoryToggle}
-              />
-
-              <Text style={styles.subtitle}>
-                Bitte überprüfe deine Nutzerdaten auf Richtigkeit und Vollständigkeit
+              <Text style={styles.successText}>
+                Andere Nutzer können dir in der AushilfApp sogar Danksagungen hinterlassen! 🎉
               </Text>
-
-              <PreviewAccordion
-                isExpanded={isExpanded}
-                onToggle={() => setIsExpanded(!isExpanded)}
-                accordionTitle="Persönliche Daten"
-                isOnboarding={true}
-              />
             </View>
 
-            <TouchableOpacity style={styles.button} onPress={handleFinish}>
-              <LinearGradient
-                colors={['#FFB41E', '#FF9900']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.gradientButton}
-              >
-                <Text style={styles.buttonText}>Los geht's!</Text>
-              </LinearGradient>
-            </TouchableOpacity>
-          </View>
-        </BlurView>
+            {/* Profile preview */}
+            <UserProfileHeaderPreview
+              user={{
+                fullName: userInfo.vorname + ' ' + userInfo.nachname,
+                email: userInfo.email,
+                profileImage: profileImage || '',
+                bio: bio || '',
+                kategorien: categoryLabels,
+              }}
+              danksagungsLength={0}
+              isEditable={true}
+              onCategoryToggle={handleCategoryToggle}
+              onBioChange={handleBioChange}
+            />
+          </BlurView>
+          
+
+          {/* Data verification card */}
+          <BlurView 
+            intensity={100} 
+            tint="light" 
+            style={styles.verificationCard}
+          >
+            <Text style={styles.verificationTitle}>
+              Bitte überprüfe deine Nutzerdaten auf Richtigkeit und Vollständigkeit
+            </Text>
+
+            <PreviewAccordion
+              isExpanded={isExpanded}
+              onToggle={() => setIsExpanded(!isExpanded)}
+              accordionTitle="Persönliche Daten"
+              isOnboarding={true}
+              isOnboardingStep={true}
+            />
+          </BlurView>
+
+          {/* Action button */}
+          <TouchableOpacity style={styles.button} onPress={handleFinish}>
+            <LinearGradient
+              colors={['#FFB41E', '#FF9900']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.gradientButton}
+            >
+              <Text style={styles.buttonText}>Los geht's!</Text>
+            </LinearGradient>
+          </TouchableOpacity>
         </View>
       </ScrollView>
       
@@ -202,25 +226,16 @@ export default function ConclusionScreen() {
 }
 
 const styles = StyleSheet.create({
-  outerContainer: {
+  container: {
+    paddingHorizontal: 10,
+    gap: 16,
+  },
+  mainCard: {
+    padding: getResponsivePadding(200),
     borderRadius: 25,
     overflow: 'hidden',
   },
-  contentContainer: {
-    width: '100%',
-  },
-  subtitle: {
-    fontSize: 18,
-    fontWeight: '500',
-    textAlign: 'center',
-    marginVertical: 15,
-  },
-  profilePreviewContainer: {
-    marginTop: 20,
-    borderRadius: 20,
-    overflow: 'hidden',
-  },
-  sideInfoCard: {
+  successCard: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#e8f5e9',
@@ -230,16 +245,28 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#81c784',
   },
-  sideInfoText: {
+  successText: {
     fontSize: 16,
     marginLeft: 10,
     flex: 1,
     color: '#1b5e20',
   },
+  verificationCard: {
+    padding: getResponsivePadding(400),
+    borderRadius: 25,
+    overflow: 'hidden',
+  },
+  verificationTitle: {
+    fontSize: 22,
+    fontWeight: '500',
+    textAlign: 'center',
+    marginBottom: 15,
+    color: '#333',
+  },
   button: {
     borderRadius: 18,
     overflow: 'hidden',
-    marginTop: 20,
+    marginTop: 8,
   },
   gradientButton: {
     flexDirection: 'row',

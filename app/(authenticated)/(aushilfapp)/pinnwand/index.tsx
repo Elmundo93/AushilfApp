@@ -136,30 +136,30 @@ const Pinnwand: React.FC = () => {
         />
       </View>
     ) : (
-      <View style={{ flex: 1 }}>
-      <Animated.FlatList
-    data={filteredPosts}
-    keyExtractor={(item) => item.id}
-    renderItem={renderItem}
-    ListEmptyComponent={<EmptyListComponent />}
-    refreshControl={<RefreshHandler location={location} />}
-    ListHeaderComponent={
-      <>
-        <PinnwandHeader />
-        <FilterAccordion
-          isExpanded={isAccordionExpanded}
-          onToggle={toggleAccordion}
-          renderCheckbox={renderCheckbox}
+      <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
+        <Animated.FlatList
+          data={filteredPosts}
+          keyExtractor={(item) => item.id}
+          renderItem={renderItem}
+          ListEmptyComponent={<EmptyListComponent />}
+          refreshControl={<RefreshHandler location={location} />}
+          ListHeaderComponent={
+            <>
+              <PinnwandHeader />
+              <FilterAccordion
+                isExpanded={isAccordionExpanded}
+                onToggle={toggleAccordion}
+                renderCheckbox={renderCheckbox}
+              />
+            </>
+          }
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+            { useNativeDriver: false }
+          )}
+          scrollEventThrottle={16}
         />
-      </>
-    }
-    onScroll={Animated.event(
-      [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-      { useNativeDriver: false }
-    )}
-    scrollEventThrottle={16}
-  />
-  </View>
+      </Animated.View>
     )}
   </SafeAreaView>
   );

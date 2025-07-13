@@ -25,6 +25,8 @@ interface OnboardingState {
   profileImage: string | null;
   password: string;
   step: number;
+  entersIntent: boolean;
+  setEntersIntent: (value: boolean) => void;
   setUserInfo: (field: keyof UserInfo, value: string) => void;
   setField: <K extends keyof Omit<
     OnboardingState,
@@ -56,7 +58,8 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
   profileImage: null,
   password: '',
   step: 0,
-
+  entersIntent: false,
+  setEntersIntent: (value: boolean) => set({ entersIntent: value }),
   setUserInfo: (field, value) =>
     set((state) => ({
       userInfo: {

@@ -8,6 +8,8 @@ import { BlurView } from 'expo-blur';
 import { onboardingSharedStyles, getResponsiveSize, getResponsivePadding, getResponsiveMargin } from '../sharedStyles';
 import { OnboardingLayout } from '@/components/Onboarding/OnboardingLayout';
 import { LinearGradient } from 'expo-linear-gradient';
+import LottieView from 'lottie-react-native';
+import ScribbleLine from '@/assets/animations/ScribbleLine.json';
 
 export default function IntroScreen() {
   const router = useRouter();
@@ -37,14 +39,22 @@ export default function IntroScreen() {
                 padding: getResponsivePadding(400), 
                 borderRadius: 25,
                 marginBottom: 150,
-                justifyContent: 'space-between'
+                justifyContent: 'space-between',
+                marginTop: 100
               }
             ]}
           >
-                      <Text style={styles.text}>
-              Schön, dass du da bist!{'\n\n'}
-              Wir möchten dir ein paar Fragen stellen, um dein Profil zu vervollständigen und dir passende Hilfe oder Angebote in deiner Nähe zu zeigen.
-            </Text>
+            <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+            
+              <Text style={styles.HeadlineText}>Schön, dass du da bist! {'\n\n'}👋</Text>
+
+             
+            </View>
+            <View style={{flex: 1, marginBottom: 30}}>
+              <Text style={styles.text}>
+                Wir möchten dir ein paar Fragen stellen, um dein Profil zu vervollständigen und dir passende <Text style={styles.highlightedText}>Hilfe</Text> oder <Text style={styles.highlightedText}>Gebote in deiner Nähe</Text> zu zeigen.
+              </Text>
+            </View>
             <TouchableOpacity style={styles.button} onPress={handleNext}>
               <LinearGradient
                 colors={['#FFB41E', '#FF9900']}
@@ -75,11 +85,30 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   text: {
+    fontSize: 22,
+    color: '#333',
+    textAlign: 'center',
+    lineHeight: 28,
+    letterSpacing: 0.3,
+    marginBottom: 30,
+    paddingHorizontal: 10,
+  },
+  HeadlineText: {
     fontSize: 24,
     color: '#333',
     textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 30,
+    lineHeight: 32,
+    letterSpacing: 0.5,
+    marginVertical: 10,
+    fontFamily: 'Poppins-Bold',
+    paddingHorizontal: 15,
+  },
+  highlightedText: {
+    color: '#333',
+    fontWeight: 'bold',
+    fontSize: 20,
+    lineHeight: 28,
+    letterSpacing: 0.3,
   },
   button: {
     borderRadius: 18,

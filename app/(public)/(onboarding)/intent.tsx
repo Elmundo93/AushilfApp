@@ -1,6 +1,6 @@
 // app/(public)/onboarding/intent.tsx
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, Image } from 'react-native';
 import { usePathname, useRouter } from 'expo-router';
 import { useOnboardingStore } from '@/components/stores/OnboardingContext';
@@ -21,7 +21,7 @@ const CATEGORIES = [
 
 export default function IntentScreen() {
   const router = useRouter();
-  const { setField, categories } = useOnboardingStore();
+  const { setField, categories, setEntersIntent } = useOnboardingStore();
   const [selectedCategories, setSelectedCategories] = useState<string[]>(categories || []);
   const pathname = usePathname();
   const steps = ['intro', 'userinfo', 'userinfo2', 'intent', 'about', 'profileImage', 'password', 'conclusion', 'verify-identity', 'subscribe'];
@@ -43,11 +43,15 @@ export default function IntentScreen() {
     router.push('about' as any);
   };
 
+  useEffect(() => {
+    setEntersIntent(true);
+  }, []);
+
   return (
     <OnboardingLayout
       currentStep={currentStep}
       steps={steps}
-      headerTitle="Wobei möchtest du helfen oder Hilfe finden?"
+      headerTitle="Wähle Kategorien in denen du Hilfe suchst oder anbieten möchtest"
       backRoute="/(public)/(onboarding)/userinfo"
     >
       <KeyboardAvoidingView 
@@ -75,13 +79,13 @@ export default function IntentScreen() {
               ]}
             >
             <View style={styles.contentContainer}>
-              <Text style={styles.subtitle}>Wähle Kategorien in denen du Hilfe suchst oder anbieten möchtest. {'\n'}  </Text>
+
               <View style={styles.categoryContainer}>
                 {CATEGORIES.map(({ label, color, key }) => (
                   <TouchableOpacity
                     key={label}
                     style={styles.categoryButton}
-                    onPress={() => toggleCategory(label)}
+                    onPress={() => toggleCategory(key)}
                   >
                     <BlurView 
                       intensity={80} 
@@ -90,8 +94,8 @@ export default function IntentScreen() {
                         styles.categoryBlurView,
                         {
                           borderColor: color,
-                          borderWidth: selectedCategories.includes(label) ? 2 : 1,
-                          backgroundColor: selectedCategories.includes(label) ? color + 'E0' : 'rgba(255, 255, 255, 0.3)',
+                          borderWidth: selectedCategories.includes(key) ? 2 : 1,
+                          backgroundColor: selectedCategories.includes(key) ? color + 'E0' : 'rgba(255, 255, 255, 0.3)',
                         }
                       ]}
                     >
@@ -101,12 +105,12 @@ export default function IntentScreen() {
                           width: 55,
                           height: 55,
                           marginBottom: 8,
-                          opacity: selectedCategories.includes(label) ? 1 : 0.7,
+                          opacity: selectedCategories.includes(key) ? 1 : 0.7,
                         }}
                       />
                       <Text style={{ 
-                        color: selectedCategories.includes(label) ? '#000' : '#333', 
-                        fontWeight: selectedCategories.includes(label) ? 'bold' : '600',
+                        color: selectedCategories.includes(key) ? '#000' : '#333', 
+                        fontWeight: selectedCategories.includes(key) ? 'bold' : '600',
                         fontSize: 15,
                         textAlign: 'center',
                         textShadowColor: 'rgba(255, 255, 255, 0.8)',
@@ -155,8 +159,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
-
+    borderWidth: 1,
+    borderColor: 'orange',
+    borderRadius: 25,
+    padding: 10,
     flex: 1,
+    marginBottom: 20,
   },
   categoryButton: {
     margin: 8,
@@ -168,7 +176,7 @@ const styles = StyleSheet.create({
   categoryBlurView: {
     borderWidth: 1,
     borderRadius: 25,
-    padding: 10,
+    padding: 20,
     alignItems: 'center',
     justifyContent: 'center',
     minWidth: 100,

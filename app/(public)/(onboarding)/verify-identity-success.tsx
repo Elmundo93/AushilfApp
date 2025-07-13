@@ -1,11 +1,19 @@
 // app/(public)/(onboarding)/payment-success.tsx
-import { useEffect, useState } from 'react';
-import { View, Text, ActivityIndicator, StyleSheet, TouchableOpacity } from 'react-native';
+import { useEffect, useState, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import { useRouter } from 'expo-router';
 
 import { useAuthStore } from '@/components/stores/AuthStore';
 import { syncFromSupabase, pushUserToSupabase } from '@/components/services/Storage/Syncs/UserSyncService';
 import { useSQLiteContext } from 'expo-sqlite';
+import {
+  AnimatedLogo,
+  FloatingParticles,
+  AnimatedText,
+  AnimatedBackground,
+  AnimatedLoadingIndicator,
+} from '@/components/Animation';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function VerifyIdentitySuccess() {
   const { user, setUser } = useAuthStore();
@@ -13,58 +21,94 @@ export default function VerifyIdentitySuccess() {
   const db = useSQLiteContext();
   const [syncAttempts, setSyncAttempts] = useState(0);
   const [status, setStatus] = useState<'syncing' | 'success' | 'error'>('syncing');
+  const isMounted = useRef(true);
+  const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Success animation
+  const completionAnim = useRef(new Animated.Value(0)).current;
+
+  // Cleanup function
+  useEffect(() => {
+    return () => {
+      isMounted.current = false;
+      if (syncTimeoutRef.current) {
+        clearTimeout(syncTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleManualCompletion = async () => {
-    if (!user?.id) return;
+    if (!user?.id || !isMounted.current) return;
     
     try {
       setStatus('syncing');
-      const updatedUser = { ...user, onboarding_completed: true };
+      const updatedUser = { ...user, is_id_verified: true };
       
       // Update locally and in Supabase
       await pushUserToSupabase(updatedUser);
-      setUser(updatedUser);
-      setUser({...user, onboarding_completed: true});
-      
-      setStatus('success');
-      setTimeout(() => {
-        router.replace('/(public)/(onboarding)/subscribe');
-      }, 1000); 
+      if (isMounted.current) {
+        setUser(updatedUser);
+        setStatus('success');
+        setTimeout(() => {
+          if (isMounted.current) {
+            router.replace('/(public)/(onboarding)/subscribe');
+          }
+        }, 3500); // Extended to 3.5 seconds to allow animation to complete
+      }
     } catch (error) {
       console.error('❌ Manual completion failed:', error);
-      setStatus('error');
+      if (isMounted.current) {
+        setStatus('error');
+      }
     }
   };
 
+  // Success animation with longer duration
+  useEffect(() => {
+    if (status === 'success' && isMounted.current) {
+      Animated.timing(completionAnim, {
+        toValue: 1,
+        duration: 3000, // Extended to 3 seconds
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [status]);
+
   useEffect(() => {
     const handleSync = async () => {
-      if (!user?.id) return;
+      if (!user?.id || !isMounted.current) return;
       
       try {
         console.log('🔄 Verify Identity Success: Syncing user data...');
         await syncFromSupabase(db, user.id);
+        
+        if (!isMounted.current) return;
         
         // Check if onboarding is now completed
         const currentUser = useAuthStore.getState().user;
         if (currentUser?.is_id_verified) {
           setStatus('success');
           console.log('✅ Verify Identity Success: Onboarding completed, redirecting to app...');
-          // Small delay to show success message
-          setTimeout(() => {
-            router.push('/(public)/(onboarding)/subscribe');
-          }, 1500);
+          // Extended delay to show success animation for 3 seconds
+          syncTimeoutRef.current = setTimeout(() => {
+            if (isMounted.current) {
+              router.push('/(public)/(onboarding)/subscribe');
+            }
+          }, 3500); // Increased to 3.5 seconds to allow animation to complete
         } else {
           // Webhook might not have processed yet, retry after delay
-          if (syncAttempts < 5) {
+          if (syncAttempts < 5 && isMounted.current) {
             setSyncAttempts(prev => prev + 1);
-            setTimeout(handleSync, 2000); // Retry every 2 seconds
-          } else {
+            syncTimeoutRef.current = setTimeout(handleSync, 2000); // Retry every 2 seconds
+          } else if (isMounted.current) {
             setStatus('error');
           }
         }
       } catch (error) {
         console.error('❌ Verify Identity Success: Sync error:', error);
-        setStatus('error');
+        if (isMounted.current) {
+          setStatus('error');
+        }
       }
     };
 
@@ -86,9 +130,90 @@ export default function VerifyIdentitySuccess() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.message}>{getStatusMessage()}</Text>
-      <ActivityIndicator size="large" style={styles.spinner} color="#ff9a00" />
-      
+        <LinearGradient
+        colors={['#ff9a00', '#ffc300', '#ffffff']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
+      {/* Animated Background */}
+      <AnimatedBackground />
+
+      {/* Floating Particles */}
+      <FloatingParticles count={6} />
+
+      {/* Logo Animation */}
+      <View style={styles.logoContainer}>
+        <AnimatedLogo 
+          size={120}
+          logoText="🐝"
+          color="#f59e0b"
+        />
+      </View>
+
+      {/* Enhanced Welcome Text */}
+      <View style={styles.textContainer}>
+        <AnimatedText
+          fontSize={32}
+          fontWeight="bold"
+          color="#f59e0b"
+          enablePulse={true}
+          enableGlow={true}
+        >
+          Willkommen bei
+        </AnimatedText>
+        <AnimatedText
+          fontSize={24}
+          fontWeight="600"
+          color="#374151"
+          enablePulse={true}
+          enableGlow={true}
+        >
+          Wir helfen aus e.V.
+        </AnimatedText>
+
+        {/* Decorative elements */}
+        <View style={styles.decorativeContainer}>
+          {[0, 1, 2].map((i) => (
+            <View key={i} style={styles.decorativeDot} />
+          ))}
+        </View>
+      </View>
+
+      {/* Status Message */}
+      <AnimatedText
+        style={styles.message}
+        enablePulse={true}
+        enableGlow={false}
+      >
+        {getStatusMessage()}
+      </AnimatedText>
+
+      {/* Enhanced Loading Indicator */}
+      <AnimatedLoadingIndicator 
+        size="large"
+        color="#ff9a00"
+        showProgressDots={true}
+        dotCount={5}
+        dotColor="#f59e0b"
+      />
+
+      {/* Success Animation */}
+      {status === 'success' && (
+        <Animated.View
+          style={[
+            styles.successContainer,
+            {
+              opacity: completionAnim,
+              transform: [{ scale: completionAnim }],
+            },
+          ]}
+        >
+          <Text style={styles.successText}>✨ Bereit! ✨</Text>
+        </Animated.View>
+      )}
+
+      {/* Error Container */}
       {status === 'error' && (
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>
@@ -110,6 +235,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 24,
     backgroundColor: '#fff',
+    position: 'relative',
+  },
+  logoContainer: {
+    marginBottom: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  textContainer: {
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  decorativeContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 16,
+  },
+  decorativeDot: {
+    width: 8,
+    height: 8,
+    backgroundColor: '#f59e0b',
+    borderRadius: 4,
   },
   message: {
     fontSize: 18,
@@ -118,8 +265,14 @@ const styles = StyleSheet.create({
     color: '#333',
     lineHeight: 24,
   },
-  spinner: {
+  successContainer: {
+    alignItems: 'center',
     marginTop: 16,
+  },
+  successText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#f59e0b',
   },
   errorContainer: {
     marginTop: 24,

@@ -104,21 +104,31 @@ export const ChatProvider = ({ children }: PropsWithChildren) => {
     const unsub = NetInfo.addEventListener((state) => {
       if (state.isConnected && state.isInternetReachable) {
         console.log('🌐 Network connected, triggering channel sync');
-        syncChannels();
+        // Only sync if user is not in onboarding
+        if (user && user.onboarding_completed) {
+          syncChannels();
+        } else {
+          console.log('ℹ️ Skipping channel sync during onboarding');
+        }
       }
     });
     return () => unsub();
-  }, [streamChatClient]);
+  }, [streamChatClient, user]);
 
   useEffect(() => {
     const sub = AppState.addEventListener('change', (status) => {
       if (status === 'active') {
         console.log('📱 App became active, triggering channel sync');
-        syncChannels();
+        // Only sync if user is not in onboarding
+        if (user && user.onboarding_completed) {
+          syncChannels();
+        } else {
+          console.log('ℹ️ Skipping channel sync during onboarding');
+        }
       }
     });
     return () => sub.remove();
-  }, []);
+  }, [user]);
 
   const syncMessagesForChannel = useCallback(async (cid: string, limit = 30) => {
     if (!streamChatClient || !user) {
@@ -127,6 +137,12 @@ export const ChatProvider = ({ children }: PropsWithChildren) => {
     }
     
     console.log('🔄 Starting message sync for channel:', cid);
+    
+    // Check if user is still in onboarding
+    if (!user.onboarding_completed) {
+      console.log('ℹ️ User is in onboarding - skipping message sync');
+      return;
+    }
     
     // Check if we're already loading this channel
     const currentCid = useActiveChatStore.getState().cid;

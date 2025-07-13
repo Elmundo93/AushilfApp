@@ -65,6 +65,7 @@ const PinnwandHeader: React.FC = () => {
 
 const styles = StyleSheet.create({
   container: {
+    marginTop:40,
     marginVertical: 20,
     marginHorizontal: 10,
     position: 'relative',

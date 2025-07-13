@@ -11,6 +11,8 @@ import { usePostSync }         from '@/components/services/Storage/Syncs/PostSyn
 import { useDanksagungSync }   from '@/components/services/Storage/Syncs/DanksagungsSync';
 import { usePostCountStore }   from '@/components/stores/postCountStores';
 import { useChannelSync }      from '@/components/services/Storage/Syncs/ChannelSync';
+import { useAuthStore }        from '@/components/stores/AuthStore';
+import { useActiveChatStore }  from '@/components/stores/useActiveChatStore';
 
 import { Alert } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
@@ -34,11 +36,10 @@ const RETRY_DELAY = 2000; // Increased to 2 seconds
 export const DataProvider = ({ children }: PropsWithChildren) => {
   const { location } = useLocationStore();
   const { postCount } = usePostCountStore();
+  const { user } = useAuthStore();
   const syncPosts        = usePostSync();
   const syncDanksagungen = useDanksagungSync();
   const syncChannelsAndMessages = useChannelSync();
-
-
 
   const [loading, setLoading]     = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
@@ -55,7 +56,7 @@ export const DataProvider = ({ children }: PropsWithChildren) => {
     return net.isConnected && net.isInternetReachable;
   };
 
-  const syncWithRetry = async (syncFn: () => Promise<void>, name: string) => {
+  const syncWithRetry = async (syncFn: () => Promise<void>, name: string, isOnboarding = false) => {
     let retries = 0;
     while (retries < MAX_RETRIES) {
       try {
@@ -78,6 +79,12 @@ export const DataProvider = ({ children }: PropsWithChildren) => {
           stack: e.stack
         });
 
+        // Handle specific StreamChat initialization errors during onboarding
+        if (isOnboarding && e.message && e.message.includes('Both secret and user tokens are not set')) {
+          console.log(`ℹ️ ${name} sync skipped during onboarding - this is expected`);
+          return; // Don't retry, just return gracefully
+        }
+
         if (retries === MAX_RETRIES) {
           console.error(`❌ ${name} sync failed after ${MAX_RETRIES} attempts`);
           throw e;
@@ -96,15 +103,19 @@ export const DataProvider = ({ children }: PropsWithChildren) => {
       return;
     }
 
+    // Check if user is in onboarding
+    const isInOnboarding = user && !user.onboarding_completed;
+
     console.log('Starting full sync with location:', location);
+    console.log('Onboarding status:', isInOnboarding ? 'In progress' : 'Completed');
     setLoading(true);
     setSyncError(null);
 
     try {
       // Synchronize sequentially with retry logic
-      await syncWithRetry(() => syncPosts(location), 'Posts');
-      await syncWithRetry(() => syncDanksagungen(location), 'Danksagungen');
-      await syncWithRetry(() => syncChannelsAndMessages(), 'Channels');
+      await syncWithRetry(() => syncPosts(location), 'Posts', isInOnboarding || false);
+      await syncWithRetry(() => syncDanksagungen(location), 'Danksagungen', isInOnboarding || false);
+      await syncWithRetry(() => syncChannelsAndMessages(), 'Channels', isInOnboarding || false);
       console.log('✅ All syncs completed successfully');
     } catch (e: any) {
       console.error('❌ Full sync failed:', {
@@ -113,10 +124,16 @@ export const DataProvider = ({ children }: PropsWithChildren) => {
         stack: e.stack
       });
       setSyncError(e.message || 'Unbekannter Fehler');
-      Alert.alert(
-        'Synchronisationsfehler',
-        'Die Daten konnten nicht synchronisiert werden. Bitte überprüfe deine Internetverbindung und versuche es später erneut.'
-      );
+      
+      // Only show error alert if user is not in onboarding
+      if (!isInOnboarding) {
+        Alert.alert(
+          'Synchronisationsfehler',
+          'Die Daten konnten nicht synchronisiert werden. Bitte überprüfe deine Internetverbindung und versuche es später erneut.'
+        );
+      } else {
+        console.log('ℹ️ Skipping error alert during onboarding');
+      }
     } finally {
       setLoading(false);
     }
@@ -132,7 +149,8 @@ export const DataProvider = ({ children }: PropsWithChildren) => {
   useEffect(() => {
     if (location && postCount) {
       console.log('Post count changed, triggering post sync');
-      syncWithRetry(() => syncPosts(location), 'Posts').catch(e => {
+      const isInOnboarding = user && !user.onboarding_completed;
+      syncWithRetry(() => syncPosts(location), 'Posts', isInOnboarding || false).catch(e => {
         console.error('Post sync after creation failed:', {
           error: e,
           message: e.message,

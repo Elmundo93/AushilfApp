@@ -88,7 +88,7 @@ const UserProfile = () => {
       <View style={styles.cardContainer}>
         <View style={styles.iconsContainer}>
           {CATEGORIES.map((category) => {
-            const isSelected = selectedCategories.includes(category.label);
+            const isSelected = selectedCategories.includes(category.key);
             const categoryColor = getBackgroundForCategory(category.key).backgroundColor;
             
             return (
@@ -102,7 +102,7 @@ const UserProfile = () => {
                       : 'rgba(200, 200, 200, 0.3)',
                   },
                 ]}
-                onPress={() => isEditingCategories && handleCategoryToggle(category.label)}
+                onPress={() => isEditingCategories && handleCategoryToggle(category.key)}
                 activeOpacity={0.7}
               >
                 <View style={[

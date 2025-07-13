@@ -10,7 +10,6 @@ import { FontSizeContext } from '@/components/provider/FontSizeContext';
 import { useContext } from 'react';
 import { StyleSheet } from 'react-native';
 import { usePostCountStore } from '@/components/stores/postCountStores';
-import { usePostService } from '@/components/Crud/SQLite/Services/postService';
 import NetInfo from '@react-native-community/netinfo';
 
 const CreatePost: React.FC = () => {
@@ -29,7 +28,6 @@ const CreatePost: React.FC = () => {
 
   const incrementPostCount = usePostCountStore((state) => state.incrementPostCount);
   const location = useLocationStore((state) => state.location);
-  const { addPosts } = usePostService();
 
   const onSubmit = async () => {
     console.log('=== Starting post creation process ===');
@@ -136,19 +134,6 @@ const CreatePost: React.FC = () => {
 
       console.log('Post successfully created:', data);
       incrementPostCount();
-      
-      console.log('Starting post synchronization...');
-      if (location) {
-        try {
-          await addPosts(location);
-          console.log('Posts successfully synchronized');
-        } catch (syncError) {
-          console.error('Sync error details:', syncError);
-          Alert.alert('Hinweis', 'Der Post wurde erstellt, aber die Synchronisation war nicht erfolgreich.');
-        }
-      } else {
-        console.log('No location data available for synchronization');
-      }
       
       console.log('Navigating back...');
       router.back();

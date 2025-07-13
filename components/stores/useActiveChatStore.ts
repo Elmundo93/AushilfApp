@@ -6,6 +6,7 @@ type ActiveChatState = {
   messages: ChatMessage[];
   loading: boolean;
   hasMoreMessages: boolean;
+  isNavigating: boolean;
   setCid: (cid: string | null) => void;
   setMessages: (messages: ChatMessage[] | ((prev: ChatMessage[]) => ChatMessage[])) => void;
   addMessage: (message: ChatMessage) => void;
@@ -19,6 +20,7 @@ type ActiveChatState = {
   clearActiveChat: () => void;
   getMessage: (messageId: string) => ChatMessage | undefined;
   hasMessage: (messageId: string) => boolean;
+  setIsNavigating: (isNavigating: boolean) => void;
 };
 
 export const useActiveChatStore = create<ActiveChatState>((set, get) => ({
@@ -26,7 +28,7 @@ export const useActiveChatStore = create<ActiveChatState>((set, get) => ({
   messages: [],
   loading: false,
   hasMoreMessages: true,
-
+  isNavigating: false,
   setCid: (cid) => set({ cid }),
   
   setMessages: (messagesOrUpdater) =>
@@ -111,4 +113,5 @@ export const useActiveChatStore = create<ActiveChatState>((set, get) => ({
     const { messages } = get();
     return messages.some(msg => msg.id === messageId);
   },
+  setIsNavigating: (isNavigating) => set({ isNavigating }),
 }));

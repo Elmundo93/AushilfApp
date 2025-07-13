@@ -2,6 +2,7 @@
 import NetInfo from '@react-native-community/netinfo';
 import { usePostService } from '@/components/Crud/SQLite/Services/postService';
 import { usePostStore }   from '@/components/stores/postStore';
+import { useActiveChatStore } from '@/components/stores/useActiveChatStore';
 import { Location }       from '@/components/types/location';
 
 /**

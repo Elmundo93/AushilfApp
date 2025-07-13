@@ -64,9 +64,8 @@ const ForreignProfileHeader: React.FC<ForreignProfileHeaderProps> = ({
           <View style={styles.cardContainer}>
             <View style={styles.iconsContainer}>
               {CATEGORIES.map((category) => {
-                const normalizedCategory = normalizeCategory(category);
-                const isSelected = normalizedKategorien.includes(normalizedCategory);
-                const categoryColor = getBackgroundForCategory(normalizedCategory).backgroundColor;
+                const isSelected = normalizedKategorien.includes(category);
+                const categoryColor = getBackgroundForCategory(category).backgroundColor;
                 
                 return (
                   <View
@@ -89,7 +88,7 @@ const ForreignProfileHeader: React.FC<ForreignProfileHeaderProps> = ({
                       }
                     ]}>
                       <Image
-                        source={getIconForCategory(normalizedCategory)}
+                        source={getIconForCategory(category)}
                         style={[
                           styles.categoryIcon,
                           {
@@ -203,7 +202,7 @@ const styles = StyleSheet.create({
     marginTop: 15,
   },
   cardContainer: {
-    backgroundColor: 'rgba(240, 240, 240, 0.3)',
+    backgroundColor: '#f0f0f0',
     borderRadius: 16,
     padding: 8,
     marginVertical: 4,
@@ -240,6 +239,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 12,
+    backgroundColor: '#ffffff',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,

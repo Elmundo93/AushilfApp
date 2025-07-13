@@ -12,7 +12,6 @@ import {
 import { usePathname, useRouter } from 'expo-router';
 import { useOnboardingStore } from '@/components/stores/OnboardingContext';
 import LottieView from 'lottie-react-native'; 
-import { onboardingSharedStyles, getResponsiveSize, getResponsivePadding, getResponsiveMargin } from './sharedStyles';
 import { OnboardingLayout } from '@/components/Onboarding/OnboardingLayout';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
@@ -29,6 +28,9 @@ export default function AboutScreen() {
   const progress = Math.min((wordCount / MAX_WORDS) * 100, 100);
   const isProgressComplete = wordCount >= MAX_WORDS;
 
+  const { categories = [] } = useOnboardingStore();
+  const placeholderText = generateDynamicPlaceholder(userInfo.vorname, categories);
+
   useEffect(() => {
     return () => {
       setField('bio', localBio.trim());
@@ -42,12 +44,43 @@ export default function AboutScreen() {
     router.push('/(public)/(onboarding)/profileImage');
   };
 
+  const handleInsertPlaceholder = () => {
+    setLocalBio(generateDynamicPlaceholder(userInfo.vorname, categories));
+  };
+
+  function generateDynamicPlaceholder(name: string, categories: string[]) {
+    const fragments: Record<string, string> = {
+      garten: '🌱 Gartenarbeiten und Pflanzenpflege',
+      haushalt: '🧼 Hilfe im Haushalt, z. B. beim Aufräumen oder Einkaufen',
+      soziales: '🫂 Unterstützung im Alltag oder einfach nur Zuhören',
+      gastro: '🍽️ Mithelfen in der Küche oder beim Servieren',
+      handwerk: '🔧 Kleine Reparaturen und handwerkliche Tätigkeiten',
+      bildung: '📚 Unterstützung bei Hausaufgaben oder Nachhilfe',
+    };
+  
+    const selectedFragments = categories
+      .map((key) => fragments[key])
+      .filter(Boolean);
+  
+    if (selectedFragments.length === 0) {
+      return `Ich heiße ${name} und helfe gerne dort, wo ich gebraucht werde.`;
+    }
+  
+    const activityList = selectedFragments.join('\n');
+  
+    return (
+      `Ich heiße ${name} und bringe mich gerne ein. Zum Beispiel bei:\n\n` +
+      `${activityList}\n\n` +
+      `Mir ist wichtig, dass meine Hilfe ankommt und ich einen positiven Beitrag leisten kann.`
+    );
+  }
+
   return (
     <OnboardingLayout
       currentStep={currentStep}
       steps={steps}
       backRoute={'/intent'}
-      headerTitle="     Wobei brauchst du Hilfe? Wobei würdest du gerne helfen?"
+      headerTitle=""
       
 
     >
@@ -81,9 +114,17 @@ export default function AboutScreen() {
               style={styles.formCard}
             >
             <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>
-                Deine Vorstellung
-              </Text>
+              <View style={styles.labelContainer}>
+                <Text style={styles.inputLabel}>
+                  Deine Vorstellung
+                </Text>
+                <TouchableOpacity 
+                  style={styles.chipButton}
+                  onPress={handleInsertPlaceholder}
+                >
+                  <Text style={styles.chipText}>Beispiel hinzufügen! ✅</Text>
+                </TouchableOpacity>
+              </View>
               
               <TextInput
                 style={styles.textArea}
@@ -91,7 +132,7 @@ export default function AboutScreen() {
                 maxLength={300}
                 value={localBio}
                 onChangeText={setLocalBio}
-                placeholder={`Ich heiße ${userInfo.vorname}, bin gerne im Garten und helfe meinen Nachbarn beim Einkaufen...`}
+                placeholder={placeholderText}
                 placeholderTextColor="#999"
                 textAlignVertical="top"
               />
@@ -133,16 +174,11 @@ export default function AboutScreen() {
               onPress={handleNext}
               disabled={wordCount === 0}
             >
-              <LinearGradient
-                colors={isProgressComplete ? ['#4CAF50', '#45a049'] : ['#FFB41E', '#FF9900']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.gradientButton}
-              >
+             
                 <Text style={styles.buttonText}>
                   {isProgressComplete ? '🎯 Perfekt! Weiter' : '🎯 Weiter'}
                 </Text>
-              </LinearGradient>
+
             </TouchableOpacity>
           </BlurView>
         </View>
@@ -170,7 +206,7 @@ const styles = StyleSheet.create({
   headerSection: {
     alignItems: 'center',
     marginTop: 20,
-    marginBottom: 32,
+
   },
   animation: {
     width: 120,
@@ -214,25 +250,38 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     padding: 24,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
+  
     elevation: 4,
   },
   inputContainer: {
     marginBottom: 24,
     borderRadius: 25,
   },
+  labelContainer: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+  },
   inputLabel: {
-    fontSize: 16,
+    fontSize: 22,
     fontWeight: '600',
     color: '#333',
-    marginBottom: 12,
+  },
+  chipButton: {
+    backgroundColor: '#FFB41E',
+    borderRadius: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'flex-end',
+    marginTop: 30,
+    marginBottom: 10,
+  },
+  chipText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: '600',
   },
   textArea: {
     minHeight: 140,
@@ -277,13 +326,11 @@ const styles = StyleSheet.create({
   button: {
     borderRadius: 16,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
+    backgroundColor: '#FFB41E',
+    paddingVertical: 18,
+    paddingHorizontal: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
     elevation: 3,
   },
   gradientButton: {

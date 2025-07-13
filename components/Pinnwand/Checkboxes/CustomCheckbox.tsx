@@ -34,24 +34,24 @@ const CustomCheckbox: React.FC<CustomCheckboxProps> = ({ label, isChecked, onChe
     <TouchableOpacity
       onPress={onCheck}
       activeOpacity={0.7}
-      style={[
-        styles.chip,
-        getBorderRadius(),
-        {
-          backgroundColor: isChecked ? getUnderlayColor(label) : 'rgba(255, 255, 255, 0.9)',
-          borderColor: isChecked ? getUnderlayColor(label) : 'rgba(0, 0, 0, 0.2)',
-          shadowColor: isChecked ? getUnderlayColor(label) : '#000',
-          shadowOffset: {
-            width: 0,
-            height: isChecked ? 2 : 1,
+              style={[
+          styles.chip,
+          getBorderRadius(),
+          {
+            backgroundColor: isChecked ? getUnderlayColor(label) : '#ffffff',
+            borderColor: isChecked ? getUnderlayColor(label) : 'rgba(0, 0, 0, 0.2)',
+            shadowColor: isChecked ? getUnderlayColor(label) : '#000',
+            shadowOffset: {
+              width: 0,
+              height: isChecked ? 2 : 1,
+            },
+            shadowOpacity: isChecked ? 0.3 : 0.1,
+            shadowRadius: isChecked ? 4 : 2,
+            elevation: isChecked ? 4 : 2,
+            width: width || 100,
+            paddingHorizontal: isChecked ? 40 : 20, // More space when checked for the tick
           },
-          shadowOpacity: isChecked ? 0.3 : 0.1,
-          shadowRadius: isChecked ? 4 : 2,
-          elevation: isChecked ? 4 : 2,
-          width: width || 100,
-          paddingHorizontal: isChecked ? 40 : 20, // More space when checked for the tick
-        },
-      ]}
+        ]}
     >
       <Text 
         style={[

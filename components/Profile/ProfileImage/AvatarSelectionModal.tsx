@@ -30,12 +30,12 @@ const AVATAR_COLLECTIONS = [
   {
     label: 'Adventurer',
     baseUrl: 'https://api.dicebear.com/7.x/adventurer/png?seed=',
-    seeds: ['Jude', 'Vivian', 'Jade', 'Liliana', 'Quentin', 'Aiden', 'Andrea', 'Sadie'],
+    seeds: ['Jude', 'Vivian', 'Jade', 'Liliana', 'Aiden', 'Andrea', 'Sadie'],
   },
   {
     label: 'Notionists',
     baseUrl: 'https://api.dicebear.com/7.x/notionists/png?seed=',
-    seeds: ['Sara', 'Riley', 'Ryan', 'Andrea', 'Adrian', 'Liliana', 'Vivian', 'Mackenzie', 'Maria', 'Jameson'],
+    seeds: ['Sara', 'Riley', 'Ryan', 'Andrea', 'Adrian', 'Liliana', 'Vivian', 'Maria', 'Jameson'],
   },
 ];
 

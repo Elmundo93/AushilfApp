@@ -53,12 +53,11 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
   };
 
   return (
-
     <View style={onboardingSharedStyles.mainContainer}>
-     <LinearGradient
-        colors={['#FFB41E', '#FF9900']}
+      <LinearGradient
+        colors={['#ff9a00', '#ffc300', '#ffffff']}
         start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0.5 }}
+        end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFill}
       />
       <OnboardingBackground step={getCurrentStep(pathname)} />

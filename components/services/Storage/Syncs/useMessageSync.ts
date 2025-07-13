@@ -1,6 +1,7 @@
 // components/services/Storage/Syncs/useMessageSync.ts
 import { useSQLiteContext } from 'expo-sqlite';
 import { useAuthStore } from '@/components/stores/AuthStore';
+import { useActiveChatStore } from '@/components/stores/useActiveChatStore';
 import { useMessagesService } from '@/components/Crud/SQLite/Services/messagesService';
 import { FormatMessageResponse } from 'stream-chat';
 

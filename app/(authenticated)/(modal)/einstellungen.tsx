@@ -10,7 +10,7 @@ import { router } from 'expo-router';
 
 const EinstellungenPage: React.FC = () => {
   const { fontSize, setFontSize } = useContext(FontSizeContext);
-  const defaultFontSize = 22;
+  const defaultFontSize = 24;
   const readingModeFontSize = 32;
   const componentBaseFontSize = 24;
   const minIconSize = 35;
@@ -18,7 +18,8 @@ const EinstellungenPage: React.FC = () => {
   const iconSize = Math.min(Math.max(fontSize * 1.5, minIconSize), maxIconSize);
   const { logout } = useAuth();
 
-  const isReadingMode = fontSize > defaultFontSize;
+  // Check if reading mode is explicitly activated (font size is at reading mode level)
+  const isReadingMode = fontSize === readingModeFontSize;
   const adjustedFontSize = (fontSize / defaultFontSize) * componentBaseFontSize;
   const finalFontSize = adjustedFontSize;
 

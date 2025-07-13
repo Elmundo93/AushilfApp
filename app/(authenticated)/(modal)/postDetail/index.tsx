@@ -11,6 +11,7 @@ import { ScrollView } from 'react-native-gesture-handler';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import BackgroundImage from '@/components/Onboarding/OnboardingBackground';
+import { useActiveChatStore } from '@/components/stores/useActiveChatStore';
 
 import { useSelectedPostStore } from '@/components/stores/selectedPostStore';
 import { useAuthStore } from '@/components/stores/AuthStore';
@@ -22,6 +23,7 @@ import { PostContent } from '@/components/PostDetails/PostContent';
 import { useChatContext } from '@/components/provider/ChatProvider';
 
 export default function PostDetail() {
+  const { setIsNavigating, isNavigating } = useActiveChatStore();
   const { selectedPost } = useSelectedPostStore();
   const { user } = useAuthStore();
 
@@ -50,6 +52,7 @@ export default function PostDetail() {
     console.log('🔍 PostDetail: Button pressed, starting chat initialization...');
 
     try {
+      // Don't set isNavigating here - let ChatNavigationService handle it internally
       console.log('🎬 PostDetail: Starting chat initialization...');
       const channelCid = await initializeChatWithPost(user, selectedPost, {
         showLoading: true,
@@ -70,6 +73,8 @@ export default function PostDetail() {
       console.error('❌ Error in handleChatPressButton:', error);
       Alert.alert('Fehler', error.message);
     }
+    // Remove the finally block that was setting isNavigating to false
+    console.log('🔍 PostDetail: Chat initialization completed');
   };
 
   if (!selectedPost) return null;
@@ -105,6 +110,9 @@ export default function PostDetail() {
               category={selectedPost.category}
               finalFontSize={finalFontSize}
               iconSize={iconSize}
+              userId={selectedPost.userId}
+              userBio={selectedPost.userBio}
+              kategorien={selectedPost.kategorien}
             />
           </BlurView>
         </View>
@@ -161,6 +169,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: 40,
+    flexGrow: 1, // Allow content to expand
   },
   backgroundGradient: {
     position: 'absolute',
@@ -194,13 +203,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'orange',
     backgroundColor: 'white',
-    marginTop:80
+    marginTop: 80,
+    minHeight: 400, // Increased minimum height for larger fonts
+    flex: 1, // Allow content to expand
   },
   contentBlurView: {
-
+    flex: 1, // Allow blur view to expand
     borderWidth: 1,
     borderColor: 'orange',
-   
+    padding: 20, // Increased padding for larger fonts
   },
   buttonContainer: {
     marginHorizontal: 16,

@@ -62,6 +62,14 @@ function ChannelList() {
     });
   };
 
+  const NavigateToCreatePost = () => {
+    router.push('/pinnwand');
+
+    setTimeout(() => {
+      router.push('/createPost');
+    }, 500);
+  };
+
   useChatListeners(streamChatClient, null, addMessage, setZustandChannels, db, user, activeMessages);
   useChatLifecycle(user?.id, db);
 
@@ -152,13 +160,19 @@ function ChannelList() {
           {renderMutedUsersSection()}
           {renderMutedSection()}
           
-          {channels.length === 0 && mutedChannels.length === 0 && mutedUsers.length === 0 && channelsReady ? (
+          {channels.length === 0 && !loading ? (
             <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>Keine Nachrichten vorhanden</Text>
+              <View style={styles.navigationContainer}>
+                <Text style={styles.emptyText}>Keine Nachrichten vorhanden</Text>
+                <Text style={styles.emptySubText}>Versuch's mal mit einem Post um zu schauen ob es jemanden gibt der dir hilft oder deine Hilfe benötigt!</Text>
+                <TouchableOpacity style={styles.navigationButton} onPress={NavigateToCreatePost}>
+                  <Text style={styles.navigationButtonText}>Erstelle einen Post</Text>
+                </TouchableOpacity>
+              </View>
               <Text style={styles.emptySubText}>
                 {selectedCategory 
                   ? `Keine Chats in der Kategorie "${selectedCategory}" gefunden. Wählen Sie eine andere Kategorie oder alle Kategorien.`
-                  : 'Suchen Sie nach Posts und starten Sie eine Konversation!'
+                  : ''
                 }
               </Text>
               {selectedCategory && (
@@ -203,6 +217,27 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  navigationContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
+  navigationButton: { 
+    backgroundColor: 'white',
+    padding: 10,
+    borderRadius: 8,
+    marginTop: 30,
+    borderWidth: 1,
+    borderColor: 'orange',
+  },
+  navigationButtonText: {
+    color: 'orange',
+    fontSize: 22,
+    letterSpacing: 0.5,
+    textAlign: 'center',
+    padding: 10,
+    fontWeight: '700',
+  },    
   loadingAnimation: {
     width: 200,
     height: 200,
@@ -226,7 +261,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   emptySubText: {
-    fontSize: 20,
+    fontSize: 22,
     textAlign: 'center',
     color: '#666',
   },

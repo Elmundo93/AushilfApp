@@ -74,6 +74,11 @@ export const useChatNavigation = () => {
         await new Promise(resolve => setTimeout(resolve, 300));
       }
 
+      // NOW set isNavigating only for the actual navigation phase
+      const { setIsNavigating } = useActiveChatStore.getState();
+      setIsNavigating(true);
+      console.log('🚫 ChatNavigationService: Setting isNavigating to true for navigation');
+
       // Start navigation in background while loading is still visible
       console.log('🚀 ChatNavigationService: Starting navigation in background...');
       console.log('🚀 ChatNavigationService: Navigating to nachrichten list...');
@@ -85,6 +90,12 @@ export const useChatNavigation = () => {
           pathname: '/nachrichten/channel/[cid]',
           params: { cid: channel.cid },
         });
+        
+        // Reset isNavigating after navigation is complete
+        setTimeout(() => {
+          setIsNavigating(false);
+          console.log('✅ ChatNavigationService: Navigation complete, setting isNavigating to false');
+        }, 1000); // Give navigation time to complete
       }, 200);
 
       // Loading will auto-hide after 2 seconds due to duration parameter
@@ -100,6 +111,10 @@ export const useChatNavigation = () => {
       if (showLoading) {
         await hideGlobalLoading();
       }
+      
+      // Reset isNavigating on error
+      const { setIsNavigating } = useActiveChatStore.getState();
+      setIsNavigating(false);
       
       onError?.(errorMessage);
       return null;

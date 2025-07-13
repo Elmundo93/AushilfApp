@@ -8,6 +8,7 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Animated,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter, usePathname } from 'expo-router';
@@ -17,26 +18,82 @@ import { onboardingSharedStyles, getResponsiveSize, getResponsivePadding, getRes
 import { OnboardingLayout } from '@/components/Onboarding/OnboardingLayout';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
+import { FadingImage } from '@/components/utils/fadingImage';
 
 const AVATAR_COLLECTIONS = [
   {
     label: 'Avataaars',
     baseUrl: 'https://api.dicebear.com/7.x/avataaars/png?seed=',
-    seeds: [ 'Andrea', 'Jude', 'Chase', 'Vivian', 'Maria','Liliana', 'Ryker', 'Aiden'],
+    seeds: ['Andrea', 'Jude', 'Chase', 'Vivian', 'Maria', 'Liliana', 'Ryker', 'Aiden'],
   },
   {
     label: 'Adventurer',
     baseUrl: 'https://api.dicebear.com/7.x/adventurer/png?seed=',
-    seeds: [ 'Jude', 'Vivian', 'Jade', 'Liliana', 'Quentin', 'Aiden','Andrea','Sadie'],
+    seeds: ['Jude', 'Vivian', 'Jade', 'Liliana', 'Aiden', 'Andrea', 'Sadie'],
   },
   {
-    label:'Notionists',
-    baseUrl:'https://api.dicebear.com/7.x/notionists/png?seed=',
-    seeds:['Sara','Riley', 'Ryan','Andrea','Adrian', 'Liliana', 'Vivian', 'Mackenzie','Maria', 'Jameson',]
+    label: 'Notionists',
+    baseUrl: 'https://api.dicebear.com/7.x/notionists/png?seed=',
+    seeds: ['Sara', 'Riley', 'Ryan', 'Andrea', 'Adrian', 'Liliana', 'Vivian', 'Maria', 'Jameson'],
   }
 ];
 
 const getAvatarUrl = (baseUrl: string, seed: string) => `${baseUrl}${seed}`;
+
+// AvatarPreview with smooth border transition
+const AvatarPreview = React.memo(({ 
+  uri, 
+  isSelected, 
+  onPress, 
+  index
+}: { 
+  uri: string, 
+  isSelected: boolean, 
+  onPress: () => void,
+  index: number
+}) => {
+  const borderOpacity = React.useRef(new Animated.Value(isSelected ? 1 : 0)).current;
+  const borderScale = React.useRef(new Animated.Value(isSelected ? 1 : 0.8)).current;
+  
+  React.useEffect(() => {
+    Animated.parallel([
+      Animated.timing(borderOpacity, {
+        toValue: isSelected ? 1 : 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.spring(borderScale, {
+        toValue: isSelected ? 1 : 0.8,
+        tension: 100,
+        friction: 8,
+        useNativeDriver: true,
+      })
+    ]).start();
+  }, [isSelected]);
+
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      style={styles.avatarContainer}
+    >
+      <FadingImage 
+        uri={uri} 
+        index={index}
+        isSelected={false}
+      />
+      <Animated.View
+        style={[
+          styles.animatedBorder,
+          {
+            opacity: borderOpacity,
+            transform: [{ scale: borderScale }]
+          }
+        ]}
+        pointerEvents="none"
+      />
+    </TouchableOpacity>
+  );
+});
 
 export default function ProfileImageScreen() {
   const router = useRouter();
@@ -78,6 +135,7 @@ export default function ProfileImageScreen() {
       currentStep={currentStep}
       steps={steps}
       headerTitle="Wähle dein Profilbild!"
+      backRoute={'/intent'}
     >
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -119,30 +177,30 @@ export default function ProfileImageScreen() {
 
             <View style={styles.orContainer}>
               <View style={styles.orLine} />
-              <Text style={styles.orText}>Oder wähle einen Avatar</Text>
+              <Text style={styles.orText}>Oder wähle einen Avatar 👇</Text>
               <View style={styles.orLine} />
             </View>
 
-            {AVATAR_COLLECTIONS.map(({ label, baseUrl, seeds }) => (
+            {AVATAR_COLLECTIONS.map(({ label, baseUrl, seeds }, collectionIndex) => (
               <View key={label} style={{ marginBottom: 20 }}>
                 <Text style={styles.avatarCollectionLabel}>{label}</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                  {seeds.map((seed) => {
-                    const uri = getAvatarUrl(baseUrl, seed);
-                    const isSelected = profileImage === uri;
-                    return (
-                      <TouchableOpacity
-                        key={seed}
-                        onPress={() => handleAvatarSelect(baseUrl, seed)}
-                        style={[
-                          styles.avatarContainer,
-                          isSelected && styles.avatarSelectedBorder,
-                        ]}
-                      >
-                        <Image source={{ uri }} style={styles.avatar} />
-                      </TouchableOpacity>
-                    );
-                  })}
+                {seeds.map((seed, seedIndex) => {
+  const uri = getAvatarUrl(baseUrl, seed);
+  const globalIndex = collectionIndex * seeds.length + seedIndex;
+  const isSelected = profileImage === uri;
+  
+  return (
+    <AvatarPreview
+      key={`${label}-${seed}`}
+      uri={uri}
+      index={globalIndex}
+      isSelected={isSelected}
+      onPress={() => handleAvatarSelect(baseUrl, seed)}
+    />
+  );
+})}
+
                 </ScrollView>
               </View>
             ))}
@@ -198,7 +256,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     borderWidth: 2,
-
     borderStyle: 'dashed',
     borderRadius: 12,
     marginBottom: 20,
@@ -237,7 +294,14 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'transparent',
   },
-  avatarSelectedBorder: {
+  animatedBorder: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 25,
+    borderWidth: 3,
     borderColor: '#ff9a00',
   },
   avatar: {

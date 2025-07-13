@@ -306,7 +306,7 @@ export default function ChannelScreen() {
         <KeyboardAvoidingView
           style={styles.flex}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.select({ ios: 80, android: 100 })}
+          keyboardVerticalOffset={Platform.select({ ios: 120, android: 100 })}
         >
           {isMuted && <MutedNotice />}
 

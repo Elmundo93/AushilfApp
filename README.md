@@ -16,9 +16,11 @@
 Die **AushilfApp** ist eine mobile App zur Vermittlung von Nachbarschaftshilfe – besonders für ältere Menschen, Studierende und Helfende mit wenig digitaler Erfahrung.  
 Im Mittelpunkt stehen **Zugänglichkeit**, **Nützlichkeit im Alltag** und **einfache Vermittlung**.
 
+Sie ist bereits testbar und vereint DSGVO-konforme Technologie mit echter sozialer Wirkung.
+
 ---
 
-### 🧭 Hauptfunktionen für Nutzer:innen
+## 🧭 Hauptfunktionen für Nutzer:innen
 
 | 🔹 Funktion                     | 📝 Beschreibung |
 |-------------------------------|----------------|
@@ -30,10 +32,11 @@ Im Mittelpunkt stehen **Zugänglichkeit**, **Nützlichkeit im Alltag** und **ein
 | 🧑‍💼 **Userdaten-Verwaltung**  | Eigene Profildaten verwalten, Danksagungen empfangen & anzeigen |
 | 🪪 **Minijob-Tunnel Integration** | Onboarding mit Stripe-Verifizierung zur Einbindung in Minijobzentralen |
 | 📶 **Offline-Modus**           | Lokale SQLite-Datenbank für stabile Nutzung ohne Internet |
+| 👀 **Barrierefreiheit**        | Schriftgrößenmodus, visuelle Avatar-Hilfe, einfache Sprache |
 
 ---
 
-## ⚙️ Tech Stack & Nutzen
+## 🚀 Technische Highlights
 
 | Layer        | Technologie                          | Nutzen für App |
 |-------------|---------------------------------------|----------------|
@@ -45,6 +48,21 @@ Im Mittelpunkt stehen **Zugänglichkeit**, **Nützlichkeit im Alltag** und **ein
 | 📂 **DB**       | Supabase PostgreSQL + SQLite        | Kombiniert Cloud mit lokalem Cache |
 | 🔎 **Toxicity** | ONNX + optional Flask API           | Lokaler Schutz vor toxischer Sprache – datenschutzfreundlich |
 | 💼 **Verwaltung**| Stripe Identity Light (0,99 €)     | Nahtlose Integration in Minijobzentralen & Behördenprozesse |
+
+---
+
+## 🧑‍🤝‍🧑 Gemeinnützigkeit & Wirkung
+
+Die AushilfApp ist ein gemeinnütziges Projekt des Vereins **Wir helfen aus e. V.**.  
+Wir glauben an eine Gesellschaft, in der Hilfe auf Gegenseitigkeit basiert – unabhängig von Herkunft, Sprache oder digitaler Kompetenz.
+
+### Was uns auszeichnet:
+
+- 💡 **Zugang für alle**: auch ohne App über WhatsApp Companion möglich
+- 🔒 **Privatsphäre & Kontrolle**: keine Weitergabe von Nutzerdaten
+- 📚 **Begleitmaterialien**: leicht verständlich, mehrsprachig & barrierefrei
+- 🫶 **Community getrieben**: Nutzer:innen können helfen, aber auch Hilfe suchen
+- 💬 **KI-Unterstützung** intuitive Hilfe durch maßgeschneiderte Angebote mit den Aushelfern der AushilfApp 
 
 ---
 
@@ -83,3 +101,8 @@ Die Konfiguration erfolgt über `eas.json`, `app.config.js` und `.env`.
 
 MIT License – frei nutzbar, weiterentwickelbar und gemeinwohlorientiert.
 
+---
+
+## 💛 Danke
+
+Danke an alle, die mithelfen. Gemeinsam bauen wir eine digitale Struktur, die echten sozialen Mehrwert bringt – **barrierefrei, inklusiv und lokal verankert**. 🐝

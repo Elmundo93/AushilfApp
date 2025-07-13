@@ -38,13 +38,24 @@
         "ENVIRONMENT": "production",
         "SUPABASE_FUNCTIONS_URL": "https://rorjehxddmuelbakcyqo.functions.supabase.co",
         "STRIPE_PUBLISHABLE_KEY": "pk_live_..."
+      },
+      "ios": {
+        "resourceClass": "m-medium"
+      },
+      "android": {
+        "resourceClass": "medium"
       }
     }
   },
   "submit": {
     "production": {
       "ios": {
-        "appleId": "DEINE-APPLE-ID@provider.de"
+        "appleId": "DEINE-APPLE-ID@provider.de",
+        "appleTeamId": "DEIN-TEAM-ID"
+      },
+      "android": {
+        "serviceAccountKeyPath": "./google-service-account.json",
+        "track": "production"
       }
     }
   }

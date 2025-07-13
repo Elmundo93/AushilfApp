@@ -37,7 +37,7 @@ serve(async (req) => {
       mode: 'subscription',
       line_items: [
         {
-          price: 'price_1RadUFRxdlPuUFwslwrwZqnw', // ID deines monatlichen 0,99€-Preises
+          price: 'price_1RjNseRo1tSBJy4Lla0KtKr4', // ID deines monatlichen 0,99€-Preises
           quantity: 1,
         },
       ],

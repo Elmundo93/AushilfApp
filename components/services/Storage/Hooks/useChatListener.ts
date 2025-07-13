@@ -9,6 +9,7 @@ import { useMessagesService } from '@/components/Crud/SQLite/Services/messagesSe
 import { logger } from '@/components/utils/logger';
 import { dbMutex } from '@/components/Crud/SQLite/Services/dbMutex';
 import { useStreamChatStore } from '@/components/stores/useStreamChatStore';
+import { useActiveChatStore } from '@/components/stores/useActiveChatStore';
 
 export const useChatListeners = (
   streamChatClient: any,

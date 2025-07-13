@@ -51,11 +51,13 @@ export interface StoredChannel {
   custom_post_nachname: string;
   custom_post_profileImage: string;
   custom_post_userBio: string;
+  custom_post_kategorien: string;
   custom_user_vorname: string;
   custom_user_nachname: string;
   custom_user_profileImage: string;
   custom_user_userBio: string;
   custom_user_id: string;
+  custom_user_kategorien: string;
   last_message_text: string;
   last_message_at: string | null;
   updated_at: string | null;

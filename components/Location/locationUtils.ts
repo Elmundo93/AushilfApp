@@ -20,7 +20,7 @@ export async function reverseGeocodeFromCoords(lat: number, long: number): Promi
       wohnort: address.city || address.region || '',
       plz: address.postalCode || '',
       straße: address.street || '',
-      hausnummer: address.name || '',
+      hausnummer: address.streetNumber || '',
     };
   } catch (error) {
     console.error('Fehler bei reverseGeocodeFromCoords:', error);

@@ -1,104 +1,119 @@
-// File: app/(public)/(onboarding)/subscribe.tsx
-
-import React, { useEffect } from 'react';
+import React from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
+  View, Text, StyleSheet, TouchableOpacity,
+  KeyboardAvoidingView, Platform, ScrollView, Alert,
+  Image,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
-import { BlurView } from 'expo-blur';
+import { usePathname, useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { SvgXml } from 'react-native-svg';
-
 import { useAuthStore } from '@/components/stores/AuthStore';
 import { startStripeSubscriptionFlow } from '@/components/services/stripe/startStripeSubscription';
+import { onboardingSharedStyles, getResponsiveSize, getResponsivePadding, getResponsiveMargin } from './sharedStyles';
 import { OnboardingLayout } from '@/components/Onboarding/OnboardingLayout';
-import { onboardingSharedStyles } from './sharedStyles';
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
+  import { useOnboardingStore } from '@/components/stores/OnboardingContext';
 
-const steps = ['intro', 'userinfo', 'userinfo2', 'intent', 'about', 'profileImage', 'password', 'conclusion', 'verify-identity', 'subscribe'];
+const steps = ['intro', 'userinfo', 'userinfo2', 'intent', 'about', 'profileImage', 'password', 'conclusion', 'savety'];
 
-export default function SubscribeScreen() {
+export default function SavetyScreen() {
   const { user } = useAuthStore();
   const router = useRouter();
-
-  useEffect(() => {
-    if (!user?.is_id_verified) {
-      router.replace('/(public)/(onboarding)/verify-identity');
-    }
-  }, [user?.is_id_verified]);
-
-  const handleSubscribe = async () => {
+  const pathname = usePathname();
+  const currentStep = steps.findIndex((step) => pathname.includes(step));
+  const { reset } = useOnboardingStore();
+  const handleStripePress = () => {
     if (!user?.id || !user?.email) {
       return Alert.alert('Fehler', 'Benutzerdaten fehlen.');
     }
-
-    await startStripeSubscriptionFlow({
+  
+    startStripeSubscriptionFlow({
       userId: user.id,
       email: user.email,
-      onSuccess: () => router.replace('/(public)/(onboarding)/payment-success'),
+      onSuccess: () => router.replace('/payment-success' as any),
       onCancel: () => Alert.alert('Abbruch', 'Du kannst später fortfahren'),
       onError: (msg) => Alert.alert('Fehler', msg),
     });
+    reset();
   };
 
   return (
-    <OnboardingLayout currentStep={steps.length - 1} steps={steps} backRoute="/(public)/(onboarding)/verify-identity">
+    <OnboardingLayout
+      currentStep={currentStep}
+      steps={steps}
+      backRoute="/(public)/(onboarding)/intro"
+    >
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
           <View style={styles.outerContainer}>
-            <BlurView intensity={100} tint="light" style={[onboardingSharedStyles.formCard, styles.blurCard]}>
-              <View style={styles.centered}>
-                <SvgXml
-                  xml={`<svg width="120" height="120" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 2C6.48 2 2 6.48 2 12c0 4.41 2.87 8.19 6.84 9.5l1.16-4.65c-1.52-.69-2.5-2.22-2.5-3.85 0-2.49 2.01-4.5 4.5-4.5s4.5 2.01 4.5 4.5c0 1.63-.98 3.16-2.5 3.85l1.16 4.65C19.13 20.19 22 16.41 22 12c0-5.52-4.48-10-10-10z" fill="#FF9900"/>
-                  </svg>`}
-                  width={120}
-                  height={120}
-                  style={{ marginBottom: 10 }}
-                />
-                <Text style={styles.title}>🎉 Fast geschafft</Text>
+            <BlurView 
+              intensity={100} 
+              tint="light" 
+              style={[
+                onboardingSharedStyles.formCard, 
+                { 
+                  padding: getResponsivePadding(400), 
+                  borderRadius: 25,
+                  margin: 20
+                }
+              ]}
+            >
+            <View style={{ alignItems: 'center', marginBottom: 20 }}>
+             <Image source={require('@/assets/images/BienenLogoNeat.png')} style={{ width: 100, height: 90, marginBottom: 10 }} />
+              <Text style={styles.title}>Minimalbetrag zur Erhaltung der AushilfApp</Text>
+            </View>
+
+            {infoBoxes.map((box, i) => (
+              <View key={i} style={styles.infoBox}>
+                <Ionicons name={box.icon as any} size={28} color={box.color} />
+                <Text style={styles.infoText}>
+                  {box.text}
+                </Text>
               </View>
+            ))}
 
-              <Text style={styles.paragraph}>
-                Mit einem kleinen Beitrag von 0,99 € pro Monat hilfst du dabei, die AushilfApp dauerhaft und werbefrei zu betreiben.
-              </Text>
 
-              <Text style={styles.note}>
-                100 % fließen in den gemeinnützigen Betrieb. Du kannst jederzeit kündigen.
-              </Text>
-
-              <TouchableOpacity style={styles.button} onPress={handleSubscribe}>
-                <LinearGradient colors={['#FFB41E', '#FF9900']} style={styles.gradientButton}>
-                  <Text style={styles.buttonText}>Abo starten</Text>
-                </LinearGradient>
-              </TouchableOpacity>
-            </BlurView>
-          </View>
+            <TouchableOpacity style={styles.button} onPress={handleStripePress}>
+              <LinearGradient
+                colors={['#FFB41E', '#FF9900']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.gradientButton}
+              >
+                <Text style={styles.buttonText}>Verstanden & weiter</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </BlurView>
+        </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </OnboardingLayout>
   );
 }
 
+const infoBoxes = [
+  {
+    icon: 'people-outline',
+    color: '#FF9900',
+    text: 'Die AushilfApp ist ein gemeinnütziges Projekt, des Wir helfen aus e.V..',
+  },
+  {
+    icon: 'card-outline',
+    color: '#1565c0',
+    text: 'Ein Minimalbetrag von 0,99 €/p.M. hilft uns die Authetikationskosten & die laufenden Kosten zu decken',
+  },
+  {
+    icon: 'heart-outline',
+    color: '#d81b60',
+    text: 'Deine Zahlung fließt zu 100 % in den gemeinnützigen Betrieb der App und hilft dabei, Hilfe dorthin zu bringen, wo sie gebraucht wird.',
+  },
+];
+
 const styles = StyleSheet.create({
   outerContainer: {
     borderRadius: 25,
     overflow: 'hidden',
-  },
-  blurCard: {
-    padding: 24,
-    borderRadius: 25,
-    margin: 20,
-  },
-  centered: {
-    alignItems: 'center',
-    marginBottom: 20,
   },
   title: {
     fontSize: 26,
@@ -107,27 +122,42 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 10,
   },
-  paragraph: {
+  infoBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    backgroundColor: '#f9f9f9',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: '#ff9a00',
+  },
+  infoText: {
+    flex: 1,
     fontSize: 18,
     color: '#444',
-    textAlign: 'center',
-    marginBottom: 16,
+    lineHeight: 22,
   },
-  note: {
+  trustNote: {
     fontSize: 13,
     color: '#555',
+    marginTop: 14,
     textAlign: 'center',
     fontStyle: 'italic',
-    marginBottom: 24,
   },
   button: {
     borderRadius: 18,
     overflow: 'hidden',
+    marginTop: 24,
   },
   gradientButton: {
-    paddingVertical: 16,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     borderRadius: 18,
+    paddingVertical: 16,
+    paddingHorizontal: 32,
   },
   buttonText: {
     color: '#fff',

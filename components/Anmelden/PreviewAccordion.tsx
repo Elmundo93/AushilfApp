@@ -8,6 +8,7 @@ interface Props {
   onToggle: () => void;
   accordionTitle: string;
   isOnboarding?: boolean;
+  isOnboardingStep?: boolean;
 }
 
 const PreviewAccordion = ({
@@ -15,6 +16,7 @@ const PreviewAccordion = ({
   onToggle,
   accordionTitle,
   isOnboarding = false,
+  isOnboardingStep = false,
 }: Props) => {
   const rotateAnim = useRef(new Animated.Value(0)).current;
   const { userInfo, setUserInfo, validate, persist, getFullCityField } = useOnboardingStore();
@@ -72,7 +74,8 @@ const PreviewAccordion = ({
       icon: 'mail-outline',
       placeholder: 'Email',
       value: userInfo.email || '',
-      editable: false,
+      editable: isOnboardingStep ? true : false,
+      onChangeText: (val) => handleChange('email', val),
     },
     {
       icon: 'call-outline',

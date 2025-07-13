@@ -32,9 +32,14 @@ export async function startStripeSubscriptionFlow({
     const { url } = await res.json();
     if (!url) throw new Error('Keine Checkout-URL erhalten');
 
-    await WebBrowser.openBrowserAsync(url);
+    const redirectUri = 'https://wir-helfen-aus.de/payment-success';
+    const result = await WebBrowser.openAuthSessionAsync(url, redirectUri);
 
-    onSuccess();
+    if (result.type === 'success') {
+      onSuccess();
+    } else {
+      onCancel?.();
+    }
   } catch (err: any) {
     onError?.(err.message);
   } finally {

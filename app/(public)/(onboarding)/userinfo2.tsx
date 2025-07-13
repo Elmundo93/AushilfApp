@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
-import { Alert, View } from 'react-native';
+import { Alert, View, Text, StyleSheet } from 'react-native';
 import { usePathname, useRouter } from 'expo-router';
 import { useOnboardingStore } from '@/components/stores/OnboardingContext';
 import { OnboardingLayout } from '@/components/Onboarding/OnboardingLayout';
 import { OnboardingForm } from '@/components/Onboarding/OnboardingForm';
 import { PrivacyModal } from '@/components/Onboarding/PrivacyModal';
 import { AddressAutoFillButton } from '@/components/Location/AdressAutoFillButton';
-import { onboardingSharedStyles, getResponsivePadding } from '@/app/(public)/(onboarding)/sharedStyles';
+import { onboardingSharedStyles, getResponsivePadding, getResponsiveSize } from '@/app/(public)/(onboarding)/sharedStyles';
 import { useWindowDimensions } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+
 
 export default function UserInfo2Screen() {
   const router = useRouter();
@@ -82,6 +84,10 @@ export default function UserInfo2Screen() {
 
   const addressAutoFillContent = (
     <View style={onboardingSharedStyles.autoFillContainer}>
+        <View style={styles.sideInfoCard}>
+              <Ionicons name="checkmark-circle-outline" size={24} color="#2e7d32" />
+              <Text style={styles.sideInfoText}>Falls du gerade Zuhause bist drücke einfach den Button! ✌️</Text>
+            </View>
       <AddressAutoFillButton
         style={[
           onboardingSharedStyles.autoFillButton, 
@@ -99,12 +105,14 @@ export default function UserInfo2Screen() {
   );
 
   return (
+  
     <OnboardingLayout
       currentStep={currentStep}
       steps={steps}
       headerTitle="Dein Wohnort"
       onBack={handleBack}
-    >
+    > 
+   
       <OnboardingForm
         fields={fields}
         formData={userInfo}
@@ -126,3 +134,24 @@ export default function UserInfo2Screen() {
     </OnboardingLayout>
   );
 } 
+
+
+const styles = StyleSheet.create({
+  sideInfoCard: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  backgroundColor: '#e8f5e9',
+  padding: 15,
+  borderRadius: 10,
+  marginVertical: 10,
+  borderWidth: 1,
+  borderColor: '#81c784',
+},
+sideInfoText: {
+  fontSize: 16,
+  marginLeft: 10,
+  flex: 1,
+  color: '#1b5e20',
+  letterSpacing: 0.5,
+},
+});

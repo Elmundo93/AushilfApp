@@ -12,7 +12,7 @@ export const handleChatPress = async (
   postDetails: Post
 ): Promise<Channel | null> => {
 
-// Metadaten
+  // Metadaten
 const getPostMetadata = (user: User, post: Post) => ({
   custom_post_option: post.option || '',
   custom_post_category: post.category || '',
@@ -22,11 +22,13 @@ const getPostMetadata = (user: User, post: Post) => ({
   custom_post_nachname: post.nachname || '',
   custom_post_profileImage: post.profileImageUrl || '',
   custom_post_userBio: post.userBio || '',
+  custom_post_kategorien: JSON.stringify(post.kategorien || []),
   custom_user_vorname: user.vorname || '',
   custom_user_nachname: user.nachname || '',
   custom_user_profileImage: user.profileImageUrl || '',
   custom_user_userBio: user.bio || '',
   custom_user_id: user.id || '',
+  custom_user_kategorien: JSON.stringify(user.kategorien || []),
 });
 
 // Initialnachricht

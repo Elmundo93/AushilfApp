@@ -53,7 +53,7 @@ const CombinedSuchenBietenButton: React.FC<CombinedSuchenBietenButtonProps> = ({
           styles.halfButton,
           styles.leftHalf,
           {
-            backgroundColor: suchenChecked ? suchenColor : 'rgba(255, 255, 255, 0.9)',
+            backgroundColor: suchenChecked ? suchenColor : '#ffffff',
             borderColor: suchenChecked ? suchenColor : 'rgba(0, 0, 0, 0.2)',
             shadowColor: suchenChecked ? suchenColor : '#000',
             shadowOffset: {
@@ -103,7 +103,7 @@ const CombinedSuchenBietenButton: React.FC<CombinedSuchenBietenButtonProps> = ({
           styles.halfButton,
           styles.rightHalf,
           {
-            backgroundColor: bietenChecked ? bietenColor : 'rgba(255, 255, 255, 0.9)',
+            backgroundColor: bietenChecked ? bietenColor : '#ffffff',
             borderColor: bietenChecked ? bietenColor : 'rgba(0, 0, 0, 0.2)',
             shadowColor: bietenChecked ? bietenColor : '#000',
             shadowOffset: {
@@ -148,12 +148,11 @@ const CombinedSuchenBietenButton: React.FC<CombinedSuchenBietenButtonProps> = ({
 const styles = StyleSheet.create({
     container: {
     flexDirection: 'row',
-
     borderRadius: 20,
     borderWidth: 1.5,
     borderColor: 'rgba(0, 0, 0, 0.2)',
     overflow: 'hidden',
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    backgroundColor: '#ffffff',
   },
   halfButton: {
     flex: 1,

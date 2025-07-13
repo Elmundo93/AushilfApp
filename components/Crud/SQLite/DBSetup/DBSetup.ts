@@ -2,7 +2,7 @@
 import { SQLiteDatabase } from 'expo-sqlite';
 
 export async function migrateDbIfNeeded(db: SQLiteDatabase) {
-  const DATABASE_VERSION = 56;
+  const DATABASE_VERSION = 57;
 
   // Aktuelle DB-Version auslesen
   const { user_version: currentDbVersion = 0 } =
@@ -147,7 +147,8 @@ CREATE TABLE IF NOT EXISTS chats_fetched (
   telefonnummer TEXT,
   steuernummer TEXT,
   kategorien TEXT,
-  onboarding_completed BOOLEAN DEFAULT FALSE
+  onboarding_completed BOOLEAN DEFAULT FALSE,
+  is_id_verified BOOLEAN DEFAULT FALSE
 );
 
       COMMIT;

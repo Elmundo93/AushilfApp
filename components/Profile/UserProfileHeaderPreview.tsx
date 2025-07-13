@@ -1,8 +1,10 @@
-import React, { useContext } from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useContext, useState } from 'react';
+import { View, Text, Image, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
 import { FontSizeContext } from '@/components/provider/FontSizeContext';
 import { getIconForCategory, getBackgroundForCategory } from '../Pinnwand/utils/CategoryAndOptionUtils';
 import { LinearGradient } from 'expo-linear-gradient';
+import LottieView from 'lottie-react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 // Typen für echten User oder Onboarding-Daten
 type ProfileUserData = {
@@ -18,6 +20,7 @@ interface UserProfileHeaderProps {
   danksagungsLength: number;
   isEditable?: boolean;
   onCategoryToggle?: (category: string) => void;
+  onBioChange?: (bio: string) => void;
 }
 
 const CATEGORIES = [
@@ -34,6 +37,7 @@ const UserProfileHeaderPreview: React.FC<UserProfileHeaderProps> = ({
   danksagungsLength,
   isEditable = false,
   onCategoryToggle,
+  onBioChange,
 }) => {
   const { fontSize } = useContext(FontSizeContext);
   const maxFontSize = 48;
@@ -41,6 +45,9 @@ const UserProfileHeaderPreview: React.FC<UserProfileHeaderProps> = ({
   const componentBaseFontSize = 25;
   const adjustedFontSize = (fontSize / defaultFontSize) * componentBaseFontSize;
   const finalFontSize = Math.min(adjustedFontSize, maxFontSize);
+
+  const [isBioExpanded, setIsBioExpanded] = useState(false);
+  const [localBio, setLocalBio] = useState(user.bio || '');
 
   const renderCategoryGrid = () => {
     return (
@@ -126,6 +133,62 @@ const UserProfileHeaderPreview: React.FC<UserProfileHeaderProps> = ({
     );
   };
 
+  const handleBioChange = (text: string) => {
+    setLocalBio(text);
+    onBioChange?.(text);
+  };
+
+  const renderBioSection = () => {
+    if (!user.bio && !isEditable) return null;
+
+    return (
+      <View style={styles.userBioWrapper}>
+        <View style={styles.bioHeader}>
+          <Text style={[styles.userBioTitle, { fontSize: finalFontSize - 8 }]}>
+            Über mich:
+          </Text>
+          {isEditable && (
+            <TouchableOpacity 
+              style={styles.bioToggleButton}
+              onPress={() => setIsBioExpanded(!isBioExpanded)}
+            >
+              <Ionicons 
+                name={isBioExpanded ? "chevron-up" : "chevron-down"} 
+                size={16} 
+                color="#666" 
+              />
+              <Text style={styles.bioToggleText}>
+                {isBioExpanded ? "Speichern" : "Bearbeiten"}
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
+        
+        {isBioExpanded && isEditable ? (
+          <View style={styles.bioInputContainer}>
+            <TextInput
+              style={[styles.bioInput, { fontSize: finalFontSize - 7 }]}
+              multiline
+              maxLength={300}
+              value={localBio}
+              onChangeText={handleBioChange}
+              placeholder="Erzähle etwas über dich..."
+              placeholderTextColor="#999"
+              textAlignVertical="top"
+            />
+            <Text style={styles.bioCharCount}>
+              {localBio.length}/300 Zeichen
+            </Text>
+          </View>
+        ) : (
+          <Text style={[styles.userBio, { fontSize: finalFontSize - 8 }]} numberOfLines={3}>
+            {localBio || user.bio || ''}
+          </Text>
+        )}
+      </View>
+    );
+  };
+
   return (
     <View style={styles.headerContainer}>
       <LinearGradient
@@ -160,17 +223,21 @@ const UserProfileHeaderPreview: React.FC<UserProfileHeaderProps> = ({
         </Text>
         {user.email && <Text style={styles.userEmail} numberOfLines={1}>{user.email}</Text>}
 
-        {user.bio && (
-          <View style={styles.userBioWrapper}>
-            <Text style={[styles.userBioTitle, { fontSize: finalFontSize - 8 }]}>
-              Über mich:
-            </Text>
-            <Text style={[styles.userBio, { fontSize: finalFontSize - 8 }]} numberOfLines={2}>{user.bio}</Text>
-          </View>
-        )}
+        {renderBioSection()}
       </View>
 
       <View style={styles.trenner} />
+      <View style={styles.lottieContainer}>
+            {[1, 2, 3].map((_, index) => (
+              <LottieView
+                key={index}
+                source={require('@/assets/animations/SpinnigGreenArrow.json')}
+                autoPlay
+                loop
+                style={styles.lottie}
+              />
+            ))}
+          </View>
     </View>
   );
 };
@@ -180,14 +247,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 20,
     padding: 20,
-    marginBottom: 20,
+    marginBottom: 10,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 3,
+    shadowRadius: 4,
     elevation: 3,
   },
   profileTopRow: {
@@ -241,9 +305,48 @@ const styles = StyleSheet.create({
   userBioWrapper: {
     marginTop: 10,
   },
+  bioHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 5,
+  },
   userBioTitle: {
     fontWeight: '600',
-    marginBottom: 5,
+  },
+  bioToggleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'orange',
+    paddingHorizontal: 8,
+    marginVertical: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+  },
+  bioToggleText: {
+    fontSize: 16,
+    color: 'white',
+    marginLeft: 2,
+  },
+  bioInputContainer: {
+    marginTop: 5,
+  },
+  bioInput: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 8,
+    minHeight: 60,
+    backgroundColor: '#fff',
+    fontFamily: 'Poppins-Regular',
+    fontWeight: '500',
+    letterSpacing: 0.5,
+  },
+  bioCharCount: {
+    fontSize: 10,
+    color: '#999',
+    textAlign: 'right',
+    marginTop: 2,
   },
   userBio: {
     color: '#444',
@@ -255,7 +358,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   cardContainer: {
-    backgroundColor: 'rgba(240, 240, 240, 0.3)',
+    backgroundColor: 'transparent',
     borderRadius: 20,
     padding: 12,
     marginVertical: 8,
@@ -292,6 +395,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 12,
+    backgroundColor: '#ffffff',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -304,6 +408,19 @@ const styles = StyleSheet.create({
   categoryIcon: {
     width: 36,
     height: 36,
+  },
+  lottieContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  lottie: {
+    alignSelf: 'center',
+    width: 100,
+    height: 40,
+    zIndex: 1000,
+    transform: [{ rotate: '180deg' }],
   },
 });
 

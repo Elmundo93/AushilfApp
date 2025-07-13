@@ -79,7 +79,7 @@ serve(async (req) => {
       });
     }
 
-    const event = JSON.parse(rawBody);
+    const event = JSON.parse(rawBody)
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object;
       const userId = session.metadata?.user_id;

@@ -2,6 +2,7 @@
 import NetInfo from '@react-native-community/netinfo';
 import { useDanksagungenService } from '@/components/Crud/SQLite/Services/danksagungenService';
 import { useDanksagungStore }    from '@/components/stores/danksagungStores';
+import { useActiveChatStore }     from '@/components/stores/useActiveChatStore';
 import { Location }               from '@/components/types/location';
 
 /**
