@@ -147,8 +147,9 @@ export const ChatProvider = ({ children }: PropsWithChildren) => {
     // Check if we're already loading this channel
     const currentCid = useActiveChatStore.getState().cid;
     const currentMessages = useActiveChatStore.getState().messages;
+    const currentLoading = useActiveChatStore.getState().loading;
     
-    console.log('🔍 Current state:', { currentCid, messageCount: currentMessages.length });
+    console.log('🔍 Current state:', { currentCid, messageCount: currentMessages.length, loading: currentLoading });
     
     // Only clear messages if we're switching to a different channel
     if (currentCid !== cid) {
@@ -158,8 +159,15 @@ export const ChatProvider = ({ children }: PropsWithChildren) => {
       console.log('ℹ️ Same channel, keeping existing messages');
     }
     
-    setCid(cid);
-    setLoading(true);
+    // Only update cid if it's different
+    if (currentCid !== cid) {
+      setCid(cid);
+    }
+    
+    // Only set loading if not already loading
+    if (!currentLoading) {
+      setLoading(true);
+    }
     setStoreLoading(true);
     
     try {
@@ -249,7 +257,10 @@ export const ChatProvider = ({ children }: PropsWithChildren) => {
         user: user.id
       });
     } finally {
-      setLoading(false);
+      // Only set loading to false if we were the one who set it to true
+      if (currentCid !== cid || !currentLoading) {
+        setLoading(false);
+      }
       setStoreLoading(false);
       console.log('🔄 Message sync completed for channel:', cid);
     }

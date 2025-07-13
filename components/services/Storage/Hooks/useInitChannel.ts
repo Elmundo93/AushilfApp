@@ -8,6 +8,7 @@ import { ChatMessage } from '@/components/types/stream';
 export const useInitChannel = (cid: string | null) => {
   const db = useSQLiteContext();
   const setMessages = useActiveChatStore((s) => s.setMessages);
+  const currentMessages = useActiveChatStore((s) => s.messages);
   const { getMessagesForChannel } = useMessagesService(db);
   const lastCidRef = useRef<string | null>(null);
 
@@ -38,7 +39,18 @@ export const useInitChannel = (cid: string | null) => {
         }));
         
         console.log(`✅ Loaded ${chatMessages.length} messages for channel ${cid}`);
-        setMessages(chatMessages);
+        
+        // Only update if messages are different to prevent unnecessary re-renders
+        const currentMessageIds = currentMessages.map(m => m.id).sort();
+        const newMessageIds = chatMessages.map(m => m.id).sort();
+        
+        if (JSON.stringify(currentMessageIds) !== JSON.stringify(newMessageIds)) {
+          console.log('🔄 Messages changed, updating store');
+          setMessages(chatMessages);
+        } else {
+          console.log('ℹ️ Messages unchanged, skipping store update');
+        }
+        
         lastCidRef.current = cid;
       } catch (error) {
         console.error('❌ Error loading messages for channel:', cid, error);
@@ -46,5 +58,5 @@ export const useInitChannel = (cid: string | null) => {
     };
 
     loadMessages();
-  }, [cid, getMessagesForChannel, setMessages]);
+  }, [cid, getMessagesForChannel, setMessages, currentMessages]);
 };

@@ -76,6 +76,9 @@ export default function ChannelScreen() {
   // Simple channel tracking
   const [channelData, setChannelData] = useState(channel);
 
+  // Add ref to track if we've already synced this channel
+  const syncedChannelRef = useRef<string | null>(null);
+
   // Update channel data when channel is found
   useEffect(() => {
     if (channel) {
@@ -125,18 +128,37 @@ export default function ChannelScreen() {
   // Error state for channel not found
   const [showError, setShowError] = useState(false);
 
-  // Channel validation and error handling
+  // Channel validation and error handling - FIXED TO PREVENT LOOPING
   useEffect(() => {
     console.log('🔍 ChannelScreen: Component mounted with cid:', cid);
     console.log('🔍 ChannelScreen: Available channels:', channels.map(ch => ch.cid));
     console.log('🔍 ChannelScreen: Channel found:', channel ? 'YES' : 'NO');
     
-    // Sync messages from Stream Chat when channel is found
-    if (cid && channel) {
+    // Only sync if we haven't already synced this channel
+    if (cid && channel && syncedChannelRef.current !== cid) {
       console.log('🔄 Triggering message sync for channel:', cid);
+      syncedChannelRef.current = cid;
       syncMessagesForChannel(cid);
+    } else if (cid && channel && syncedChannelRef.current === cid) {
+      console.log('ℹ️ Channel already synced, skipping sync for:', cid);
     }
-  }, [cid, channel]); // Only depend on cid and channel
+  }, [cid, channel?.cid]); // Only depend on cid and channel.cid (not the entire channel object)
+
+  // Reset sync tracking when cid changes
+  useEffect(() => {
+    if (syncedChannelRef.current !== cid) {
+      console.log('🔄 Channel changed, resetting sync tracking from', syncedChannelRef.current, 'to', cid);
+      syncedChannelRef.current = null;
+    }
+  }, [cid]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      console.log('🧹 ChannelScreen: Cleaning up sync tracking');
+      syncedChannelRef.current = null;
+    };
+  }, []);
 
   // Fade in content when chat is ready
   useEffect(() => {

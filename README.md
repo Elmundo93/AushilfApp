@@ -27,12 +27,75 @@ Sie ist bereits testbar und vereint DSGVO-konforme Technologie mit echter sozial
 | 📌 **Pinnwand**                | Posts in deiner Umgebung – ortsbasiert & nach Kategorien filterbar |
 | 🗂 **Kategorien**              | Garten, Haushalt, Bildung, Gastro, Soziales, Handwerk |
 | 🧭 **Location-Filter**         | Zeigt nur relevante Posts in deiner Nähe – Radius einstellbar |
-| 💬 **Optimierter Chat**        | Barrierearme 1:1-Kommunikation mit Swipe-Optionen & Read-Ticks |
+| 💬 **Optimierter Chat**        | Barrierearme 1:1-Kommunikation  |
 | 🔎 **Filterbare ChannelList**  | Chats lassen sich nach Kategorie, Status oder Kontext filtern |
 | 🧑‍💼 **Userdaten-Verwaltung**  | Eigene Profildaten verwalten, Danksagungen empfangen & anzeigen |
 | 🪪 **Minijob-Tunnel Integration** | Onboarding mit Stripe-Verifizierung zur Einbindung in Minijobzentralen |
 | 📶 **Offline-Modus**           | Lokale SQLite-Datenbank für stabile Nutzung ohne Internet |
 | 👀 **Barrierefreiheit**        | Schriftgrößenmodus, visuelle Avatar-Hilfe, einfache Sprache |
+
+---
+
+## 🎥 Walkthrough: So funktioniert die AushilfApp
+
+### 📝 Barrierearmes Onboarding für ein schnelles Setup!
+
+
+<img src="./assets/Screenshots/OnboardingWohnort.png" width="200" alt="Onboarding Wohnort">
+<img src="./assets/Screenshots/OnboardingCategories.png" width="200" alt="Onboarding Kategorien">
+<img src="./assets/Screenshots/OnboardingIdentity.png" width="200" alt="Onboarding Identität">
+<img src="./assets/Screenshots/Subscription.png" width="200" alt="Stripe Subscription">
+<img src="./assets/Screenshots/StripeSubscription.png" width="200" alt="Subscription Screen">
+<img src="./assets/Screenshots/LoadingScreen.png" width="200" alt="Onboarding Loading Screen">
+
+---
+
+### 🧭 Intuitive Pinnwand mit leicht zugänglichen Posterstellungsprozess ✌️
+Wähle deine Interessensbereiche wie Garten, Soziales oder Gastro.
+
+<img src="./assets/Screenshots/HeroGreen.png" width="200" alt="Onboarding Wohnort">
+<img src="./assets/Screenshots/CreatePost.png" width="200" alt="Onboarding Wohnort">
+<img src="./assets/Screenshots/PinnwanndStandard.png" width="200" alt="Onboarding Kategorien">
+<img src="./assets/Screenshots/FilterAccordionGreenFree.png" width="200" alt="Onboarding Identität">
+<img src="./assets/Screenshots/FilterAccordionGreenChoosen.png" width="200" alt="Stripe Subscription">
+
+
+---
+
+### 🐝 Trete in Kontakt mit Menschen denen du helfen Kannst!
+<img src="./assets/Screenshots/PostDetails.png" width="200" alt="Stripe Subscription">
+<img src="./assets/Screenshots/InitMessage.png" width="200" alt="Stripe Subscription">
+<img src="./assets/Screenshots/ChannelListGreen.png" width="200" alt="Stripe Subscription">
+
+---
+
+### 📌 Organisiere deine Aushilfen schnell und einfach mit der Kategorieauswahl in den Nachrichten!
+
+<img src="./assets/Screenshots/ChannelListGreenGarten.png" width="200" alt="Stripe Subscription">
+<img src="./assets/Screenshots/ChannelListGreenGastro.png" width="200" alt="Stripe Subscription">
+<img src="./assets/Screenshots/KategorienChoose.png" width="200" alt="Stripe Subscription">
+
+---
+
+### 📔 Melde deine Aushilfmöglichkeit schnell und einfach mit den relevanten Daten bei der Minijobzentrale an
+
+<img src="./assets/Screenshots/AnmeldungGreen.png" width="200" alt="Stripe Subscription">
+
+---
+
+
+### 👥 Jeder User hat ein Profil in dem andere User Danksagungen hinterlassen können! Neben den Danksagungen sind dort auch ihre Interessen zu finden!
+
+<img src="./assets/Screenshots/ForreignProfile.png" width="200" alt="Stripe Subscription">
+<img src="./assets/Screenshots/OwnProfileGreen.png" width="200" alt="Stripe Subscription">
+
+
+---
+
+### ⚙️ Um die Zugänglichkeit der AushilfApp zu erhöhen, haben wir auch einen Lesemodus integriert für Menschen mit schwachen Augen!
+
+<img src="./assets/Screenshots/EinstellungLeseHilfeOff.png" width="200" alt="Stripe Subscription">
+<img src="./assets/Screenshots/EinstellungenLeseHilfeToggled.png" width="200" alt="Stripe Subscription">
 
 ---
 
