@@ -107,7 +107,7 @@ Wähle deine Interessensbereiche wie Garten, Soziales oder Gastro.
 
 <div align="center">
 
-<img src="./assets/Screenshots/EinstellungLeseHilfeOff.png" width="200" alt="Einstellungen Lesemodus aus"> <img src="./assets/Screenshots/EinstellungenLeseHilfeToggled.png" width="200" alt="Einstellungen Lesemodus aktiviert"><img src="./assets/Screenshots/Bildschirmfoto 2025-07-13 um 22.26.20.png" width="200" alt="Einstellungen Lesemodus aktiviert"
+<img src="./assets/Screenshots/EinstellungLeseHilfeOff.png" width="200" alt="Einstellungen Lesemodus aus"> <img src="./assets/Screenshots/EinstellungenLeseHilfeToggled.png" width="200" alt="Einstellungen Lesemodus aktiviert"><img src="./assets/Screenshots/Bildschirmfoto 2025-07-13 um 22.26.20.png" width="200" alt="Einstellungen Lesemodus aktiviert">
 
 </div>
 
