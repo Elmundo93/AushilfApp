@@ -350,6 +350,7 @@ export default function ChannelScreen() {
                     postOption={item.post_option}
                     postText={item.content || ''}
                     profileImageUrl={item.post_image}
+                    fontSize={fontSize}
 
                   />
                 );

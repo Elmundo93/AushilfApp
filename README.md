@@ -67,7 +67,7 @@ Wähle deine Interessensbereiche wie Garten, Soziales oder Gastro.
 
 <div align="center">
 
-<img src="./assets/Screenshots/PostDetails.png" width="200" alt="Post Details Ansicht"> <img src="./assets/Screenshots/InitMessage.png" width="200" alt="Erste Nachricht senden"> <img src="./assets/Screenshots/ChannelListGreen.png" width="200" alt="Channel Liste Übersicht">
+<img src="./assets/Screenshots/PostDetails.png" width="200" alt="Post Details Ansicht"> <img src="./assets/Screenshots/Bildschirmfoto 2025-07-13 um 22.25.55.png" width="200" alt="Erste Nachricht senden"> <img src="./assets/Screenshots/ChannelListGreen.png" width="200" alt="Channel Liste Übersicht">
 
 </div>
 
@@ -97,7 +97,7 @@ Wähle deine Interessensbereiche wie Garten, Soziales oder Gastro.
 
 <div align="center">
 
-<img src="./assets/Screenshots/ForreignProfile.png" width="200" alt="Fremdes Benutzerprofil"> <img src="./assets/Screenshots/OwnProfileGreen.png" width="200" alt="Eigenes Benutzerprofil">
+<img src="./assets/Screenshots/ForreignProfile.png" width="200" alt="Fremdes Benutzerprofil"> <img src="./assets/Screenshots/OwnProfileGreen.png" width="200" alt="Eigenes Benutzerprofil"> <img src="./assets/Screenshots/ProfileImageWahl.png" width="200">
 
 </div>
 
@@ -107,7 +107,7 @@ Wähle deine Interessensbereiche wie Garten, Soziales oder Gastro.
 
 <div align="center">
 
-<img src="./assets/Screenshots/EinstellungLeseHilfeOff.png" width="200" alt="Einstellungen Lesemodus aus"> <img src="./assets/Screenshots/EinstellungenLeseHilfeToggled.png" width="200" alt="Einstellungen Lesemodus aktiviert">
+<img src="./assets/Screenshots/EinstellungLeseHilfeOff.png" width="200" alt="Einstellungen Lesemodus aus"> <img src="./assets/Screenshots/EinstellungenLeseHilfeToggled.png" width="200" alt="Einstellungen Lesemodus aktiviert"><img src="./assets/Screenshots/Bildschirmfoto 2025-07-13 um 22.26.20.png" width="200" alt="Einstellungen Lesemodus aktiviert"
 
 </div>
 
