@@ -7,7 +7,7 @@
 ![License](https://img.shields.io/github/license/Elmundo93/aushilfapp)
 
 > **Wir helfen Ihnen, eine helfende Hand zu finden – oder eine zu werden.**  
-> _Eine App zur Vermittlung von lokaler Hilfe, entwickelt von [Wir helfen aus e.V.](https://www.wir-helfen-aus.de)_
+> _Eine App zur Vermittlung von lokaler Hilfe, entwickelt vom [Wir helfen aus e.V.](https://www.wir-helfen-aus.de)_
 
 ---
 
