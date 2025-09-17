@@ -1,26 +1,16 @@
-import { useEffect, useState } from 'react';
-import { getDB } from '@/components/Crud/SQLite/bridge';
-import { syncChannelsOnce } from '@/components/services/Chat/chatSync';
+// hooks/useChannels.ts
+import { useLiveQuery } from '@/components/hooks/useLiveQuery';
+import { TOPIC } from '@/components/lib/liveBus';
 
-export function useChannels() {
-  const db = getDB();
-  const [channels, setChannels] = useState<any[]>([]);
+export function useChannels(db: any, category?: string) {
+  const sql = category
+    ? `SELECT * FROM channels_local WHERE custom_category = ? ORDER BY last_message_at DESC, updated_at DESC`
+    : `SELECT * FROM channels_local ORDER BY last_message_at DESC, updated_at DESC`;
 
-  useEffect(() => {
-    const read = async () =>
-      await db.getAllAsync<any>(
-        `select * from channels_local
-         order by (last_message_at is null), last_message_at desc`
-      );
-
-    const init = async () => {
-      setChannels(await read());
-      await syncChannelsOnce();
-      setChannels(await read());
-    };
-
-    void init();
-  }, [db]);
-
-  return channels;
+  return useLiveQuery<any>(
+    db,
+    sql,
+    category ? [category] : [],
+    [TOPIC.CHANNELS]
+  );
 }
