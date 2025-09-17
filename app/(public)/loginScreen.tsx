@@ -155,10 +155,10 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   welcome: {
-    fontSize: 26,
+    fontSize: 30,
     fontWeight: '700',
     textAlign: 'center',
-    color: '#222',
+    color: 'white',
     marginBottom: 6,
   },
   subtitle: {

@@ -1,3 +1,4 @@
+// components/Nachrichten/Costum/CustomInputField.tsx
 import React, { useState } from 'react';
 import { View, TextInput, StyleSheet, TouchableOpacity, Keyboard } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';

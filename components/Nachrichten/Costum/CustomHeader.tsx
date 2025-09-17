@@ -7,11 +7,10 @@ import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuthStore } from '@/components/stores/AuthStore';
 import { useActiveChatStore } from '@/components/stores/useActiveChatStore';
-import { useStreamChatStore } from '@/components/stores/useStreamChatStore';
+import { useChannelLocalStore } from '@/components/stores/useChannelLocalStore';
 import { FontSizeContext } from '@/components/provider/FontSizeContext';
 import { useSQLiteContext } from 'expo-sqlite';
 import { adjustCategory } from '@/components/Crud/SQLite/Services/channelServices';
-import { useChatContext } from '@/components/provider/ChatProvider';
 import { styles } from './customHStyles';
 
 // Category icons
@@ -57,16 +56,15 @@ const CustomChatHeader: React.FC<Props> = ({
   const { user } = useAuthStore();
   const { fontSize } = useContext(FontSizeContext);
   const { cid } = useActiveChatStore();
-  const { channels } = useStreamChatStore();
+  const { channels } = useChannelLocalStore();
   const db = useSQLiteContext();
-  const { syncChannels } = useChatContext();
   const [categoryModalVisible, setCategoryModalVisible] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
 
   // Use passed channel or find it in the store
-  const channel = passedChannel || channels.find((ch) => ch.cid === cid) || 
-                  channels.find((ch) => ch.channel_id === cid) ||
-                  (cid ? channels.find((ch) => ch.cid?.includes(cid) || cid?.includes(ch.cid)) : null);
+  const channel = passedChannel || channels.find((ch) => ch.id === cid) || 
+                  channels.find((ch) => ch.id === cid) ||
+                  (cid ? channels.find((ch) => ch.id?.includes(cid) || cid?.includes(ch.id)) : null);
   
   const validCategories = ['gastro', 'garten', 'haushalt', 'soziales', 'handwerk', 'bildung'];
   const isValidCategory = (category: string) => validCategories.includes(category);
@@ -94,7 +92,7 @@ const CustomChatHeader: React.FC<Props> = ({
     
     if (!channel) {
       console.error('❌ Channel nicht gefunden für cid:', effectiveCid);
-      console.log('Verfügbare channels:', channels.map(ch => ({ cid: ch.cid, id: ch.channel_id })));
+      console.log('Verfügbare channels:', channels.map(ch => ({ cid: ch.id, id: ch.id })));
       Alert.alert('Fehler', 'Channel nicht gefunden. Bitte versuchen Sie es erneut.');
       return;
     }
@@ -112,13 +110,13 @@ const CustomChatHeader: React.FC<Props> = ({
       
       // Update the channel in the store
       const updatedChannels = channels.map(ch => 
-        ch.cid === effectiveCid 
+        ch.id === effectiveCid 
           ? { ...ch, custom_post_category_choosen: category }
           : ch
       );
       
       // Update the store
-      useStreamChatStore.getState().setChannels(updatedChannels);
+      useChannelLocalStore.getState().setChannels(updatedChannels);
       
       setSelectedCategory(category);
       setCategoryModalVisible(false);
@@ -131,15 +129,7 @@ const CustomChatHeader: React.FC<Props> = ({
   };
 
   const handleBackPress = async () => {
-    try {
-      console.log('🔄 ChannelScreen: Back button pressed, triggering channel sync...');
-      // Trigger channel sync before navigating back
-      await syncChannels();
-      console.log('✅ ChannelScreen: Channel sync completed, navigating back');
-    } catch (error) {
-      console.error('❌ ChannelScreen: Error during channel sync:', error);
-      // Continue with navigation even if sync fails
-    }
+
     
     // Navigate back
     router.back();

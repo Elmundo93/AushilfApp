@@ -1,10 +1,9 @@
-import { View, Text, Animated, SafeAreaView, Image, StyleSheet } from 'react-native'
+import { View, Text, Animated, SafeAreaView, Image, StyleSheet, Button } from 'react-native'
 import React, {useRef, useEffect} from 'react'
 import {  router } from 'expo-router';
 import Svg, { Path } from 'react-native-svg';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Linking } from 'react-native';
 
 
 
@@ -13,7 +12,6 @@ const Page = () => {
   const underlineWidth = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // Verzögerung von 500ms
     setTimeout(() => {
       Animated.spring(underlineWidth, {
         toValue: 1,
@@ -27,15 +25,14 @@ const Page = () => {
 
 
 
-    const login = () => {
+    const toLogin = () => {
       router.push('/(public)/loginScreen' as any);
     };
 
-const handleOpenApp =() => {
-  Linking.openURL('aushilfapp://payment-success');
-}
+
 
             return (
+
 <SafeAreaView style={styles.container}>
 <LinearGradient
         colors={['#ff9a00', '#ffc300', '#ffffff']}
@@ -45,7 +42,7 @@ const handleOpenApp =() => {
       />
       <View style={[styles.backgroundImage, { zIndex: 2 }]} >
     <Image 
-      source={require('@/assets/images/peopleWhiteBackground.png')} 
+      source={require('@/assets/images/CasualFriends.png')} 
       resizeMode="contain" 
       style={styles.imageBackground}
     />
@@ -60,9 +57,7 @@ const handleOpenApp =() => {
                 </Text>
                 <Text style={styles.greenText}>
                   - oder eine zu werden!
-                </Text>
-               
-            
+                </Text>  
             </View>
             <Text style={styles.schnellText} >
                 Schnell und einfach mit der AushilfApp!
@@ -88,24 +83,18 @@ const handleOpenApp =() => {
   </Svg>
 </Animated.View>
         <View style={styles.buttonContainer}>
-           
-                  
-                  <View style={styles.loginContainer}>
-                    <TouchableOpacity onPress={login}>
+             <View style={styles.loginContainer}>
+                    <TouchableOpacity onPress={toLogin}>
                       <Text style={styles.buttonText}>Los geht's! 🟢
                       </Text>
                     </TouchableOpacity>
+
                   </View>
                 </View>
                 </View>
                 </SafeAreaView>
-             
-                
-                );
-       
-        
-        
-        };
+               );
+              };
         
         export default Page;
 
@@ -114,7 +103,7 @@ const handleOpenApp =() => {
                 flex: 1,
                 backgroundColor: 'white',
                 alignItems: 'center',
-                height:'100%'
+
             },
             backgroundImage: {
                 width: '100%',
@@ -169,12 +158,17 @@ const handleOpenApp =() => {
               elevation: 3,
               borderWidth: 1,
               borderColor: '#e0e0e0',
+              alignItems: 'center',
+              justifyContent: 'center',
+              textAlign: 'center',
+
             },
             greenText: {
               fontSize: 26,
               color: 'black',
               padding: 5,
-              fontWeight: 'bold'
+              fontWeight: 'bold',
+              textAlign: 'center'
           },
           schnellText: {
             fontSize: 28,
@@ -203,11 +197,7 @@ const handleOpenApp =() => {
             height: 70,
             width: 350,
             marginBottom: 25,
-
-
-
-
-            elevation: 4,
+ elevation: 4,
             borderWidth: 2,
             borderColor: '#45a049',
             transform: [{ scale: 1.02 }],

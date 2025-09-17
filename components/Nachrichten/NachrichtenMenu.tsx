@@ -12,11 +12,11 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { FontSizeContext } from '@/components/provider/FontSizeContext';
 import { router } from 'expo-router';
 import { useSelectedUserStore } from '@/components/stores/selectedUserStore';
-import { useStreamChatStore } from '@/components/stores/useStreamChatStore';
+import { useChannelLocalStore } from '@/components/stores/useChannelLocalStore';
 import { useActiveChatStore } from '@/components/stores/useActiveChatStore';
-import { chatService } from '@/components/services/StreamChat/chatService';
+import { chatService } from '@/components/services/Chat/chatApi';
 import { useAuthStore } from '@/components/stores/AuthStore';
-import { extractPartnerData } from '@/components/services/StreamChat/lib/extractPartnerData';
+
 import { useSQLiteContext } from 'expo-sqlite';
 import { useMuteStore } from '@/components/stores/useMuteStore';
 
@@ -28,7 +28,7 @@ const NachrichtenMenu: React.FC<{ iconSize?: number; iconColor?: string }> = ({
   const [visible, setVisible] = useState(false);
   const [isMuting, setIsMuting] = useState(false);
   const { setSelectedUser } = useSelectedUserStore();
-  const { channels } = useStreamChatStore();
+  const { channels } = useChannelLocalStore();
   const { cid } = useActiveChatStore();
   const user = useAuthStore((s) => s.user);
   const channel = channels.find((ch) => ch.cid === cid);

@@ -1,8 +1,8 @@
 import { create } from 'zustand';
 import { User } from '@/components/types/auth';
 import { StreamChat } from 'stream-chat';
-import { useStreamChatStore } from './useStreamChatStore';
-import { useActiveChatStore } from './useActiveChatStore';
+import { useChannelLocalStore } from '@/components/stores/useChannelLocalStore';
+import { useMessageLocalStore } from './useMessageLocalStore';
 
 interface AuthState {
   user: User | null;
@@ -18,7 +18,11 @@ interface AuthState {
   registrationSuccessConfirmed: boolean;
   anmeldungsToggle: boolean;
   usersynced: boolean;
+  isVerified: boolean;
+  is_id_verified: boolean;
+  id_veried_name_match: boolean;
   clearChatState: () => void;
+  reset: () => void;
   setUser: (user: Partial<User> | null) => void;
   setToken: (token: string | null) => void;
   setStreamChatClient: (client: StreamChat | null) => void;
@@ -31,7 +35,6 @@ interface AuthState {
   setRegistrationSuccessConfirmed: (confirmed: boolean) => void;
   setAnmeldungsToggle: (anmeldungsToggle: boolean) => void;
   setUserSynced: (usersynced: boolean) => void;
-
   }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -95,7 +98,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   setError: (error) => set({ error }),
   setRegistrationSuccessConfirmed: (confirmed) => set({ registrationSuccessConfirmed: confirmed }),
   setUserSynced: (usersynced) => set({ usersynced }),
-  reset: () => ({
+  reset: () => set({
     user: null,
     token: null,
     streamChatClient: null,
@@ -107,12 +110,17 @@ export const useAuthStore = create<AuthState>((set) => ({
     error: null,
     registrationProgress: 0,
     registrationSuccessConfirmed: false,
-
+    anmeldungsToggle: false,
+    usersynced: false,
+    isVerified: false,
+    is_id_verified: false,
+    id_veried_name_match: false,
   }),
   clearChatState: () => {
-    useStreamChatStore.getState().setChannels([]);
-    useStreamChatStore.getState().setChannelsReady(false);
-    useActiveChatStore.getState().setCid(null);
-    useActiveChatStore.getState().setMessages([]);
+    
+    useMessageLocalStore.getState().setChannelId(null);
+    useMessageLocalStore.getState().setMessages([]);
+    useChannelLocalStore.getState().setChannels([]);
+    useChannelLocalStore.getState().setInitialized(false);
   },
 }));

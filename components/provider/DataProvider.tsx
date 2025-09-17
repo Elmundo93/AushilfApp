@@ -10,9 +10,9 @@ import { useLocationStore }    from '@/components/stores/locationStore';
 import { usePostSync }         from '@/components/services/Storage/Syncs/PostSync';
 import { useDanksagungSync }   from '@/components/services/Storage/Syncs/DanksagungsSync';
 import { usePostCountStore }   from '@/components/stores/postCountStores';
-import { useChannelSync }      from '@/components/services/Storage/Syncs/ChannelSync';
+import { syncChannelsOnce }      from '@/components/services/Chat/chatSync';
+
 import { useAuthStore }        from '@/components/stores/AuthStore';
-import { useActiveChatStore }  from '@/components/stores/useActiveChatStore';
 
 import { Alert } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
@@ -39,7 +39,7 @@ export const DataProvider = ({ children }: PropsWithChildren) => {
   const { user } = useAuthStore();
   const syncPosts        = usePostSync();
   const syncDanksagungen = useDanksagungSync();
-  const syncChannelsAndMessages = useChannelSync();
+  const syncChannel = syncChannelsOnce;
 
   const [loading, setLoading]     = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
@@ -56,7 +56,7 @@ export const DataProvider = ({ children }: PropsWithChildren) => {
     return net.isConnected && net.isInternetReachable;
   };
 
-  const syncWithRetry = async (syncFn: () => Promise<void>, name: string, isOnboarding = false) => {
+  const syncWithRetry = async (syncFn: () => Promise<any>, name: string, isOnboarding = false) => {
     let retries = 0;
     while (retries < MAX_RETRIES) {
       try {
@@ -115,7 +115,7 @@ export const DataProvider = ({ children }: PropsWithChildren) => {
       // Synchronize sequentially with retry logic
       await syncWithRetry(() => syncPosts(location), 'Posts', isInOnboarding || false);
       await syncWithRetry(() => syncDanksagungen(location), 'Danksagungen', isInOnboarding || false);
-      await syncWithRetry(() => syncChannelsAndMessages(), 'Channels', isInOnboarding || false);
+      await syncWithRetry(() => syncChannel(), 'Channels', isInOnboarding || false);
       console.log('✅ All syncs completed successfully');
     } catch (e: any) {
       console.error('❌ Full sync failed:', {
