@@ -1,3 +1,4 @@
+// app/(authenticated)/(modal)/postDetail/index.tsx
 import React, { useEffect, useContext, useState } from 'react';
 import {
   View,
@@ -20,14 +21,14 @@ import { FontSizeContext } from '@/components/provider/FontSizeContext';
 
 import { PostHeader } from '@/components/PostDetails/PostHeader';
 import { PostContent } from '@/components/PostDetails/PostContent';
-import { useChatContext } from '@/components/provider/ChatProvider';
+import { initializeChatWithPost } from '@/components/services/Chat/chatInit';
+import { getDB } from '@/components/Crud/SQLite/bridge';
 
 export default function PostDetail() {
   const { setIsNavigating, isNavigating } = useActiveChatStore();
   const { selectedPost } = useSelectedPostStore();
   const { user } = useAuthStore();
 
-  const { initializeChatWithPost } = useChatContext();
   const router = useRouter();
   const { fontSize } = useContext(FontSizeContext);
 
@@ -48,33 +49,26 @@ export default function PostDetail() {
       Alert.alert('Fehler', 'Bitte melden Sie sich an.');
       return;
     }
-
-    console.log('🔍 PostDetail: Button pressed, starting chat initialization...');
-
     try {
-      // Don't set isNavigating here - let ChatNavigationService handle it internally
-      console.log('🎬 PostDetail: Starting chat initialization...');
-      const channelCid = await initializeChatWithPost(user, selectedPost, {
-        showLoading: true,
-        onError: (errorMessage) => {
-          console.error('❌ PostDetail: Error in chat initialization:', errorMessage);
-          Alert.alert('Fehler', errorMessage);
-        },
-        onSuccess: (cid) => {
-          console.log('✅ PostDetail: Chat initialized successfully:', cid);
+      await initializeChatWithPost({
+        db: getDB(),
+        currentUser: user,
+        selectedPost,
+        opts: {
+          showLoading: true,
+          onError: (m: string) => Alert.alert('Fehler', m),
+          onSuccess: (cid: string) => console.log('Chat ready:', cid),
         }
       });
-
-      if (!channelCid) {
-        throw new Error('Chat konnte nicht initialisiert werden');
-      }
-
-    } catch (error: any) {
-      console.error('❌ Error in handleChatPressButton:', error);
-      Alert.alert('Fehler', error.message);
+    } catch (e: any) {
+      Alert.alert('Fehler', e.message);
     }
-    // Remove the finally block that was setting isNavigating to false
-    console.log('🔍 PostDetail: Chat initialization completed');
+  };
+
+
+
+
+
   };
 
   if (!selectedPost) return null;
