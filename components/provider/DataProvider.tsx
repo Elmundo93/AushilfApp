@@ -1,37 +1,21 @@
 // components/provider/DataProvider.tsx
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  PropsWithChildren,
-} from 'react';
+import React, { createContext, useContext, useEffect, useState, PropsWithChildren } from 'react';
 import { useLocationStore }    from '@/components/stores/locationStore';
 import { usePostSync }         from '@/components/services/Storage/Syncs/PostSync';
 import { useDanksagungSync }   from '@/components/services/Storage/Syncs/DanksagungsSync';
 import { usePostCountStore }   from '@/components/stores/postCountStores';
-import { syncChannelsOnce }      from '@/components/services/Chat/chatSync';
-
+import { syncChannelsOnce }    from '@/components/services/Chat/chatSync';
+import { subscribeChannels }   from '@/components/services/Chat/chatRealtime';
 import { useAuthStore }        from '@/components/stores/AuthStore';
-
 import { Alert } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 
-type DataContextType = {
-  syncAll: () => Promise<void>;
-  loading: boolean;
-  syncError: string | null;
-};
-
-const DataContext = createContext<DataContextType>({
-  syncAll: async () => {},
-  loading: false,
-  syncError: null,
-});
+type DataContextType = { syncAll: () => Promise<void>; loading: boolean; syncError: string | null; };
+const DataContext = createContext<DataContextType>({ syncAll: async () => {}, loading: false, syncError: null });
 export const useDataContext = () => useContext(DataContext);
 
 const MAX_RETRIES = 3;
-const RETRY_DELAY = 2000; // Increased to 2 seconds
+const RETRY_DELAY = 2000;
 
 export const DataProvider = ({ children }: PropsWithChildren) => {
   const { location } = useLocationStore();
@@ -39,126 +23,82 @@ export const DataProvider = ({ children }: PropsWithChildren) => {
   const { user } = useAuthStore();
   const syncPosts        = usePostSync();
   const syncDanksagungen = useDanksagungSync();
-  const syncChannel = syncChannelsOnce;
 
   const [loading, setLoading]     = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
 
-  const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+  const sleep = (ms: number) => new Promise(res => setTimeout(res, ms));
 
   const checkNetworkConnection = async () => {
     const net = await NetInfo.fetch();
-    console.log('Network status:', {
-      isConnected: net.isConnected,
-      isInternetReachable: net.isInternetReachable,
-      type: net.type
-    });
-    return net.isConnected && net.isInternetReachable;
+    return !!(net.isConnected && net.isInternetReachable);
   };
 
   const syncWithRetry = async (syncFn: () => Promise<any>, name: string, isOnboarding = false) => {
     let retries = 0;
-    while (retries < MAX_RETRIES) {
+    for (;;) {
       try {
-        console.log(`Attempting ${name} sync, attempt ${retries + 1}/${MAX_RETRIES}`);
-        
-        const isConnected = await checkNetworkConnection();
-        if (!isConnected) {
-          throw new Error('Keine Internetverbindung');
-        }
-
+        if (!(await checkNetworkConnection())) throw new Error('Keine Internetverbindung');
         await syncFn();
-        console.log(`✅ ${name} sync successful`);
         return;
       } catch (e: any) {
         retries++;
-        console.error(`Error in ${name} sync:`, {
-          attempt: retries,
-          error: e,
-          message: e.message,
-          stack: e.stack
-        });
-
-        // Handle specific StreamChat initialization errors during onboarding
-        if (isOnboarding && e.message && e.message.includes('Both secret and user tokens are not set')) {
-          console.log(`ℹ️ ${name} sync skipped during onboarding - this is expected`);
-          return; // Don't retry, just return gracefully
-        }
-
-        if (retries === MAX_RETRIES) {
-          console.error(`❌ ${name} sync failed after ${MAX_RETRIES} attempts`);
-          throw e;
-        }
-
-        const delay = RETRY_DELAY * retries;
-        console.log(`⚠️ ${name} sync failed, retrying in ${delay}ms...`);
-        await sleep(delay);
+        // Legacy-Onboarding-Skip (falls noch relevant)
+        if (isOnboarding && e?.message?.includes('Both secret and user tokens are not set')) return;
+        if (retries >= MAX_RETRIES) throw e;
+        await sleep(RETRY_DELAY * retries);
       }
     }
   };
 
   const syncAll = async () => {
-    if (!location) {
-      console.log('No location available for sync');
-      return;
-    }
-
-    // Check if user is in onboarding
-    const isInOnboarding = user && !user.onboarding_completed;
-
-    console.log('Starting full sync with location:', location);
-    console.log('Onboarding status:', isInOnboarding ? 'In progress' : 'Completed');
+    if (!location) return;
+    const isInOnboarding = !!(user && !user.onboarding_completed);
     setLoading(true);
     setSyncError(null);
-
     try {
-      // Synchronize sequentially with retry logic
-      await syncWithRetry(() => syncPosts(location), 'Posts', isInOnboarding || false);
-      await syncWithRetry(() => syncDanksagungen(location), 'Danksagungen', isInOnboarding || false);
-      await syncWithRetry(() => syncChannel(), 'Channels', isInOnboarding || false);
-      console.log('✅ All syncs completed successfully');
+      await syncWithRetry(() => syncPosts(location), 'Posts', isInOnboarding);
+      await syncWithRetry(() => syncDanksagungen(location), 'Danksagungen', isInOnboarding);
+      await syncWithRetry(() => syncChannelsOnce(), 'Channels', isInOnboarding);
     } catch (e: any) {
-      console.error('❌ Full sync failed:', {
-        error: e,
-        message: e.message,
-        stack: e.stack
-      });
-      setSyncError(e.message || 'Unbekannter Fehler');
-      
-      // Only show error alert if user is not in onboarding
+      setSyncError(e?.message || 'Unbekannter Fehler');
       if (!isInOnboarding) {
         Alert.alert(
           'Synchronisationsfehler',
           'Die Daten konnten nicht synchronisiert werden. Bitte überprüfe deine Internetverbindung und versuche es später erneut.'
         );
-      } else {
-        console.log('ℹ️ Skipping error alert during onboarding');
       }
     } finally {
       setLoading(false);
     }
   };
 
+  // 🔹 Einmalig: Channel-Realtime abonnieren (Server → SQLite spiegeln)
   useEffect(() => {
-    if (location) {
-      console.log('Location changed, triggering sync');
-      syncAll();
-    }
-  }, [location]);
+    const unsub = subscribeChannels();   // lebt im gesamten Auth-Lebenszyklus
+    return () => { try { unsub?.(); } catch {} };
+  }, []);
 
+  // 🔹 Bei Location-Änderung Vollsync
+  useEffect(() => { if (location) syncAll(); }, [location]);
+
+  // 🔹 Posts nach Creation aktualisieren
   useEffect(() => {
     if (location && postCount) {
-      console.log('Post count changed, triggering post sync');
-      const isInOnboarding = user && !user.onboarding_completed;
-      syncWithRetry(() => syncPosts(location), 'Posts', isInOnboarding || false).catch(e => {
-        console.error('Post sync after creation failed:', {
-          error: e,
-          message: e.message,
-          stack: e.stack
-        });
-      });
+      const isInOnboarding = !!(user && !user.onboarding_completed);
+      syncWithRetry(() => syncPosts(location), 'Posts', isInOnboarding).catch(() => {});
     }
-  }, [postCount]);
+  }, [postCount, location, user]);
+
+  // 🔹 Online wieder da? → sanfter Resync aller Daten
+  useEffect(() => {
+    const unsubNet = NetInfo.addEventListener(state => {
+      if (state.isConnected && state.isInternetReachable) {
+        syncAll().catch(() => {});
+      }
+    });
+    return () => unsubNet();
+  }, [location]);
 
   return (
     <DataContext.Provider value={{ syncAll, loading, syncError }}>

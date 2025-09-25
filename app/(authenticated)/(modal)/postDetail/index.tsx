@@ -23,6 +23,7 @@ import { PostHeader } from '@/components/PostDetails/PostHeader';
 import { PostContent } from '@/components/PostDetails/PostContent';
 import { initializeChatWithPost } from '@/components/services/Chat/chatInit';
 import { getDB } from '@/components/Crud/SQLite/bridge';
+import { ChannelCategory } from '@/components/types/chat';
 
 export default function PostDetail() {
   const { setIsNavigating, isNavigating } = useActiveChatStore();
@@ -49,19 +50,52 @@ export default function PostDetail() {
       Alert.alert('Fehler', 'Bitte melden Sie sich an.');
       return;
     }
+    
     try {
-      await initializeChatWithPost({
+      setIsNavigating(true);
+      
+      const cid = await initializeChatWithPost({
         db: getDB(),
         currentUser: user,
-        selectedPost,
+        selectedPost: {
+          id: selectedPost.id,
+          userId: selectedPost.userId,
+          category: selectedPost.category as ChannelCategory,
+          postText: selectedPost.postText,
+          vorname: selectedPost.vorname,
+          nachname: selectedPost.nachname,
+          profileImageUrl: selectedPost.profileImageUrl,
+        },
         opts: {
           showLoading: true,
           onError: (m: string) => Alert.alert('Fehler', m),
           onSuccess: (cid: string) => console.log('Chat ready:', cid),
         }
       });
+
+      if (cid) {
+        console.log('🚀 Starting navigation with cid:', cid);
+        
+        // Try using router.replace to navig if (channel) {
+      
+
+        // 1. Erst zur Nachrichtenübersicht wechseln
+        router.replace('/nachrichten');
+
+        // 2. Modal öffnen (kleiner Timeout, um Stack zu stabilisieren)
+        setTimeout(() => {
+          router.push({
+            pathname: '/nachrichten/channel/[cid]',
+            params: { cid: cid },
+          });
+        }, 100);
+        // This should close the modal and navigate to the channel in one step
+  
+      }
     } catch (e: any) {
       Alert.alert('Fehler', e.message);
+    } finally {
+      setIsNavigating(false);
     }
   };
 
@@ -69,7 +103,7 @@ export default function PostDetail() {
 
 
 
-  };
+  
 
   if (!selectedPost) return null;
 

@@ -2,7 +2,7 @@
 import { SQLiteDatabase } from 'expo-sqlite';
 
 export async function migrateDbIfNeeded(db: SQLiteDatabase) {
-  const DATABASE_VERSION = 59;
+  const DATABASE_VERSION = 61;
 
   const { user_version: currentDbVersion = 0 } =
     (await db.getFirstAsync<{ user_version: number }>('PRAGMA user_version')) ?? { user_version: 0 };
@@ -98,6 +98,7 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
 
       -- Channel members
       CREATE TABLE IF NOT EXISTS channel_members_local (
+        last_read_at INTEGER,
         channel_id TEXT NOT NULL,
         user_id TEXT NOT NULL,
         role TEXT,

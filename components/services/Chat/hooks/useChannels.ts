@@ -1,4 +1,4 @@
-// hooks/useChannels.ts
+// components/services/Chat/hooks/useChannels.ts
 import { useLiveQuery } from '@/components/hooks/useLiveQuery';
 import { TOPIC } from '@/components/lib/liveBus';
 

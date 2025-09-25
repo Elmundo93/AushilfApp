@@ -6,61 +6,60 @@ import {
   TouchableOpacity,
   StyleSheet,
   Pressable,
-
+  Image,
 } from 'react-native';
 import { FontSizeContext } from '@/components/provider/FontSizeContext';
 import { router } from 'expo-router';
 import { useSelectedUserStore } from '@/components/stores/selectedUserStore';
-import { useStreamChatStore } from '@/components/stores/useStreamChatStore';
-import { useActiveChatStore } from '@/components/stores/useActiveChatStore';
 import { useAuthStore } from '@/components/stores/AuthStore';
-import { extractPartnerData } from '@/components/services/StreamChat/lib/extractPartnerData';
-import { Image } from 'react-native';
-import { chatService } from '@/components/services/StreamChat/chatService';
+import { extractPartnerDataFromChannel } from './utils/extractPartnerData';
+import { useSQLiteContext } from 'expo-sqlite';
+import { useChannels } from '@/components/services/Chat/hooks/useChannels';
 
 
-const IconMenu: React.FC<{ iconSize?: number; iconColor?: string, categoryIcon?: any }> = ({
+const IconMenu: React.FC<{ 
+  iconSize?: number; 
+  iconColor?: string; 
+  categoryIcon?: any;
+  channelId?: string; // Pass channelId as prop
+}> = ({
   iconSize = 24,
   iconColor = 'black',
   categoryIcon,
+  channelId,
 }) => {
   const { fontSize } = useContext(FontSizeContext);
   const [visible, setVisible] = useState(false);
   const { setSelectedUser } = useSelectedUserStore();
-  const { channels } = useStreamChatStore();
-  const { cid } = useActiveChatStore();
   const user = useAuthStore((s) => s.user);
   const [isMuted, setIsMuted] = useState(false);
-  const channel = channels.find((ch) => ch.cid === cid);
-  const partnerData = channel ? extractPartnerData(channel, user?.id ?? '') : null;
+  
+  // Use SQLite context and hooks
+  const db = useSQLiteContext();
+  const channels = useChannels(db);
+  const channel = channels.find((ch) => ch.id === channelId);
+  const partnerData = channel && user?.id ? extractPartnerDataFromChannel(channel, user.id) : null;
 
   const adjustedFontSize = Math.min((fontSize / 24) * 22, 28);
 
-  useEffect(() => {
-    const checkIfMuted = async () => {
-      if (!partnerData) return;
-      const client = useAuthStore.getState().streamChatClient;
-      const mutedIds = client?.mutedUsers?.map((m) => m.target.id);
-      setIsMuted(mutedIds?.includes(partnerData.userId) ?? false);
-    };
-  
-    checkIfMuted();
-  }, [partnerData]);
+  // Note: Mute state is now handled by useMuteStore, no need for useEffect
 
   const handleViewProfile = () => {
     if (!partnerData) return;
-    setSelectedUser(partnerData);
+    setSelectedUser(partnerData as any);
     setVisible(false);
     setTimeout(() => {
       router.push('/(modal)/forreignProfile');
     }, 100);
   };
 
+  // TODO: Implement block user functionality for new chat system
   const handleBlockUser = async () => {
     if (!channel || !partnerData) return;
     
     try {
-      await chatService.blockUser(partnerData.userId);
+      // TODO: Implement block user function for new chat system
+      // await chatService.blockUser(partnerData.userId);
       console.log('✅ User blocked successfully');
     } catch (error) {
       console.error('❌ Error blocking user:', error);

@@ -1,23 +1,30 @@
+// components/services/Chat/chatOutbox.ts
 import { v4 as uuid } from 'uuid';
 import { sendMessageRpc } from './chatApi';
 import { getDB } from '@/components/Crud/SQLite/bridge';
+import { supabase } from '@/components/config/supabase';
 
 export async function enqueueMessage(channelId: string, body: string, meta: any = {}) {
   const db = getDB();
   const clientId = uuid();
   const now = Date.now();
 
+  // aktuelle User-ID laden
+  const { data, error } = await supabase.auth.getUser();
+  if (error || !data.user?.id) throw new Error('User not authenticated');
+  const currentUserId = data.user.id;
+
   await db.withTransactionAsync(async () => {
     await db.runAsync(
-      `insert into outbox_messages (client_id, channel_id, body, meta, created_at)
-       values (?, ?, ?, ?, ?)`,
+      `INSERT OR REPLACE INTO outbox_messages (client_id, channel_id, body, meta, created_at)
+       VALUES (?, ?, ?, ?, ?)`,
       [clientId, channelId, body, JSON.stringify(meta), now]
     );
     await db.runAsync(
-      `insert or replace into messages_local
+      `INSERT OR REPLACE INTO messages_local
        (id, channel_id, sender_id, body, created_at, edited_at, deleted_at, client_id, meta, sync_state)
-       values (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
-      [clientId, channelId, '', body, now, null, null, clientId, JSON.stringify(meta)]
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
+      [clientId, channelId, currentUserId, body, now, null, null, clientId, JSON.stringify(meta)]
     );
   });
 

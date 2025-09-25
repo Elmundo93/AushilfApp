@@ -5,7 +5,7 @@ import { CATEGORIES, getBackgroundForCategory, getIconForCategory } from '@/comp
 
 interface CategoryFilterProps {
   selectedCategory: string | null;
-  onSelectCategory: (category: string) => void;
+  onSelectCategory: (category: string | null) => void;
   iconSize: number;
 }
 
@@ -14,7 +14,7 @@ export const CategoryFilter = ({ selectedCategory, onSelectCategory, iconSize }:
     {CATEGORIES.map((category) => (
       <TouchableOpacity
         key={category}
-        onPress={() => onSelectCategory(category)}
+        onPress={() => onSelectCategory(selectedCategory === category ? null : category)}
         style={[
           styles.iconContainer,
           selectedCategory === category && getBackgroundForCategory(category),

@@ -2,19 +2,23 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, View, Text, StyleSheet, Image } from 'react-native';
 import dayjs from 'dayjs';
-import { ChatMessage } from '@/components/types/stream';
+import type { MessageRow } from '@/components/types/chat';
 import { styles as bubbleStyles } from './customMStyles';
 import { MessageStatusTicks } from '../Helpers/MessageStatusTicks';
 
 interface Props {
-  message: ChatMessage;
+  message: MessageRow;
   currentUserId: string;
   fontSize: number;
   animateOnMount?: boolean;
+  // UI-specific fields that need to be passed from parent
+  senderVorname?: string;
+  senderNachname?: string;
+  senderImage?: string;
 }
 
 export const CustomMessageBubble: React.FC<Props> = React.memo(
-  ({ message, currentUserId, fontSize, animateOnMount = false }) => {
+  ({ message, currentUserId, fontSize, animateOnMount = false, senderVorname, senderNachname, senderImage }) => {
     const isOwn = message.sender_id === currentUserId;
     const anim = useRef(new Animated.Value(0)).current;
 
@@ -35,6 +39,14 @@ export const CustomMessageBubble: React.FC<Props> = React.memo(
       outputRange: [20, 0],
     });
 
+    // Determine message status based on sync_state
+    const getMessageStatus = (): 'sent' | 'read' => {
+      if (message.sync_state === 'synced') {
+        return 'read';
+      }
+      return 'sent';
+    };
+
     return (
       <View
         style={[
@@ -42,8 +54,8 @@ export const CustomMessageBubble: React.FC<Props> = React.memo(
           isOwn ? bubbleStyles.ownRow : bubbleStyles.otherRow,
         ]}
       >
-        {!isOwn && message.sender_image && (
-          <Image source={{ uri: message.sender_image }} style={bubbleStyles.avatar} />
+        {!isOwn && senderImage && (
+          <Image source={{ uri: senderImage }} style={bubbleStyles.avatar} />
         )}
 
         <Animated.View
@@ -53,24 +65,24 @@ export const CustomMessageBubble: React.FC<Props> = React.memo(
             { opacity: anim, transform: [{ translateY }] },
           ]}
         >
-          {!isOwn && (
+          {!isOwn && senderVorname && (
             <Text style={[bubbleStyles.username, { fontSize: fontSize - 2 }]}> 
-              {message.sender_vorname} {message.sender_nachname?.[0]}.
+              {senderVorname} {senderNachname?.[0]}.
             </Text>
           )}
 
           <Text style={[bubbleStyles.text, { fontSize }]}>
-            {message.content}
+            {message.body}
           </Text>
        
           {isOwn && (
-  <View style={bubbleStyles.statusRow}>
-    <Text style={bubbleStyles.time}>
-      {dayjs(message.created_at).format('HH:mm')}
-    </Text>
-    <MessageStatusTicks status={message.read ? 'read' : 'sent'} />
-  </View>
-)}
+            <View style={bubbleStyles.statusRow}>
+              <Text style={bubbleStyles.time}>
+                {dayjs(message.created_at).format('HH:mm')}
+              </Text>
+              <MessageStatusTicks status={getMessageStatus()} />
+            </View>
+          )}
         </Animated.View>
       </View>
     );

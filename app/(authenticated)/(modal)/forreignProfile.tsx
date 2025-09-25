@@ -16,6 +16,7 @@ import ForeignProfileHeader from '@/components/Header/ForreignProfileHeader';
 import { CategoryType } from '@/components/types/stream';
 import { useDanksagungenService } from '@/components/Crud/SQLite/Services/danksagungenService';
 import { useSQLiteContext } from 'expo-sqlite';
+import { supabase } from '@/components/config/supabase';
 
 const normalizeCategories = (categories: string[] | undefined): string[] => {
   if (!categories) return [];
@@ -24,6 +25,7 @@ const normalizeCategories = (categories: string[] | undefined): string[] => {
 
 const ForreignProfile = () => {
   const { selectedUser } = useSelectedUserStore();
+  const { setSelectedUser } = useSelectedUserStore();
   const { danksagungen, loading, error, setDanksagungen, setLoading, setError } = useDanksagungStore();
   const { fontSize } = useContext(FontSizeContext);
   const db = useSQLiteContext();
@@ -76,6 +78,31 @@ const ForreignProfile = () => {
   useEffect(() => {
     fetchUserDanksagungen();
   }, [selectedUser?.userId]); // Only depend on userId, not the entire function
+
+  // Falls bio/kategorien fehlen → Nachziehen & Store updaten (einmalig)
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!selectedUser?.userId) return;
+      if (selectedUser.bio && Array.isArray(selectedUser.kategorien)) return;
+      const { data, error } = await supabase
+        .from('Users')
+        .select('id, vorname, nachname, bio, kategorien, profileImageUrl')
+        .eq('id', selectedUser.userId)
+        .maybeSingle();
+      if (!cancelled && !error && data) {
+        setSelectedUser({
+          userId: selectedUser.userId,
+          vorname: selectedUser.vorname ?? data.vorname ?? '',
+          nachname: selectedUser.nachname ?? data.nachname ?? '',
+          bio: selectedUser.bio ?? data.bio ?? '',
+          kategorien: selectedUser.kategorien ?? (Array.isArray(data.kategorien) ? data.kategorien : []),
+          profileImageUrl: selectedUser.profileImageUrl ?? data.profileImageUrl ?? undefined,
+        } as any);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [selectedUser?.userId]);
 
   const formatName = (v: string, n: string) => `${v} ${n.charAt(0)}.`;
 

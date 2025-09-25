@@ -1,6 +1,7 @@
 // components/services/Chat/chatRealtime.ts
 import { supabase } from '@/components/config/supabase';
 import { getDB } from '@/components/Crud/SQLite/bridge';
+import { liveBus, TOPIC } from '@/components/lib/liveBus';
 
 export type ChannelEvent = 'INSERT' | 'UPDATE' | 'DELETE';
 export type ChannelRowLocal = {
@@ -43,6 +44,8 @@ export function subscribeChannels(
           },
           'DELETE'
         );
+        // 🔔 UI invalidieren
+        liveBus.emit(TOPIC.CHANNELS);
         return;
       }
 
@@ -61,7 +64,7 @@ export function subscribeChannels(
           c.last_message_at ? new Date(c.last_message_at).getTime() : null,
           c.last_message_text ?? null,
           c.last_sender_id ?? null,
-          JSON.stringify(c.meta ?? {}),
+          typeof c.meta === 'string' ? (c.meta || '{}') : JSON.stringify(c.meta ?? {}),
         ]
       );
 
@@ -75,10 +78,12 @@ export function subscribeChannels(
           last_message_at: c.last_message_at ? new Date(c.last_message_at).getTime() : null,
           last_message_text: c.last_message_text ?? null,
           last_sender_id: c.last_sender_id ?? null,
-          meta: JSON.stringify(c.meta ?? {}),
+          meta: typeof c.meta === 'string' ? (c.meta || '{}') : JSON.stringify(c.meta ?? {}),
         },
         event
       );
+      // 🔔 UI invalidieren
+      liveBus.emit(TOPIC.CHANNELS);
     })
     .subscribe();
 

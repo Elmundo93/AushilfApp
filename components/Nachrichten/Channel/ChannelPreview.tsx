@@ -5,7 +5,8 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { FontSizeContext } from '@/components/provider/FontSizeContext';
 import { useMuteStore } from '@/components/stores/useMuteStore';
 import type { ChannelRow } from '@/components/types/chat';
-
+import { extractPartnerDataFromChannel, getChannelDisplayName, getChannelDisplayImage } from '../utils/extractPartnerData';
+import { formatRelativeDate } from '@/components/utils/formateRelativeDate';
 // Category icons (optional)
 import GastroIconWithBackground from '@/assets/images/GastroIconWithBackground.png';
 import GartenIconWithBackground from '@/assets/images/GartenIconWithBackground.png';
@@ -25,20 +26,21 @@ const categoryIcons = {
 
 const validCategories = ['gastro', 'garten', 'haushalt', 'soziales', 'handwerk', 'bildung'] as const;
 
-type ChannelPartner = { userId: string; name: string; avatarUrl?: string | null };
-
 type Props = {
-  channel: ChannelRow;                        // ← neu: SQLite-Shape
-  onSelect: (channel: ChannelRow) => void;    // ← neu: gibt ChannelRow zurück
-  partner?: ChannelPartner;                   // ← optional: Name/Avatar (z.B. via useChannelPartner)
+  channel: ChannelRow;
+  onSelect: (channel: ChannelRow) => void;
+  currentUserId: string;
+  unreadCount: number;
 };
 
-const ChannelPreview: React.FC<Props> = ({ channel, onSelect, partner }) => {
-  const { fontSize } = useContext(FontSizeContext);
+const ChannelPreview: React.FC<Props> = ({ channel, onSelect, currentUserId, unreadCount = 0 }) => {  const { fontSize } = useContext(FontSizeContext);
   const { isChannelMuted, isUserMuted } = useMuteStore();
 
+  // Extract partner data from channel
+  const partnerData = extractPartnerDataFromChannel(channel, currentUserId);
+  
   const isMutedChannel = isChannelMuted(channel.id);
-  const isMutedUser = partner?.userId ? isUserMuted(partner.userId) : false;
+  const isMutedUser = partnerData?.userId ? isUserMuted(partnerData.userId) : false;
   const isMuted = isMutedChannel || isMutedUser;
 
   const category =
@@ -50,13 +52,11 @@ const ChannelPreview: React.FC<Props> = ({ channel, onSelect, partner }) => {
   const adjustedFontSize = Math.min((fontSize / 24) * 16, 20);
   const subFontSize = Math.min((fontSize / 24) * 14, 18);
 
-  const displayName = partner?.name ?? 'Chat';
-  const displayImage = partner?.avatarUrl ?? null;
+  const displayName = getChannelDisplayName(channel, currentUserId);
+  const displayImage = getChannelDisplayImage(channel, currentUserId);
 
-  const lastDate =
-    channel.last_message_at != null
-      ? new Date(channel.last_message_at).toLocaleDateString('de-DE')
-      : undefined;
+    const lastDate = formatRelativeDate(channel.last_message_at ?? undefined);
+    const hasUnread = unreadCount > 0;
 
   return (
     <TouchableOpacity
@@ -64,10 +64,16 @@ const ChannelPreview: React.FC<Props> = ({ channel, onSelect, partner }) => {
       onPress={() => onSelect(channel)}
     >
       <View style={styles.avatarContainer}>
-        <Image
-          source={displayImage ? { uri: displayImage } : require('@/assets/images/DefaultAvatar.png')}
-          style={styles.avatar}
-        />
+        {displayImage
+          ? <Image source={{ uri: displayImage }} style={styles.avatar} />
+          : <Image source={require('@/assets/images/DefaultAvatar.png')} style={styles.avatar} />
+        }
+         {hasUnread && (
+         <View style={styles.unreadBadge}>
+           <Text style={styles.unreadText}>       
+                  {unreadCount > 99 ? '99+' : String(unreadCount)}            </Text>
+         </View>
+       )}
         {isMuted && (
           <View style={styles.muteIndicator}>
             <MaterialCommunityIcons name="volume-off" size={12} color="white" />
@@ -78,18 +84,30 @@ const ChannelPreview: React.FC<Props> = ({ channel, onSelect, partner }) => {
 
       <View style={styles.content}>
         <View style={styles.header}>
-          <Text style={[styles.name, { fontSize: adjustedFontSize }, isMuted && styles.mutedText]}>
-            {displayName}
+        <Text style={[
+             styles.name,
+             { fontSize: adjustedFontSize },
+             hasUnread && styles.bold,
+             isMuted && styles.mutedText
+           ]}>            {displayName}
           </Text>
           {lastDate && (
-            <Text style={[styles.time, { fontSize: subFontSize }, isMuted && styles.mutedText]}>
-              {lastDate}
+            <Text style={[
+                styles.time,
+                { fontSize: subFontSize },
+               hasUnread && styles.timeBold,
+                isMuted && styles.mutedText
+              ]}>              {lastDate}
             </Text>
           )}
         </View>
 
-        <Text style={[styles.lastMessage, { fontSize: subFontSize }, isMuted && styles.mutedText]}>
-          {channel.last_message_text ?? 'Keine Nachrichten'}
+        <Text style={[
+           styles.lastMessage,
+           { fontSize: subFontSize },
+           hasUnread && styles.bold,
+           isMuted && styles.mutedText
+         ]}>          {channel.last_message_text ?? 'Keine Nachrichten'}
         </Text>
 
         {isMuted && (
@@ -116,6 +134,24 @@ const styles = StyleSheet.create({
   lastMessage: { color: '#666', marginBottom: 4 },
   mutedText: { color: '#999' },
   mutedLabel: { color: '#ff6b6b', fontStyle: 'italic' },
+  unreadBadge: {
+      position: 'absolute',
+      top: -4,
+      left: -4,
+      minWidth: 18,
+      height: 18,
+       paddingHorizontal: 4,
+      borderRadius: 9,
+      backgroundColor: '#ff6b00', // AushilfApp-Orange? ggf. aus Theme holen
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 2,
+      borderColor: 'white',
+    },
+    unreadText: { color: 'white', fontSize: 11, fontWeight: '700' },
+    bold: { fontWeight: '700', color: '#111' },
+    timeBold: { color: '#111', fontWeight: '700' },
+
 });
 
 export default ChannelPreview;

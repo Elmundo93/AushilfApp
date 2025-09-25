@@ -6,11 +6,10 @@ import NachrichtenMenu from '../NachrichtenMenu';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuthStore } from '@/components/stores/AuthStore';
-import { useActiveChatStore } from '@/components/stores/useActiveChatStore';
-import { useChannelLocalStore } from '@/components/stores/useChannelLocalStore';
-import { FontSizeContext } from '@/components/provider/FontSizeContext';
+ import { FontSizeContext } from '@/components/provider/FontSizeContext';
 import { useSQLiteContext } from 'expo-sqlite';
-import { adjustCategory } from '@/components/Crud/SQLite/Services/channelServices';
+import { updateChannelCategory } from '@/components/services/Chat/chatApi';
+import { useChannels } from '@/components/services/Chat/hooks/useChannels';
 import { styles } from './customHStyles';
 
 // Category icons
@@ -20,6 +19,8 @@ import HaushaltWithBackground from '@/assets/images/HaushaltWithBackground.png';
 import SozialesIconWithBackground from '@/assets/images/SozialesIconWithBackground.png';
 import HandwerkIconWithBackground from '@/assets/images/HandwerkIconWithBackground.png';
 import BildungsIconWithBackground from '@/assets/images/BildungsIconWithBackground.png';
+import { adjustChannelLocal } from '@/components/Crud/SQLite/Services/chat/channelService';
+import { nowUnix } from '@/components/utils/chatutils';
 
 const categoryIcons = {
   gastro: GastroIconWithBackground,
@@ -43,28 +44,27 @@ type Props = {
   otherUserImage: string;
   categoryIcon: any;
   otherUserName?: string;
-  channel?: any; // Add channel prop for direct access
+  channelId?: string; // Pass channelId instead of channel object
 };
 
 const CustomChatHeader: React.FC<Props> = ({
   otherUserImage,
   otherUserName = '',
   categoryIcon,
-  channel: passedChannel,
+  channelId,
 }) => {
   const router = useRouter();
   const { user } = useAuthStore();
   const { fontSize } = useContext(FontSizeContext);
-  const { cid } = useActiveChatStore();
-  const { channels } = useChannelLocalStore();
   const db = useSQLiteContext();
   const [categoryModalVisible, setCategoryModalVisible] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
 
-  // Use passed channel or find it in the store
-  const channel = passedChannel || channels.find((ch) => ch.id === cid) || 
-                  channels.find((ch) => ch.id === cid) ||
-                  (cid ? channels.find((ch) => ch.id?.includes(cid) || cid?.includes(ch.id)) : null);
+  // Use SQLite hook to get channels
+  const channels = useChannels(db);
+  
+  // Find channel using the new structure
+  const channel = channelId ? channels.find((ch) => ch.id === channelId) : null;
   
   const validCategories = ['gastro', 'garten', 'haushalt', 'soziales', 'handwerk', 'bildung'];
   const isValidCategory = (category: string) => validCategories.includes(category);
@@ -75,58 +75,48 @@ const CustomChatHeader: React.FC<Props> = ({
 
   const adjustedFontSize = Math.min((fontSize / 24) * 16, 20);
 
-  const handleCategorySelect = async (category: string) => {
-    console.log('🔍 Debugging channel lookup:');
-    console.log('- cid from useActiveChatStore:', cid);
-    console.log('- channels from useStreamChatStore:', channels.length);
-    console.log('- passed channel:', passedChannel);
-    console.log('- channel found:', channel);
-    
-    // Use the passed channel's cid as fallback if useActiveChatStore cid is null
-    const effectiveCid = cid || passedChannel?.cid || channel?.cid;
-    
-    if (!effectiveCid) {
-      Alert.alert('Fehler', 'Channel ID nicht verfügbar');
-      return;
-    }
-    
-    if (!channel) {
-      console.error('❌ Channel nicht gefunden für cid:', effectiveCid);
-      console.log('Verfügbare channels:', channels.map(ch => ({ cid: ch.id, id: ch.id })));
-      Alert.alert('Fehler', 'Channel nicht gefunden. Bitte versuchen Sie es erneut.');
-      return;
-    }
+  
+const handleCategorySelect = async (category: string) => {
+  if (!channelId) {
+    Alert.alert('Fehler', 'Channel ID nicht verfügbar');
+    return;
+  }
+  if (!channel) {
+    Alert.alert('Fehler', 'Channel nicht gefunden. Bitte versuchen Sie es erneut.');
+    return;
+  }
+  if (!isValidCategory(category)) {
+    Alert.alert('Fehler', 'Ungültige Kategorie');
+    return;
+  }
 
-    try {
-      console.log('🔄 Starting category update for cid:', effectiveCid, 'category:', category);
-      
-      // Check if table exists before proceeding
-      const tableCheck = await db.getFirstAsync<{ count: number }>(
-        "SELECT COUNT(*) as count FROM sqlite_master WHERE type='table' AND name='channels_fetched'"
-      );
-      console.log('📊 Table check result:', tableCheck);
-      
-      await adjustCategory(db, category, effectiveCid);
-      
-      // Update the channel in the store
-      const updatedChannels = channels.map(ch => 
-        ch.id === effectiveCid 
-          ? { ...ch, custom_post_category_choosen: category }
-          : ch
-      );
-      
-      // Update the store
-      useChannelLocalStore.getState().setChannels(updatedChannels);
-      
-      setSelectedCategory(category);
-      setCategoryModalVisible(false);
-      
-      console.log('✅ Kategorie erfolgreich aktualisiert:', category);
-    } catch (error) {
-      console.error('❌ Fehler beim Aktualisieren der Kategorie:', error);
-      Alert.alert('Fehler', 'Kategorie konnte nicht aktualisiert werden. Bitte versuchen Sie es erneut.');
-    }
-  };
+  try {
+    // 1) Optimistic local update (instant UI feedback)
+    const previous = channel.custom_post_category_choosen || channel.custom_post_category || '';
+    await adjustChannelLocal(db, channelId, category, { updated_at: nowUnix() });
+    setSelectedCategory(category);
+    setCategoryModalVisible(false);
+
+    // 2) Server mutation
+    const res = await updateChannelCategory(channelId, category);
+
+    // 3) Reconcile using server updated_at (apply-if-newer)
+    //    Convert server ISO -> unix (seconds or ms depending on nowUnix)
+    const serverUpdatedUnix = Math.floor(new Date(res.updated_at).getTime() / 1000);
+    await adjustChannelLocal(db, channelId, res.custom_category, { updated_at: serverUpdatedUnix });
+
+    console.log('✅ Kategorie server-bestätigt:', res.custom_category);
+  } catch (error) {
+    console.error('❌ Fehler beim Aktualisieren der Kategorie:', error);
+
+    // Rollback optimistic change (best-effort)
+    const prev = channel?.custom_post_category_choosen || channel?.custom_post_category || '';
+    await adjustChannelLocal(db, channelId, prev, { updated_at: nowUnix() });
+    setSelectedCategory(prev);
+
+    Alert.alert('Fehler', 'Kategorie konnte nicht aktualisiert werden. Bitte versuchen Sie es erneut.');
+  }
+};
 
   const handleBackPress = async () => {
 
@@ -228,7 +218,7 @@ const CustomChatHeader: React.FC<Props> = ({
       </TouchableOpacity>
       
       <View style={styles.menuContainer}>
-        <NachrichtenMenu iconSize={40} iconColor="#333" />
+        <NachrichtenMenu iconSize={40} iconColor="#333" channelId={channelId} />
         <Text style={styles.menuHint}>⋯</Text>
       </View>
 

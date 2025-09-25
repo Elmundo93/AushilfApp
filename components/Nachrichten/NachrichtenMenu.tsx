@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useState } from 'react';
 import {
   Modal,
   View,
@@ -12,46 +12,87 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { FontSizeContext } from '@/components/provider/FontSizeContext';
 import { router } from 'expo-router';
 import { useSelectedUserStore } from '@/components/stores/selectedUserStore';
-import { useChannelLocalStore } from '@/components/stores/useChannelLocalStore';
-import { useActiveChatStore } from '@/components/stores/useActiveChatStore';
-import { chatService } from '@/components/services/Chat/chatApi';
 import { useAuthStore } from '@/components/stores/AuthStore';
-
-import { useSQLiteContext } from 'expo-sqlite';
 import { useMuteStore } from '@/components/stores/useMuteStore';
+import { extractPartnerDataFromChannel } from './utils/extractPartnerData';
+import { useSQLiteContext } from 'expo-sqlite';
+import { useChannels } from '@/components/services/Chat/hooks/useChannels';
+import { supabase } from '@/components/config/supabase';
+// optional: falls du users_local in SQLite hast
+// import { getDB } from '@/components/Crud/SQLite/bridge';
 
-const NachrichtenMenu: React.FC<{ iconSize?: number; iconColor?: string }> = ({
+const NachrichtenMenu: React.FC<{ 
+  iconSize?: number; 
+  iconColor?: string;
+  channelId?: string; // Pass channelId as prop instead of using store
+}> = ({
   iconSize = 24,
   iconColor = 'black',
+  channelId,
 }) => {
   const { fontSize } = useContext(FontSizeContext);
   const [visible, setVisible] = useState(false);
   const [isMuting, setIsMuting] = useState(false);
   const { setSelectedUser } = useSelectedUserStore();
-  const { channels } = useChannelLocalStore();
-  const { cid } = useActiveChatStore();
   const user = useAuthStore((s) => s.user);
-  const channel = channels.find((ch) => ch.cid === cid);
-  const partnerData = channel ? extractPartnerData(channel, user?.id ?? '') : null;
   const db = useSQLiteContext();
+  
+  // Use SQLite hook to get channels
+  const channels = useChannels(db);
+  
+  // Find channel using the new structure
+  const channel = channels.find((ch) => ch.id === channelId);
+  
+  // Extract partner data from channel
+  const partnerData = channel && user?.id ? extractPartnerDataFromChannel(channel, user.id) : null;
 
   // Enhanced mute state management
   const { isUserMuted, isChannelMuted, toggleUserMute, toggleChannelMute, setLoading } = useMuteStore();
-  const isUserMutedState = partnerData ? isUserMuted(partnerData.userId) : false;
-  const isChannelMutedState = cid ? isChannelMuted(cid) : false;
 
   const adjustedFontSize = Math.min((fontSize / 24) * 22, 28);
 
-  const handleViewProfile = () => {
+  const handleViewProfile = async () => {
     if (!partnerData) return;
-    console.log('partnerData', partnerData);
-    setSelectedUser(partnerData);
-    setVisible(false);
-    router.back();
-    
-    setTimeout(() => {
-      router.push('/(modal)/forreignProfile');
-    }, 100);
+    try {
+      setVisible(false);
+
+      // 1) Basis aus Channel
+      let full = { ...partnerData };
+
+      // 2) Falls bio/kategorien fehlen → on-demand laden
+      if (!full.bio || !full.kategorien || !full.vorname || !full.nachname || !full.profileImageUrl) {
+        // a) optional aus lokaler SQLite (wenn vorhanden)
+        // const db = getDB();
+        // const local = await db.getFirstAsync<any>('select id, vorname, nachname, bio, kategorien, profileImageUrl from users_local where id = ?', [partnerData.userId]);
+        // if (local) { ...merge... }
+
+        // b) Supabase-Fallback
+        const { data, error } = await supabase
+          .from('Users')
+          .select('id, vorname, nachname, bio, kategorien, profileImageUrl')
+          .eq('id', partnerData.userId)
+          .maybeSingle();
+        if (!error && data) {
+          full = {
+            userId: partnerData.userId,
+            vorname: partnerData.vorname ?? data.vorname ?? undefined,
+            nachname: partnerData.nachname ?? data.nachname ?? undefined,
+            profileImageUrl: (partnerData.profileImageUrl ?? data.profileImageUrl ?? '') || undefined,
+            bio: partnerData.bio ?? data.bio ?? undefined,
+            kategorien: partnerData.kategorien ?? (Array.isArray(data.kategorien) ? data.kategorien : undefined),
+          };
+        }
+      }
+
+      // 3) In Store schreiben
+      setSelectedUser(full as any);
+
+      // 4) Navigation (erst zurück, dann Modal)
+      router.back();
+      setTimeout(() => { router.push('/(modal)/forreignProfile'); }, 80);
+    } catch (e) {
+      console.warn('viewProfile failed', e);
+    }
   };
 
   const handleToggleUserMute = async () => {
@@ -60,18 +101,22 @@ const NachrichtenMenu: React.FC<{ iconSize?: number; iconColor?: string }> = ({
     setLoading(true);
 
     try {
+      const isUserMutedState = isUserMuted(partnerData.userId);
+      
       if (isUserMutedState) {
-        await chatService.unmuteUser(partnerData.userId);
+        // TODO: Implement unmuteUser function for new chat system
+        // await chatService.unmuteUser(partnerData.userId);
         toggleUserMute(partnerData.userId);
-        Alert.alert('Erfolg', `${partnerData.vorname} wurde wieder hörbar.`);
+        Alert.alert('Erfolg', `${partnerData.vorname || 'Benutzer'} wurde wieder hörbar.`);
       } else {
-        await chatService.muteUser(partnerData.userId);
+        // TODO: Implement muteUser function for new chat system
+        // await chatService.muteUser(partnerData.userId);
         toggleUserMute(partnerData.userId, {
           vorname: partnerData.vorname,
           nachname: partnerData.nachname,
           profileImageUrl: partnerData.profileImageUrl,
         });
-        Alert.alert('Erfolg', `${partnerData.vorname} wurde stummgeschaltet.`);
+        Alert.alert('Erfolg', `${partnerData.vorname || 'Benutzer'} wurde stummgeschaltet.`);
       }
     } catch (e: any) {
       Alert.alert('Fehler', e.message);
@@ -81,7 +126,9 @@ const NachrichtenMenu: React.FC<{ iconSize?: number; iconColor?: string }> = ({
   };
 
   const handleToggleChannelMute = async () => {
-    if (!cid) return;
+    if (!channelId) return;
+    
+    const isChannelMutedState = isChannelMuted(channelId);
     
     // Show confirmation dialog
     Alert.alert(
@@ -100,15 +147,17 @@ const NachrichtenMenu: React.FC<{ iconSize?: number; iconColor?: string }> = ({
             setLoading(true);
             
             try {
-              console.log('🔇 Starting channel mute toggle for cid:', cid);
+              console.log('🔇 Starting channel mute toggle for channelId:', channelId);
               
               if (isChannelMutedState) {
-                await chatService.unmuteChannel(cid);
-                toggleChannelMute(cid);
+                // TODO: Implement unmuteChannel function for new chat system
+                // await chatService.unmuteChannel(channelId);
+                toggleChannelMute(channelId);
                 Alert.alert('Erfolg', 'Channel wurde wieder hörbar gemacht.');
               } else {
-                await chatService.muteChannel(cid);
-                toggleChannelMute(cid);
+                // TODO: Implement muteChannel function for new chat system
+                // await chatService.muteChannel(channelId);
+                toggleChannelMute(channelId);
                 Alert.alert('Erfolg', 'Channel wurde stummgeschaltet.');
               }
               
@@ -149,11 +198,16 @@ const NachrichtenMenu: React.FC<{ iconSize?: number; iconColor?: string }> = ({
             <MenuItem onPress={handleViewProfile} text="Profil betrachten" fontSize={adjustedFontSize} />
            
             <MenuItem
-  onPress={handleToggleUserMute}
-  text={isUserMutedState ? 'Stummschaltung aufheben' : 'Benutzer stummschalten'}
-  fontSize={adjustedFontSize}
-/>
+              onPress={handleToggleUserMute}
+              text={partnerData && isUserMuted(partnerData.userId) ? 'Stummschaltung aufheben' : 'Benutzer stummschalten'}
+              fontSize={adjustedFontSize}
+            />
            
+            <MenuItem
+              onPress={handleToggleChannelMute}
+              text={channelId && isChannelMuted(channelId) ? 'Channel wieder hörbar machen' : 'Channel stummschalten'}
+              fontSize={adjustedFontSize}
+            />
            
           </View>
         </Pressable>

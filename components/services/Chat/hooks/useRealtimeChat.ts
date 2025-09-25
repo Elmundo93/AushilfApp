@@ -1,18 +1,18 @@
+// components/services/Chat/hooks/useRealtimeChat.ts
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 import { getDB } from '@/components/Crud/SQLite/bridge';
 import { backfillMessages } from '@/components/services/Chat/chatSync';
 import { uploadOutbox } from '@/components/services/Chat/chatOutbox';
-import { subscribeChannels } from '@/components/services/Chat/chatRealtime';
 import { supabase } from '@/components/config/supabase';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 
 type LocalMsg = {
   id: string;
   channel_id: string;
   sender_id: string;
   body: string;
-  created_at: number; // ms epoch
-  // ... weitere Felder optional
+  created_at: number; 
 };
 
 export function useRealtimeChat(channelId: string) {
@@ -24,6 +24,7 @@ export function useRealtimeChat(channelId: string) {
   const appStateRef = useRef<'active' | 'background' | 'inactive'>('active');
   const isMountedRef = useRef(true);
   const uidRef = useRef<string | null>(null);
+  const subRef = useRef<RealtimeChannel | null>(null);
 
   // effiziente Read-Funktion (stabil durch useCallback)
   const readLocal = useCallback(async () => {
@@ -69,22 +70,54 @@ export function useRealtimeChat(channelId: string) {
 
     return () => {
       isMountedRef.current = false;
+      if (subRef.current) {
+        try { subRef.current.unsubscribe(); } catch {}
+        subRef.current = null;
+      }
     };
   }, [channelId, readLocal]);
 
-  // Realtime-Subscribe (nur dieser Channel)
+  // Realtime-Subscribe (nur dieser Channel) — dedupe + sauberes Cleanup
   useEffect(() => {
-    const unsub = subscribeChannels(async (m: any) => {
-      // throttle: nur aktualisieren, wenn sich wirklich was geändert hat
-      const updated = await readLocal();
-      const newLastId = updated.length ? updated[updated.length - 1].id : null;
-      if (newLastId !== lastMsgIdRef.current) {
-        lastMsgIdRef.current = newLastId;
-        setMessages(updated);
-        lastTsRef.current = updated.length ? updated[updated.length - 1].created_at : null;
+    // bei Channel-Wechsel: alte Subscription aufräumen
+    if (subRef.current) {
+      try { subRef.current.unsubscribe(); } catch {}
+      subRef.current = null;
+    }
+    if (!channelId) return;
+
+    const channel = supabase.channel(`realtime:messages:${channelId}`);
+
+    channel.on(
+      'postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'messages', filter: `channel_id=eq.${channelId}` },
+      async (payload: any) => {
+        if (!isMountedRef.current) return;
+        const newId = payload?.new?.id as string | undefined;
+        if (newId && newId === lastMsgIdRef.current) return; // keine unnötigen Reloads
+
+        // Nur nachladen, wenn sich wirklich etwas geändert hat
+        const updated = await readLocal();
+        const newLastId = updated.length ? updated[updated.length - 1].id : null;
+        if (newLastId !== lastMsgIdRef.current) {
+          lastMsgIdRef.current = newLastId;
+          setMessages(updated);
+          lastTsRef.current = updated.length ? updated[updated.length - 1].created_at : null;
+        }
       }
+    );
+
+    channel.subscribe((status) => {
+      // Optional: könnte hier ein initiales Delta-Pull auslösen
+      // if (status === 'SUBSCRIBED') { /* no-op */ }
     });
-    return () => { unsub(); };
+
+    subRef.current = channel;
+
+    return () => {
+      try { channel.unsubscribe(); } catch {}
+      if (subRef.current === channel) subRef.current = null;
+    };
   }, [channelId, readLocal]);
 
   // Outbox-Loop: nur im Vordergrund, UID gecached

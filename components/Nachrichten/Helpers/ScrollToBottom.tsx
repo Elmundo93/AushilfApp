@@ -19,7 +19,10 @@ export const useScrollToBottom = (
   useEffect(() => {
     // Only scroll if trigger actually changed and we're near bottom
     if (trigger !== lastTriggerRef.current && isNearBottom) {
-      flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+      // Use a longer delay to ensure the FlatList has fully updated
+      setTimeout(() => {
+        flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+      }, 100);
       lastTriggerRef.current = trigger;
     }
   }, [trigger, isNearBottom, flatListRef]);

@@ -1,3 +1,4 @@
+// components/services/Chat/chatSync.ts
 import { fetchChannelPage, fetchMessages, pageMessages } from './chatApi';
 import { getDB } from '@/components/Crud/SQLite/bridge';
 
@@ -20,7 +21,7 @@ export async function syncChannelsOnce() {
           c.last_message_at ? new Date(c.last_message_at).getTime() : null,
           c.last_message_text ?? null,
           c.last_sender_id ?? null,
-          JSON.stringify(c.meta ?? {}),
+          typeof c.meta === 'string' ? (c.meta || '{}') : JSON.stringify(c.meta ?? {}),
         ]
       );
     }
@@ -56,6 +57,7 @@ export async function backfillMessages(channelId: string, sinceMs?: number) {
     }
   });
 }
+
 
 /** Ältere Nachrichten via Seek-Pagination laden (für Infinite-Scroll nach oben) */
 export async function loadOlderMessages(channelId: string, beforeCreatedMs?: number, beforeId?: string, limit = 50) {
