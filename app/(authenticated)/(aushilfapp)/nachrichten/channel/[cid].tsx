@@ -7,10 +7,8 @@ import { Animated as RNAnimated } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { ChanelLoading } from "@/components/Nachrichten/Channel/ChanelLoading"
 import { InitialMessageBanner } from '@/components/Nachrichten/initialMessageButton';
-
 import { FontSizeContext } from '@/components/provider/FontSizeContext';
 import { useAuthStore } from '@/components/stores/AuthStore';
-
 import CustomChatHeader from '@/components/Nachrichten/Costum/CustomHeader';
 import { CustomInputField } from '@/components/Nachrichten/Costum/CustomInputField';
 import { CustomMessageBubble } from '@/components/Nachrichten/Costum/CustomMessageBubble';
@@ -60,7 +58,7 @@ export default function ChannelScreen() {
        db,
        `SELECT * FROM messages_local 
           WHERE channel_id=? 
-          ORDER BY created_at ASC, id ASC 
+          ORDER BY created_at DESC, id DESC 
           LIMIT 200`,   
        [channelId],
        [TOPIC.MESSAGES(channelId!)]

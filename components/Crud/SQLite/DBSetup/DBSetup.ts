@@ -2,7 +2,8 @@
 import { SQLiteDatabase } from 'expo-sqlite';
 
 export async function migrateDbIfNeeded(db: SQLiteDatabase) {
-  const DATABASE_VERSION = 61;
+  const DATABASE_VERSION = 63
+  ;
 
   const { user_version: currentDbVersion = 0 } =
     (await db.getFirstAsync<{ user_version: number }>('PRAGMA user_version')) ?? { user_version: 0 };
@@ -71,6 +72,7 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
       );
 
       -- 🔹 Profiles local cache (neu): für Partnernamen/Avatare offline-first
+      DROP TABLE IF EXISTS profiles_local;
       CREATE TABLE IF NOT EXISTS profiles_local (
         id TEXT PRIMARY KEY,
         vorname TEXT,
@@ -81,6 +83,7 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
       );
 
       -- Chat: channels (already with preview fields)
+      DROP TABLE IF EXISTS channels_local;
       CREATE TABLE IF NOT EXISTS channels_local (
         id TEXT PRIMARY KEY,
         custom_type TEXT,
@@ -93,10 +96,12 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
       );
 
       -- 🔹 Index für snappy Sortierung der Liste
+      DROP INDEX IF EXISTS idx_channels_local_last_msg_at;
       CREATE INDEX IF NOT EXISTS idx_channels_local_last_msg_at
         ON channels_local (last_message_at DESC);
 
       -- Channel members
+      DROP TABLE IF EXISTS channel_members_local;
       CREATE TABLE IF NOT EXISTS channel_members_local (
         last_read_at INTEGER,
         channel_id TEXT NOT NULL,
@@ -108,12 +113,15 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
       );
 
       -- 🔹 Indizes für schnelle Lookups
+      DROP INDEX IF EXISTS idx_ch_members_local_user;
+      DROP INDEX IF EXISTS idx_ch_members_local_channel;
       CREATE INDEX IF NOT EXISTS idx_ch_members_local_user
         ON channel_members_local (user_id);
       CREATE INDEX IF NOT EXISTS idx_ch_members_local_channel
         ON channel_members_local (channel_id);
 
       -- Messages
+      DROP TABLE IF EXISTS messages_local;
       CREATE TABLE IF NOT EXISTS messages_local (
         id TEXT PRIMARY KEY,
         channel_id TEXT NOT NULL,
@@ -128,14 +136,17 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
       );
 
       -- Bestehender Index
+      DROP INDEX IF EXISTS idx_msg_local_channel_created;
       CREATE INDEX IF NOT EXISTS idx_msg_local_channel_created
         ON messages_local (channel_id, created_at);
 
       -- 🔹 Seek-Pagination stabilisieren (bei gleichen Timestamps)
+      DROP INDEX IF EXISTS idx_msg_local_channel_created_id;
       CREATE INDEX IF NOT EXISTS idx_msg_local_channel_created_id
         ON messages_local (channel_id, created_at, id);
 
       -- Outbox
+      DROP TABLE IF EXISTS outbox_messages;
       CREATE TABLE IF NOT EXISTS outbox_messages (
         client_id TEXT PRIMARY KEY,
         channel_id TEXT NOT NULL,
